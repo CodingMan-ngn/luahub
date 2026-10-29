@@ -6,99 +6,150 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=110"/>
+<link rel="stylesheet" href="/assets/style.css?v=130"/>
 <style>
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: #0a0a0a; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  /* --- Custom Smooth Scrollbar --- */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #050505; }
+  ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; border: 2px solid #050505; }
   ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
+  /* --- Base Styles --- */
+  html { scroll-behavior: smooth; }
   body { 
-    background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; margin: 0; 
-    background-image: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.05), transparent 60%);
-    overflow-y: scroll; /* Always show track to prevent layout shift */
+    background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;
+    background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%), radial-gradient(circle at 10% 100%, rgba(16, 185, 129, 0.05), transparent 40%);
+    background-attachment: fixed; -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
 
-  nav { 
-    padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(12px);
-    border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; 
-    position: sticky; top: 0; z-index: 10;
+  /* --- Toast Notifications --- */
+  #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none; }
+  .toast { 
+    background: #0a0a0a; border: 1px solid #222; border-left: 4px solid #7c3aed; 
+    padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+    color: #fff; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 0.8rem;
+    transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    pointer-events: auto; max-width: 350px;
   }
-  .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; color: #fff; text-decoration: none; }
-  .logo img { border-radius: 6px; }
+  .toast.error { border-left-color: #ef4444; }
+  .toast.success { border-left-color: #10b981; }
+  @keyframes slideIn { to { transform: translateX(0); } }
+  @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
+  .toast.fade-out { animation: slideOut 0.3s ease forwards; }
+
+  /* --- Navigation --- */
+  nav { 
+    padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.7); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center; 
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; transition: 0.2s; }
+  .logo:hover { opacity: 0.8; }
+  .logo img { border-radius: 6px; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
   
   .nav-links { display: flex; align-items: center; gap: 2rem; height: 100%; }
   .nav-links a { 
     color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600; 
-    transition: 0.2s; height: 100%; display: flex; align-items: center; position: relative; cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease; height: 100%; display: flex; align-items: center; position: relative; cursor: pointer;
   }
-  .nav-links a:hover { color: #fff; }
+  .nav-links a:hover { color: #fff; transform: translateY(-1px); }
   .nav-links a.active { color: #fff; }
-  .nav-links a.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #7c3aed; }
+  .nav-links a.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #7c3aed; box-shadow: 0 0 10px #7c3aed; }
   
   .user-menu { display: flex; align-items: center; gap: 1.5rem; }
   .user-name { color: #ccc; font-size: 0.9rem; font-weight: 600; }
-  .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-  .btn-logout:hover { color: #ff6b6b; }
+  .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; padding: 0.5rem; border-radius: 6px; }
+  .btn-logout:hover { color: #fff; background: rgba(239, 68, 68, 0.2); }
 
+  /* --- Container & Layout --- */
   .container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
-  .page-header { margin-bottom: 2rem; }
-  .page-header h1 { font-size: 2rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -0.02em; }
+  .page-header { margin-bottom: 2rem; animation: slideDown 0.5s ease; }
+  .page-header h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -0.03em; }
   .page-header p { color: #888; margin: 0; font-size: 0.95rem; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
   .glass-card {
-    background: rgba(15, 15, 15, 0.6); border: 1px solid #222; border-radius: 16px;
-    padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); backdrop-filter: blur(10px); margin-bottom: 2rem;
+    background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px;
+    padding: 2.5rem; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+    backdrop-filter: blur(16px); animation: fadeIn 0.6s ease;
   }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-  .editor-box { background: #000; border: 1px solid #222; border-radius: 12px; overflow: hidden; transition: 0.3s; }
-  .editor-box:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 1px #7c3aed; }
+  /* --- Editor --- */
+  .editor-box { background: #000; border: 1px solid #222; border-radius: 14px; overflow: hidden; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .editor-box:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2), 0 10px 30px rgba(124, 58, 237, 0.1); transform: translateY(-2px); }
   .editor-textarea { width: 100%; height: 350px; background: transparent; color: #d4d4d4; border: none; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; resize: vertical; outline: none; line-height: 1.6; }
   .editor-footer { display: flex; justify-content: space-between; padding: 0.8rem 1.5rem; background: #0a0a0a; font-size: 0.8rem; color: #666; border-top: 1px solid #222; font-family: 'JetBrains Mono', monospace; }
   
-  .settings-group { margin-top: 1.5rem; }
+  /* --- Inputs & Toggles --- */
+  .settings-group { margin-top: 2rem; }
   .form-row { display: flex; align-items: center; margin-bottom: 1.5rem; gap: 1.5rem; }
-  .form-row label { width: 120px; color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-  .input-field { flex: 1; background: #0a0a0a; border: 1px solid #222; color: #fff; padding: 0.9rem 1rem; border-radius: 8px; outline: none; font-family: 'Inter', sans-serif; transition: 0.2s; font-size: 0.95rem; }
-  .input-field:focus { border-color: #7c3aed; box-shadow: 0 0 15px rgba(124,58,237,0.15); }
+  .form-row label.main-label { width: 140px; color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .input-field { flex: 1; background: #0a0a0a; border: 1px solid #222; color: #fff; padding: 0.9rem 1rem; border-radius: 10px; outline: none; font-family: 'Inter', sans-serif; transition: all 0.3s ease; font-size: 0.95rem; }
+  .input-field:focus { border-color: #7c3aed; background: #000; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15); }
   
   .toggle-wrap { display: flex; align-items: center; gap: 1rem; flex: 1; }
   .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
-  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-  input:checked + .slider { background-color: #7c3aed; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 34px; }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 50%; }
+  input:checked + .slider { background-color: #7c3aed; box-shadow: 0 0 15px rgba(124,58,237,0.4); }
   input:checked + .slider:before { transform: translateX(22px); }
-  .toggle-text { color: #888; font-size: 0.85rem; }
+  .toggle-text { color: #888; font-size: 0.85rem; transition: 0.2s; }
+  input:checked ~ .toggle-text { color: #fff; }
 
-  .btn-submit { width: 100%; padding: 1.1rem; background: #7c3aed; color: #fff; font-weight: 700; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-top: 1rem; letter-spacing: 0.5px; }
-  .btn-submit:hover { background: #6d28d9; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124,58,237,0.3); }
-  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  /* --- Buttons --- */
+  .btn-submit { 
+    width: 100%; padding: 1.1rem; background: #7c3aed; color: #fff; font-weight: 700; font-size: 1rem; 
+    border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    margin-top: 1rem; letter-spacing: 0.5px; box-shadow: 0 10px 20px rgba(124, 58, 237, 0.2);
+  }
+  .btn-submit:hover { background: #8b5cf6; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(124, 58, 237, 0.4); }
+  .btn-submit:active { transform: translateY(-1px); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
+  /* --- Cards Grid --- */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-  .card { background: rgba(15, 15, 15, 0.6); border: 1px solid #222; border-radius: 12px; padding: 1.5rem; transition: 0.3s; display: flex; flex-direction: column; backdrop-filter: blur(10px); }
-  .card:hover { transform: translateY(-4px); border-color: #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .card { 
+    background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; 
+    padding: 1.5rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; backdrop-filter: blur(10px);
+  }
+  .card:hover { transform: translateY(-8px); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(124,58,237,0.1); }
   .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;}
   .card-meta { font-size: 0.8rem; color: #888; margin-bottom: 1rem; }
   .card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-  .copy-btn { background: #222; color: #fff; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-  .copy-btn:hover { background: #7c3aed; }
+  
+  .copy-btn { background: #222; color: #fff; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+  .copy-btn:hover { background: #7c3aed; box-shadow: 0 0 15px rgba(124,58,237,0.3); }
   .edit-btn { background: transparent; border: none; color: #7c3aed; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.2s; padding: 0; }
-  .edit-btn:hover { color: #a78bfa; text-decoration: underline; }
+  .edit-btn:hover { color: #a78bfa; text-decoration: underline; text-underline-offset: 4px; }
 
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 100; }
-  .modal.active { display: flex; animation: fadeIn 0.2s ease; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .modal-content { background: #0a0a0a; border: 1px solid #222; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); transform: scale(0.95); animation: popIn 0.2s var(--spring) forwards; }
-  @keyframes popIn { to { transform: scale(1); } }
+  /* --- Settings Specific --- */
+  .discord-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #5865F2; color: #fff; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: 0.3s; }
+  .discord-badge:hover { background: #4752c4; transform: translateY(-2px); }
+
+  /* --- Modal --- */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .modal.active { display: flex; animation: fadeInModal 0.3s ease; }
+  @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
+  .modal-content { 
+    background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; 
+    width: 100%; max-width: 500px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); transform: scale(0.95); 
+    animation: popInModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  @keyframes popInModal { to { transform: scale(1); } }
+  
   .modal-title { font-size: 1.3rem; margin-bottom: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.8rem; }
-  .link-input { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 1rem; border-radius: 8px; font-family: monospace; margin-bottom: 1rem; font-size: 0.9rem; }
-  .load-box { background: #000; border: 1px solid #222; border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .link-input { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 1rem; border-radius: 10px; font-family: monospace; margin-bottom: 1rem; font-size: 0.9rem; }
+  .load-box { background: #000; border: 1px solid #222; border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
   .load-code { font-family: 'JetBrains Mono', monospace; color: #a78bfa; font-size: 0.8rem; word-break: break-all; }
 </style>
 </head>
 <body>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
 <nav>
   <a href="/" class="logo">
     <img src="/favicon.svg" width="24" height="24"/>
@@ -136,12 +187,12 @@
 
       <div class="settings-group">
         <div class="form-row">
-          <label>Title</label>
+          <label class="main-label">Title</label>
           <input id="s-name" class="input-field" placeholder="e.g. Universal ESP" />
         </div>
         
         <div class="form-row">
-          <label>Options</label>
+          <label class="main-label">Options</label>
           <div class="toggle-wrap">
             <label class="toggle-switch">
               <input type="checkbox" id="show-intro" checked>
@@ -152,7 +203,6 @@
         </div>
       </div>
 
-      <!-- Hidden field to track if we are updating -->
       <input type="hidden" id="edit-slug" value="" />
 
       <button class="btn-submit" id="submit-btn" onclick="publishPaste()">Publish Paste</button>
@@ -166,9 +216,7 @@
       <h1>Public Feed</h1>
       <p>Discover scripts shared by the community.</p>
     </div>
-    <div class="grid" id="public-grid">
-      <p style="color:#888;">Loading...</p>
-    </div>
+    <div class="grid" id="public-grid"></div>
   </div>
 
   <!-- MY LINKS PAGE -->
@@ -177,27 +225,41 @@
       <h1>My Links</h1>
       <p>Your recently generated loadstrings.</p>
     </div>
-    <div class="grid" id="my-links-grid">
-      <p style="color:#888;">You haven't created any links yet.</p>
-    </div>
+    <div class="grid" id="my-links-grid"></div>
   </div>
 
   <!-- SETTINGS PAGE -->
   <div id="page-settings" class="page" style="display:none;">
     <div class="page-header">
       <h1>Account Settings</h1>
-      <p>Manage your profile information.</p>
+      <p>Manage your profile information and integrations.</p>
     </div>
-    <div class="glass-card">
+    
+    <div class="glass-card" style="margin-bottom: 2rem;">
+      <h3 style="margin-top:0; margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid #222; padding-bottom: 1rem;">Profile</h3>
       <div class="form-row">
-        <label>Username</label>
+        <label class="main-label">Username</label>
         <input id="set-username" class="input-field" />
       </div>
       <div class="form-row">
-        <label>Bio</label>
+        <label class="main-label">Bio</label>
         <input id="set-bio" class="input-field" placeholder="Tell us about yourself..." />
       </div>
-      <button class="btn-submit" onclick="saveSettings()">Save Changes</button>
+      <button class="btn-submit" onclick="saveSettings()" style="margin-top: 0;">Save Changes</button>
+    </div>
+
+    <div class="glass-card">
+      <h3 style="margin-top:0; margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid #222; padding-bottom: 1rem;">Integrations</h3>
+      <div class="form-row" style="justify-content: space-between;">
+        <div>
+          <div style="font-weight: 600; font-size: 0.95rem;">Discord Community</div>
+          <div style="font-size: 0.8rem; color: #888;">Join our server for support and updates.</div>
+        </div>
+        <a href="https://discord.gg/P4P5jZGt3m" target="_blank" class="discord-badge">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.14ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+          Join Server
+        </a>
+      </div>
     </div>
   </div>
 
@@ -229,7 +291,28 @@
   if (!token) window.location.href = '/';
   document.getElementById('user-name').textContent = localStorage.getItem('username');
 
-  // Navigation
+  // --- Toast System ---
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    // Icon based on type
+    let icon = 'ℹ️';
+    if (type === 'error') icon = '❌';
+    if (type === 'success') icon = '✅';
+
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      toast.addEventListener('animationend', () => toast.remove());
+    }, 3000);
+  }
+
+  // --- Navigation ---
   function switchPage(pageId, el) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     document.getElementById('page-' + pageId).style.display = 'block';
@@ -242,17 +325,16 @@
     if (pageId === 'settings') loadSettings();
   }
   
-  // Set default view
   document.getElementById('page-new-paste').style.display = 'block';
 
-  // Editor Stats
+  // --- Editor Stats ---
   const editor = document.getElementById('s-code');
   editor.addEventListener('input', () => {
     document.getElementById('line-count').textContent = editor.value.split('\n').length + ' lines';
     document.getElementById('char-count').textContent = (new Blob([editor.value]).size / 1024).toFixed(1) + ' KB';
   });
 
-  // Publish / Edit Paste
+  // --- Publish / Edit Paste ---
   async function publishPaste() {
     const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
@@ -260,7 +342,7 @@
     const show_intro = document.getElementById('show-intro').checked;
     const editSlug = document.getElementById('edit-slug').value;
 
-    if (!name || !content) return alert('Title and code required');
+    if (!name || !content) return showToast('Title and code are required.', 'error');
 
     btn.disabled = true; btn.textContent = 'Publishing...';
 
@@ -278,13 +360,14 @@
       if (!res.ok) throw new Error(data.error || 'Server error');
 
       if (data.slug) {
+        showToast(editSlug ? 'Paste updated successfully!' : 'Paste published!', 'success');
+        
         const fullUrl = `${location.origin}/api/loader/${data.slug}`;
         document.getElementById('out-link').value = fullUrl;
         document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}"))()`;
         document.getElementById('success-modal').classList.add('active');
         
         if (!editSlug) {
-          // Save to local storage if it's a new paste
           let myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
           myLinks.unshift({ name, slug: data.slug });
           localStorage.setItem('my_links', JSON.stringify(myLinks));
@@ -293,7 +376,7 @@
         resetForm();
       }
     } catch(e) {
-      alert('Error: ' + e.message);
+      showToast(e.message, 'error');
     }
 
     btn.disabled = false; btn.textContent = 'Publish Paste';
@@ -312,9 +395,11 @@
     document.getElementById('char-count').textContent = '0 KB';
   }
 
-  // Load Public Feed
+  // --- Load Public Feed ---
   async function loadPublicFeed() {
     const grid = document.getElementById('public-grid');
+    grid.innerHTML = '<p style="color:#888;">Loading...</p>';
+    
     const res = await fetch('/api/scripts');
     const scripts = await res.json();
 
@@ -335,7 +420,7 @@
     `).join('');
   }
 
-  // Load My Links
+  // --- Load My Links ---
   function loadMyLinks() {
     const grid = document.getElementById('my-links-grid');
     const myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
@@ -359,7 +444,7 @@
     `).join('');
   }
 
-  // Edit Paste
+  // --- Edit Paste ---
   function editPaste(slug, name) {
     document.getElementById('edit-slug').value = slug;
     document.getElementById('s-name').value = name;
@@ -368,15 +453,13 @@
     document.getElementById('submit-btn').textContent = 'Save Changes';
     document.getElementById('cancel-btn').style.display = 'block';
     
-    // Reset editor text for safety
     editor.value = '';
     editor.placeholder = 'Paste new code here to overwrite existing...';
     
-    // Switch to editor tab
     switchPage('new-paste', document.getElementById('nav-new'));
   }
 
-  // Settings
+  // --- Settings ---
   async function loadSettings() {
     const res = await fetch('/api/profile', { headers: { Authorization: 'Bearer ' + token } });
     const data = await res.json();
@@ -399,23 +482,23 @@
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       document.getElementById('user-name').textContent = data.username;
-      alert('Settings saved!');
+      showToast('Settings saved successfully!', 'success');
     } else {
-      alert('Error: ' + data.error);
+      showToast(data.error, 'error');
     }
   }
 
   function copyLoad(slug) {
     const load = `loadstring(game:HttpGet("${location.origin}/api/loader/${slug}"))()`;
     navigator.clipboard.writeText(load);
-    alert('Copied to clipboard!');
+    showToast('Loadstring copied to clipboard!', 'success');
   }
 
   function copyVal(id) {
     const el = document.getElementById(id);
     const text = el.value || el.textContent;
     navigator.clipboard.writeText(text);
-    alert('Copied!');
+    showToast('Copied to clipboard!', 'success');
   }
 
   function logout() { localStorage.clear(); window.location.href = '/'; }

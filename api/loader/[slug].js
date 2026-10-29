@@ -9,20 +9,24 @@ module.exports = async (req, res) => {
     .from('scripts')
     .select('*')
     .eq('slug', slug)
-    .maybeSingle(); // Use maybeSingle to avoid throwing
+    .maybeSingle(); 
 
-  // If error or no script, return 404 with a specific message
-  if (error) return res.status(500).send('-- DB Error: ' + error.message);
-  if (!script) return res.status(404).send('-- Script not found');
-  if (!script.is_public) return res.status(403).send('-- Script is private');
+  if (error) {
+    res.setHeader('Content-Type', 'text/plain');
+    return res.status(500).send('-- DB Error: ' + error.message);
+  }
+  
+  if (!script) {
+    res.setHeader('Content-Type', 'text/plain');
+    return res.status(404).send('-- Script not found');
+  }
 
   // Bump hits
   supabase.from('scripts').update({ hits: (script.hits || 0) + 1 }).eq('id', script.id).then(() => {});
 
-  // Generate the final payload
   let finalLua = script.content_enc;
 
-  // Inject Liquid Glass Toast if show_intro is true
+  // Inject Liquid Glass Toast
   if (script.show_intro) {
     const discordLink = "https://discord.gg/P4P5jZGt3m";
     const introCode = `
@@ -39,7 +43,7 @@ ScreenGui.Name = "LuaHubIntro"
 
 Frame.Parent = ScreenGui
 Frame.Size = UDim2.new(0, 300, 0, 120)
-Frame.Position = UDim2.new(0.5, -150, 0.8, 0) -- Floats near bottom
+Frame.Position = UDim2.new(0.5, -150, 0.8, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 Frame.BackgroundTransparency = 0.3
 Frame.BorderSizePixel = 0
@@ -91,7 +95,6 @@ Button.MouseButton1Click:Connect(function()
     })
 end)
 
--- Tween in
 Frame.Position = UDim2.new(0.5, -150, 1.2, 0)
 game:GetService("TweenService"):Create(Frame, TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -150, 0.75, 0)}):Play()
 
@@ -101,7 +104,6 @@ task.delay(10, function()
     Frame:Destroy()
 end)
 `;
-    // Prepend the intro to the script
     finalLua = introCode + '\n' + finalLua;
   }
 
