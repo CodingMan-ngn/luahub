@@ -26,9 +26,8 @@ local function decrypt_payload(encoded_str)
     return table.concat(decrypted)
 end
 
--- Replace "hello-abc12" with your actual script slug
-local SLUG = "hello-abc12" 
-local URL_BASE = "https://lua-axon.vercel.app/api/loader/" .. SLUG
+-- The URL passed in from the dashboard
+local URL_BASE = "https://lua-axon.vercel.app/api/loader/YOUR_SLUG_HERE"
 
 local function execute_payload(data)
     local bytecode = decrypt_payload(data)
@@ -48,7 +47,6 @@ end)
 -- 2. Check if the server demands a key
 if success and string.find(response, "Key required") then
     
-    -- Build the UI Prompt
     local ScreenGui = Instance.new("ScreenGui")
     local Frame = Instance.new("Frame")
     local TextBox = Instance.new("TextBox")
@@ -94,7 +92,7 @@ if success and string.find(response, "Key required") then
     
     Button.MouseButton1Click:Connect(function()
         local userKey = TextBox.Text
-        if #userKey < 5 then return end -- Basic validation
+        if #userKey < 5 then return end
         
         local new_url = URL_BASE .. "?key=" .. userKey
         local retry_success, retry_data = pcall(function()
@@ -113,7 +111,6 @@ if success and string.find(response, "Key required") then
     end)
 
 elseif success and not string.find(response, "error") then
-    -- No key required, execute immediately
     execute_payload(response)
 else
     warn("[LuaHub] Fetch error: " .. tostring(response))

@@ -19,17 +19,17 @@
     </div>
   </nav>
 
-  <section style="padding-top: 4rem;">
-    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800;">Your Dashboard</h1>
-    <p style="color: var(--muted); margin-bottom: 3rem;">Manage your obfuscated payloads and loader URLs.</p>
+  <section style="padding-top: 4rem; max-width: 1200px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800;">Dashboard</h1>
+    <p style="color: var(--muted); margin-bottom: 3rem;" id="welcome-msg">Verifying Developer Access...</p>
 
-    <div class="dashboard-grid">
+    <!-- DEVELOPER PANEL (Only visible to Devs) -->
+    <div class="dashboard-grid" id="dev-panel" style="display:none;">
       <div class="panel">
-        <h2 style="margin-bottom: 1.5rem;">📤 Upload Payload</h2>
+        <h2 style="margin-bottom: 1.5rem;">📤 Deploy New Script</h2>
         <input id="s-name" placeholder="Script Name (e.g., Universal ESP)" />
         <textarea id="s-code" placeholder="Paste your encrypted .bin contents here..."></textarea>
         
-        <!-- KEY SYSTEM TOGGLE -->
         <div style="display:flex; align-items:center; gap:10px; margin-bottom: 1.5rem;">
           <input type="checkbox" id="s-key-toggle" style="width:20px; height:20px; cursor:pointer;">
           <label for="s-key-toggle" style="color:var(--muted); cursor:pointer;">Require Key System (BoostyLink)</label>
@@ -40,23 +40,60 @@
       </div>
 
       <div class="panel">
-        <h2 style="margin-bottom: 1.5rem;">📦 Active Scripts</h2>
+        <h2 style="margin-bottom: 1.5rem;">📦 Your Deployed Scripts</h2>
         <div id="my-scripts"><p style="color: var(--muted);">Loading...</p></div>
       </div>
     </div>
+
+    <!-- VERIFIED USER PANEL (Fallback) -->
+    <div id="non-dev-panel" class="panel hidden" style="text-align: center; padding: 4rem 2rem;">
+      <h2 style="font-size: 1.5rem; color: #ef4444; margin-bottom: 1rem;">Developer Access Required</h2>
+      <p style="color: var(--muted);">You are verified, but you need the <strong>Developer</strong> role in our Discord server to upload scripts.</p>
+      <a href="/" class="btn-primary" style="display: inline-block; margin-top: 2rem; text-decoration: none;">Back to Hub</a>
+    </div>
+
   </section>
 
   <script>
     document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
+    const token = localStorage.getItem('token');
     
     async function apiFetch(path, method = 'GET', body = null) {
       const opts = {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       }
       if (body) opts.body = JSON.stringify(body)
       const res = await fetch(path, opts)
       return res.json()
+    }
+
+    async function verifyDev() {
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken: token })
+        });
+        const data = await res.json();
+        
+        if (data.isDev) {
+          document.getElementById('welcome-msg').textContent = "Welcome, Developer. Manage your payloads below.";
+          document.getElementById('dev-panel').style.display = 'grid';
+          loadScripts();
+        } else {
+          document.getElementById('welcome-msg').textContent = "Welcome to your profile.";
+          document.getElementById('non-dev-panel').classList.remove('hidden');
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('welcome-msg').textContent = "Error verifying access.";
+      }
     }
 
     async function uploadScript() {
@@ -72,9 +109,19 @@
         const res = await apiFetch('/api/scripts', 'POST', { name, content, is_public: true, requires_key: requiresKey })
         const box = document.getElementById('upload-result')
         box.classList.remove('hidden')
+        
         if (res && res.slug) {
-          const url = `${window.location.origin}/api/loader/${res.slug}`
-          box.innerHTML = `<p>✅ Deployed! Loader URL:</p><code style="display:block;margin-top:0.5rem;color:#10b981">loadstring(game:HttpGet("${url}"))()</code>`
+          const loaderScript = `loadstring(game:HttpGet("https://lua-axon.vercel.app/lib/loader.lua"))()`
+          
+          box.innerHTML = `
+            <p>✅ Deployed successfully.</p>
+            <p style="font-size:0.85rem; margin-top:1rem; color:var(--muted);">Paste this into your executor:</p>
+            <code style="display:block;margin-top:0.5rem;color:#10b981;cursor:pointer; padding: 1rem; background: rgba(0,0,0,0.5); border-radius: 8px;" onclick="navigator.clipboard.writeText('${loaderScript}')">
+              ${loaderScript} <br><span style="font-size:0.7rem; color:var(--muted); margin-top:0.5rem; display:block;">(Click to copy)</span>
+            </code>
+            <p style="font-size:0.8rem; color:var(--muted); margin-top:1rem;">Target Slug: ${res.slug}</p>
+          `
+          
           document.getElementById('s-name').value = ''
           document.getElementById('s-code').value = ''
           document.getElementById('s-key-toggle').checked = false
@@ -95,10 +142,11 @@
           return
         }
         box.innerHTML = scripts.map(s => `
-          <div class="script-card">
-            <strong>${s.name}</strong> ${s.requires_key ? '<span style="color:#ef4444; font-size:0.8rem;">(Key Required)</span>' : ''}
-            <span style="font-size:0.8rem;color:var(--muted);display:block;margin-top:0.5rem;">👁 ${s.hits || 0} hits</span>
-            <code>loadstring(game:HttpGet("${window.location.origin}/api/loader/${s.slug}"))()</code>
+          <div class="script-card" style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--glass-border);">
+            <strong style="font-size:1.1rem; display:block; margin-bottom:0.5rem;">${s.name}</strong> 
+            ${s.requires_key ? '<span style="color:#ef4444; font-size:0.8rem; background: rgba(239,68,68,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">Key Required</span>' : '<span style="color:#10b981; font-size:0.8rem; background: rgba(16,185,129,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">Free Access</span>'}
+            <span style="font-size:0.8rem;color:var(--muted);display:block;margin-top:0.5rem;">👁 ${s.hits || 0} executions</span>
+            <code style="display:block; margin-top:0.5rem; font-size:0.75rem; color:#a78bfa;">Slug: ${s.slug}</code>
           </div>
         `).join('')
       } catch (e) {
@@ -106,9 +154,7 @@
       }
     }
 
-    if (localStorage.getItem('token')) {
-      loadScripts();
-    }
+    verifyDev();
   </script>
 </body>
 </html>
