@@ -51,9 +51,7 @@
 
   <script src="/assets/app.js"></script>
   <script>
-    // Handle OAuth redirect back from Supabase
-    captureOAuthTokens()
-
+    // Check token AFTER app.js has executed its synchronous capture
     if (!localStorage.getItem('token')) {
       window.location.href = '/'
     }

@@ -1,6 +1,27 @@
 // frontend/assets/app.js
 const SUPABASE_URL = 'https://cnwpjepbipnqirgdrque.supabase.co'
 
+// 1. Capture token IMMEDIATELY (synchronously) before anything else runs
+;(function captureTokenNow() {
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    const params = new URLSearchParams(window.location.hash.substring(1))
+    const token = params.get('access_token')
+    if (token) {
+      localStorage.setItem('token', token)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const name = payload?.user_metadata?.full_name || payload?.user_metadata?.name || payload?.user_metadata?.user_name || 'user'
+        localStorage.setItem('username', name)
+        localStorage.setItem('user_id', payload.sub)
+      } catch (e) {
+        console.error('Token decode error', e)
+      }
+      // Clean the ugly hash from the URL bar so it doesn't trigger again on refresh
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }
+})()
+
 async function apiFetch(path, method = 'GET', body = null) {
   const opts = {
     method,
@@ -27,26 +48,6 @@ function logout() {
 function openModal() { document.getElementById('auth-modal')?.classList.remove('hidden') }
 function closeModal() { document.getElementById('auth-modal')?.classList.add('hidden') }
 
-// Capture Supabase OAuth redirect tokens from URL hash on dashboard load
-function captureOAuthTokens() {
-  if (!window.location.hash) return false
-  const params = new URLSearchParams(window.location.hash.substring(1))
-  const token = params.get('access_token')
-  if (token) {
-    localStorage.setItem('token', token)
-    // Decode JWT to pull user metadata (sub, user_metadata.username)
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const username = payload?.user_metadata?.full_name || payload?.user_metadata?.name || 'user'
-      localStorage.setItem('username', username)
-      localStorage.setItem('user_id', payload.sub)
-    } catch {}
-    history.replaceState(null, '', window.location.pathname)
-    return true
-  }
-  return false
-}
-
 // 3D tilt
 function attachTilt() {
   document.querySelectorAll('.feat').forEach(card => {
@@ -70,12 +71,9 @@ function attachTilt() {
 function runPreloader() {
   const pre = document.getElementById('preloader')
   if (!pre) return
-  window.addEventListener('load', () => {
-    setTimeout(() => pre.classList.add('done'), 1000)
-  })
+  setTimeout(() => pre.classList.add('done'), 1200)
 }
 
-// Global nav state
 window.addEventListener('DOMContentLoaded', () => {
   runPreloader()
   attachTilt()
