@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=27"/>
+<link rel="stylesheet" href="/assets/style.css?v=28"/>
 <style>
   .source-viewer {
     background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
@@ -29,7 +29,7 @@
   
   .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem;}
   .locked-panel { opacity: 0.4; pointer-events: none; position: relative; border: 1px dashed #ef4444; }
-  .locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #ef4444; background: rgba(0,0,0,0.5); border-radius: var(--radius); z-index: 10;}
+  .locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #ef4444; background: rgba(0,0,0,0.5); border-radius: var(--radius);}
   .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top: 2rem;}
   @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 </style>
@@ -117,13 +117,6 @@
         <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📦 Your Scripts</h2>
         <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
       </div>
-      
-      <div id="key-box-panel" class="key-box locked-panel" style="margin-top: 2rem;">
-        <div class="locked-overlay">🔒 Developer Role Required</div>
-        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">🔑 Master Key System</h2>
-        <p style="color:var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generate a key for script execution. Single-use.</p>
-        <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Generate Key Now</a>
-      </div>
     </div>
   </div>
 </div>
@@ -156,8 +149,6 @@
     document.getElementById('user-name').innerHTML += ` <span class="role-chip role-dev">DEV</span>`;
     document.getElementById('dev-panel').classList.remove('locked-panel');
     document.getElementById('dev-lock-msg').style.display = 'none';
-    document.getElementById('key-box-panel').classList.remove('locked-panel');
-    document.getElementById('key-box-panel').querySelector('.locked-overlay').style.display = 'none';
   } else if (payload?.verified) {
     document.getElementById('user-name').innerHTML += ` <span class="role-chip role-verified">VERIFIED</span>`;
   }
@@ -217,7 +208,10 @@
     const url = `${window.location.origin}/api/loader/${slug}`;
     
     if (obfMethod === 'loader') {
-      return `script_key = "${requiresKey ? 'YOUR_KEY_HERE' : 'nil'}"; -- A key might be required, if not, delete this line.\nloadstring(game:HttpGet("${url}"))()`;
+      let str = `--[[\n  NOTE: Before you deobfuscate this code, ensure you have pure intentions.\n  This code is protected by LuaHub.\n]]\n`;
+      str += `script_key = "${requiresKey ? 'YOUR_KEY_HERE' : 'nil'}"; -- A key might be required, if not, delete this line.\n`;
+      str += `loadstring(game:HttpGet("${url}"))()`;
+      return str;
     } else {
       return `loadstring(game:HttpGet("${url}"))()`;
     }
@@ -242,6 +236,13 @@
             <div class="source-viewer hidden" id="src-${s.id}">${s.source_code || 'No source provided.'}</div>
           </div>
         ` : ''}
+        
+        ${s.requires_key ? `
+          <div style="margin-bottom: 1rem;">
+            <a href="/key-system?slug=${s.slug}" target="_blank" class="btn-secondary" style="display:block; width:100%; padding:0.4rem; font-size:0.8rem; text-align:center; text-decoration:none; margin-bottom:0.5rem;">Get Key for this Script</a>
+          </div>
+        ` : ''}
+
         <button class="btn-primary" style="width:100%; padding: 0.5rem; font-size: 0.85rem;" onclick="copyLoader('${s.slug}', ${s.requires_key}, '${s.obf_method}')">
           Copy Loadstring
         </button>
