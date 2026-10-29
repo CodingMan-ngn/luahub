@@ -6,40 +6,73 @@
 <title>LuaHub — Script Hosting</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=15"/>
-<script src="/assets/app.js?v=15" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v=17"/>
+<script src="/assets/app.js?v=17" defer></script>
 </head>
 <body>
 <nav>
-  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
-    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
+  <a href="/" class="logo">
+    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
     LuaHub
   </a>
   <div class="nav-links">
-    <a href="/dashboard.html">Dashboard</a>
-    <span id="user-name" style="color:#e2e8f0;font-weight:600"></span>
+    <a href="/dashboard">Dashboard</a>
+    <span id="user-name" style="color:#fff;font-weight:600"></span>
     <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
   </div>
 </nav>
 
-<section style="padding:4rem 2rem;max-width:1200px;margin:0 auto;">
-  <h1 style="font-size:3rem;font-weight:800;margin-bottom:0.5rem;">LuaHub</h1>
-  <p style="color:#94a3b8;margin-bottom:2.5rem;">Host, obfuscate, and deploy Roblox scripts. Loader URLs, key systems, role-gated distribution.</p>
+<div class="hero">
+  <h1>Elevate Your <span>Roblox</span> Experience</h1>
+  <p>Host, obfuscate, and deploy scripts with industrial-grade security. Loader URLs, key systems, and role-gated distribution built for creators.</p>
+  
+  <div class="hero-btns">
+    <a href="#scripts" class="btn-primary">Browse Scripts</a>
+    <a href="/dashboard" class="btn-secondary">Developer Dashboard</a>
+  </div>
 
-  <div id="auth-section" style="max-width:400px;">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <h3>10K+</h3>
+      <p>Active Users</p>
+    </div>
+    <div class="stat-item">
+      <h3>50K+</h3>
+      <p>Executions</p>
+    </div>
+    <div class="stat-item">
+      <h3>99.9%</h3>
+      <p>Uptime</p>
+    </div>
+  </div>
+</div>
+
+<section id="scripts" style="padding-top: 2rem;">
+  <div id="auth-section" class="auth-box panel" style="background: var(--surface);">
     <h2 style="margin-bottom:1rem;">Sign In</h2>
-    <input id="a-email" placeholder="Email" style="width:100%;margin-bottom:1rem"/>
-    <input id="a-pass" type="password" placeholder="Password" style="width:100%;margin-bottom:1rem"/>
-    <button class="action" onclick="login()" style="width:100%;margin-bottom:1rem;">Login</button>
-    <button class="action" onclick="register()" style="width:100%;background:#334155;">Register</button>
+    <input id="a-email" placeholder="Email"/>
+    <input id="a-pass" type="password" placeholder="Password"/>
+    <button class="btn-primary btn-full" onclick="login()">Login</button>
+    <button class="btn-secondary btn-full" onclick="register()">Register</button>
     <div id="auth-result" style="margin-top:1rem;"></div>
   </div>
 
-  <h2 style="margin-top:4rem;margin-bottom:1.5rem;">Public Scripts</h2>
-  <div id="scripts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
-    <p style="color:#94a3b8;">Loading...</p>
+  <h2 style="margin-bottom:1.5rem; font-size: 2rem;">Public Scripts</h2>
+  <div id="scripts-grid" class="grid-cards">
+    <p style="color:var(--muted);">Loading...</p>
   </div>
 </section>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <div class="ticker-item"><span>System:</span> Operational</div>
+    <div class="ticker-item"><span>Latest:</span> Universal ESP v2.4</div>
+    <div class="ticker-item"><span>Security:</span> Obfuscation Engine Active</div>
+    <div class="ticker-item"><span>System:</span> Operational</div>
+    <div class="ticker-item"><span>Latest:</span> Universal ESP v2.4</div>
+    <div class="ticker-item"><span>Security:</span> Obfuscation Engine Active</div>
+  </div>
+</div>
 
 <script>
   async function login() {
@@ -55,7 +88,7 @@
       localStorage.setItem('username', d.username);
       localStorage.setItem('role', d.role || 'user');
       localStorage.setItem('verified', d.verified ? 'true' : 'false');
-      location.href = '/dashboard.html';
+      location.href = '/dashboard';
     } else {
       document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Login failed'}</span>`;
     }
@@ -75,7 +108,7 @@
       localStorage.setItem('username', d.username);
       localStorage.setItem('role', d.role || 'user');
       localStorage.setItem('verified', d.verified ? 'true' : 'false');
-      location.href = '/dashboard.html';
+      location.href = '/dashboard';
     } else {
       document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Register failed'}</span>`;
     }
@@ -94,15 +127,21 @@
   fetch('/api/scripts').then(r => r.json()).then(list => {
     const grid = document.getElementById('scripts-grid');
     if (!Array.isArray(list) || !list.length) {
-      grid.innerHTML = '<p style="color:#94a3b8">No public scripts yet.</p>';
+      grid.innerHTML = '<p style="color:var(--muted)">No public scripts yet.</p>';
       return;
     }
     grid.innerHTML = list.map(s => `
-      <div class="panel" style="padding:1.25rem;">
-        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
-        <div style="font-size:0.75rem;color:#a78bfa;margin:0.35rem 0;">${s.obf_method}</div>
-        <div style="font-size:0.8rem;color:#94a3b8;">${s.hits || 0} runs${s.requires_key ? ' · key required' : ''}</div>
-        <code style="display:block;margin-top:0.6rem;font-size:0.7rem;color:#94a3b8;">${s.slug}</code>
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-title">${s.name}</div>
+          <div class="script-author">@${s.users?.username || 'anon'}</div>
+        </div>
+        <div class="script-meta">
+          <span>${s.obf_method}</span>
+          <span>${s.hits || 0} runs</span>
+          <span>${s.requires_key ? 'Key Required' : 'Free'}</span>
+        </div>
+        <code class="script-code" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\'${location.origin}/api/loader/${s.slug}\'))()'); this.style.color='#fff'; setTimeout(()=>this.style.color='', 500);">loadstring(game:HttpGet('${location.origin}/api/loader/${s.slug}'))()</code>
       </div>`).join('');
   }).catch(() => {});
 </script>

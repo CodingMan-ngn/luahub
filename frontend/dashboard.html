@@ -6,80 +6,79 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=15"/>
-<script src="/assets/app.js?v=15" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v=17"/>
+<script src="/assets/app.js?v=17" defer></script>
 <style>
-  .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;margin-left:0.4rem;}
-  .role-dev{background:#7c3aed;color:#fff;}
-  .role-user{background:#334155;color:#cbd5e1;}
-  .verified-chip{background:#10b981;color:#052e1a;}
-  .key-box{background:rgba(124,58,237,0.1);border:1px solid #7c3aed;border-radius:12px;padding:1.75rem;text-align:center;margin-bottom:2rem;}
-  .key-box a{display:inline-block;background:#7c3aed;color:#fff;padding:0.9rem 1.8rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:1rem;}
-  .locked{position:relative;}
-  .locked-note{position:absolute;right:0;top:0;color:#f59e0b;font-weight:600;font-size:0.8rem;}
-  .obf-select{width:100%;padding:0.75rem;border-radius:8px;background:#0b1220;color:#e2e8f0;border:1px solid #1e293b;margin-bottom:1rem;}
+  .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-left:0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);}
+  .role-dev{background:var(--accent); color:#fff; border:none;}
+  .verified-chip{background:var(--success); color:#052e1a; border:none;}
+  .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem; backdrop-filter: blur(10px);}
+  .locked{position:relative; padding: 0.5rem; border: 1px dashed var(--glass-border); border-radius: 8px;}
+  .locked-note{color:#f59e0b;font-weight:600;font-size:0.85rem;}
+  .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+  @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <nav>
-  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
-    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
+  <a href="/" class="logo">
+    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
     LuaHub
   </a>
   <div class="nav-links">
     <a href="/">Hub</a>
-    <span id="user-name">User</span>
+    <span id="user-name" style="color:#fff;">User</span>
     <span id="user-chips"></span>
-    <button onclick="localStorage.clear();location.href='/'" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
+    <button onclick="localStorage.clear();location.href='/'" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600; font-family:inherit; font-size: 0.95rem;">Logout</button>
   </div>
 </nav>
 
-<section style="padding:3rem 2rem;max-width:1200px;margin:0 auto;">
-  <h1 style="font-size:2.5rem;font-weight:800;margin-bottom:1.5rem;">Dashboard</h1>
+<section class="container" style="padding-top: 4rem;">
+  <h1 style="font-size: 2.5rem; margin-bottom: 2rem; font-weight: 800;">Dashboard</h1>
 
   <div class="key-box">
-    <h2>🔑 Master Key</h2>
-    <p style="color:#94a3b8;margin-bottom:1rem;">Generate one key per script execution. Single-use per script.</p>
-    <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener">Generate Key Now</a>
-    <div style="color:#f59e0b;font-size:0.85rem;margin-top:1rem;">⚠️ Keys are single-use. One key = one script run.</div>
+    <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔑 Master Key</h2>
+    <p style="color:var(--muted); margin-bottom: 1.5rem;">Generate a key for script execution. Single-use per script to prevent bypasses.</p>
+    <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.8rem 2rem; font-size: 0.95rem;">Generate Key Now</a>
+    <div style="color:#f59e0b;font-size:0.85rem;margin-top:1.2rem;">⚠️ Keys are single-use. One key = one script run.</div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+  <div class="dashboard-grid">
     <div class="panel">
-      <h2 style="margin-bottom:1.5rem;">📤 Deploy Script</h2>
+      <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
 
-      <input id="s-name" placeholder="Script Name" style="width:100%;margin-bottom:1rem;"/>
+      <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
 
-      <label style="display:block;margin-bottom:0.4rem;color:#94a3b8;font-size:0.85rem;">Obfuscation method</label>
-      <select id="obf-method" class="obf-select">
-        <option value="loader">Loader</option>
-        <option value="bootstrapper">Bootstrapper</option>
-        <option value="bytecode">Bytecode</option>
+      <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500;">Obfuscation Method</label>
+      <select id="obf-method">
+        <option value="loader">Loader (Standard)</option>
+        <option value="bootstrapper">Bootstrapper (Advanced)</option>
+        <option value="bytecode">Bytecode (Raw)</option>
       </select>
 
-      <textarea id="s-code" placeholder="Paste encrypted .bin contents" style="width:100%;height:180px;margin-bottom:1rem;"></textarea>
+      <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:180px;"></textarea>
 
-      <div id="key-toggle-wrap" class="locked" style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
-        <input type="checkbox" id="t-key" style="width:20px;height:20px;"/>
-        <label for="t-key" style="color:#94a3b8;cursor:pointer;">Require Key System</label>
-        <div class="locked-note" id="key-lock" style="display:none;">🔒 Developer role required</div>
+      <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin:1.5rem 0;">
+        <input type="checkbox" id="t-key" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
+        <label for="t-key" style="color:var(--muted);cursor:pointer; font-size: 0.95rem;">Require Key System</label>
+        <div class="locked-note" id="key-lock" style="display:none; margin-left: auto;">🔒 Developer role required</div>
       </div>
 
-      <button class="action" id="upload-btn" onclick="uploadScript()" style="width:100%;">Deploy Script</button>
+      <button class="btn-primary btn-full" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
       <div id="upload-result" style="margin-top:1rem;"></div>
     </div>
 
     <div class="panel">
-      <h2 style="margin-bottom:1.5rem;">📦 Your Scripts</h2>
-      <div id="my-scripts"><p style="color:#94a3b8;">Loading...</p></div>
+      <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📦 Your Scripts</h2>
+      <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
     </div>
   </div>
 
-  <div class="panel" id="profile-panel" style="margin-top:2rem;display:none;">
-    <h2 style="margin-bottom:1rem;">👤 Profile</h2>
-    <input id="p-bio" placeholder="Bio" style="width:100%;margin-bottom:1rem;"/>
-    <input id="p-avatar" placeholder="Avatar URL" style="width:100%;margin-bottom:1rem;"/>
-    <button class="action" onclick="saveProfile()">Save Profile</button>
+  <div class="panel" id="profile-panel" style="margin-top:2rem; display:none;">
+    <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">👤 Profile</h2>
+    <input id="p-bio" placeholder="Bio"/>
+    <input id="p-avatar" placeholder="Avatar URL"/>
+    <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
   </div>
 </section>
 
@@ -88,7 +87,7 @@
   const VERIFIED = localStorage.getItem('verified') === 'true';
   document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
   document.getElementById('user-chips').innerHTML =
-    `<span class="role-chip ${ROLE === 'developer' ? 'role-dev' : 'role-user'}">${ROLE}</span>` +
+    `<span class="role-chip ${ROLE === 'developer' ? 'role-dev' : ''}">${ROLE}</span>` +
     (VERIFIED ? `<span class="role-chip verified-chip">verified</span>` : '');
 
   if (ROLE !== 'developer') {
@@ -124,8 +123,8 @@
       const url = `${location.origin}/api/loader/${res.slug}`;
       let one = `loadstring(game:HttpGet("${url}"))()`;
       if (requires_key) one = `script_key = "YOUR_KEY"\n` + one;
-      box.innerHTML = `<p style="color:#10b981;">✅ Deployed (${res.obf_method})</p>
-        <code style="display:block;margin-top:0.5rem;color:#10b981;white-space:pre-wrap;font-size:0.8rem;">${one}</code>`;
+      box.innerHTML = `<p style="color:var(--success);font-weight:600;">✅ Deployed Successfully</p>
+        <code style="display:block;margin-top:0.8rem;color:var(--success);white-space:pre-wrap;font-size:0.8rem;background:#000;padding:1rem;border-radius:8px;border:1px solid rgba(16,185,129,0.2);">${one}</code>`;
       ['s-name','s-code'].forEach(id => document.getElementById(id).value='');
       document.getElementById('t-key').checked = false;
       loadScripts();
@@ -139,18 +138,18 @@
     const box = document.getElementById('my-scripts');
     const scripts = await apiFetch('/api/scripts', 'GET');
     if (!Array.isArray(scripts) || !scripts.length) {
-      box.innerHTML = '<p style="color:#94a3b8;">No scripts deployed yet.</p>';
+      box.innerHTML = '<p style="color:var(--muted);">No scripts deployed yet.</p>';
       return;
     }
     box.innerHTML = scripts.map(s => `
-      <div style="padding:1rem;background:rgba(0,0,0,0.25);border-radius:8px;margin-bottom:1rem;border:1px solid #1e293b;">
-        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
-        <div style="font-size:0.75rem;color:#a78bfa;">${s.obf_method}</div>
-        <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.3rem;">
-          ${s.requires_key ? '<span style="color:#ef4444;">Key Required</span>' : '<span style="color:#10b981;">Free</span>'}
+      <div style="padding:1.2rem;background:var(--surface);border-radius:12px;margin-bottom:1rem;border:1px solid var(--glass-border); transition: all 0.3s;">
+        <strong style="display:block;font-size:1.05rem;color:#fff;">${s.name}</strong>
+        <div style="font-size:0.8rem;color:var(--accent-soft);margin: 0.4rem 0; font-weight: 600;">${s.obf_method.toUpperCase()}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;">
+          ${s.requires_key ? '<span style="color:#ef4444;font-weight:600;">Key Required</span>' : '<span style="color:var(--success);font-weight:600;">Free Access</span>'}
           · ${s.hits || 0} runs
         </div>
-        <code style="display:block;margin-top:0.4rem;font-size:0.72rem;color:#94a3b8;">${s.slug}</code>
+        <code style="display:block;margin-top:0.6rem;font-size:0.75rem;color:var(--muted); font-family: var(--mono);">${s.slug}</code>
       </div>`).join('');
   }
 
