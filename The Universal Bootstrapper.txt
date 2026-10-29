@@ -1,0 +1,50 @@
+-- ==========================================
+-- LUAHUB BOOTSTRAPPER
+-- Paste this into your executor.
+-- ==========================================
+
+local scriptSlug = "YOUR_SLUG_HERE" -- Change this to your script's slug
+local apiUrl = "https://lua-axon.vercel.app/api/loader/" .. scriptSlug
+
+-- Check if the user provided a key in their executor (e.g., getgenv().script_key = "123")
+local providedKey = getgenv().script_key or ""
+
+-- Append key to URL if it exists
+if providedKey ~= "" then
+    apiUrl = apiUrl .. "?key=" .. providedKey
+end
+
+-- Fetch the payload from LuaHub
+local success, payload = pcall(function()
+    return game:HttpGet(apiUrl)
+end)
+
+if not success then
+    return warn("[LuaHub] Failed to connect to server.")
+end
+
+-- Check if the server returned an error message instead of code
+if string.sub(payload, 1, 2) == "--" then
+    -- The server sent back a comment (e.g., "-- Invalid Key" or "-- Script not found")
+    local errorMsg = string.gsub(payload, "%-%-", "")
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "LuaHub Error",
+        Text = errorMsg,
+        Duration = 5
+    })
+    return warn("[LuaHub] " .. errorMsg)
+end
+
+-- Load and execute the script
+local loadSuccess, err = pcall(function()
+    local func = loadstring(payload)
+    if func then
+        func()
+    else
+        error("Compilation failed")
+    end
+end)
+
+if not loadSuccess then
+    warn("[LuaHub] Execution Error: " .. tostring(err))
+end
