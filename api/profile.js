@@ -1,6 +1,6 @@
 const { supabase } = require('./_supabase');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authUser(req) {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
@@ -9,30 +9,30 @@ function authUser(req) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const user = authUser(req);
   if (!user) return res.status(401).json({ error: 'unauthorized' });
 
-  const { data: me } = await supabase
-    .from('users').select('id, username, role, verified, bio, avatar_url').eq('id', user.id).single();
-  if (!me) return res.status(404).json({ error: 'not found' });
-
   if (req.method === 'GET') {
-    const { data: scripts } = await supabase
-      .from('scripts').select('id, name, slug, hits, obf_method, requires_key, created_at')
-      .eq('owner_id', user.id).order('created_at', { ascending: false });
-    return res.status(200).json({ profile: me, scripts: scripts || [] });
+    const { data: me } = await supabase
+      .from('sessions').select('*').eq('user_id', user.id).single();
+    
+    if (!me) return res.status(404).json({ error: 'not found' });
+    return res.status(200).json({ profile: me });
   }
 
-  if (req.method === 'PATCH') {
-    if (!me.verified) return res.status(403).json({ error: 'profile edit requires verified role' });
-    const { bio, avatar_url } = req.body;
+  if (req.method === 'DELETE') {
+    // Delete user from sessions table.
+    // ON DELETE CASCADE in the schema will automatically wipe their scripts and keys.
     const { error } = await supabase
-      .from('users').update({ bio, avatar_url }).eq('id', user.id);
-    if (error) return res.status(400).json({ error: error.message });
+      .from('sessions')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ ok: true });
   }
 

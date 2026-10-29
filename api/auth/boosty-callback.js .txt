@@ -1,0 +1,55 @@
+const { supabase } = require('../_supabase');
+
+function generateKeyString() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result + 'Inv';
+}
+
+module.exports = async (req, res) => {
+  const { slug } = req.query;
+  
+  if (!slug) {
+    return res.status(400).send('Missing script identifier.');
+  }
+
+  try {
+    // 1. Verify the script exists and requires a key
+    const { data: script, error: scriptErr } = await supabase
+      .from('scripts')
+      .select('id, key_duration, requires_key')
+      .eq('slug', slug)
+      .single();
+
+    if (scriptErr || !script || !script.requires_key) {
+      return res.status(404).send('Script not found or does not require a key.');
+    }
+
+    // 2. Generate the key
+    const duration = script.key_duration || 600;
+    const newKey = generateKeyString();
+
+    // 3. Save key to database
+    const { error: insertErr } = await supabase
+      .from('keys')
+      .insert({
+        key_string: newKey,
+        script_slug: slug,
+        remaining_time: duration
+      });
+
+    if (insertErr) {
+      return res.status(500).send('Failed to generate key.');
+    }
+
+    // 4. Redirect to the success page with the key in the URL
+    res.redirect(`/key-system/success?key=${newKey}&slug=${slug}`);
+    
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal Server Error');
+  }
+};

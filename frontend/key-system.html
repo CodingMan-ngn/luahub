@@ -5,331 +5,61 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Key System — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0f111a;
-    --panel: #1a1d2d;
-    --panel-light: #232736;
-    --accent: #7c3aed;
-    --accent-hover: #8b5cf6;
-    --success: #10b981;
-    --danger: #ef4444;
-    --text: #ffffff;
-    --muted: #94a3b8;
-    --border: #2d3348;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background-image: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.15), transparent 60%);
-  }
-  
-  /* Top Nav */
-  .nav-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 1rem 2rem; background: rgba(15, 17, 26, 0.8);
-    border-bottom: 1px solid var(--border); backdrop-filter: blur(10px);
-  }
-  .nav-logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
-  .nav-links { display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--muted); }
-  .nav-links a { color: var(--muted); text-decoration: none; transition: 0.2s; }
-  .nav-links a:hover { color: var(--text); }
-
-  /* Main Container */
-  .main-container {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    padding: 3rem 1rem;
-  }
-  
-  .key-panel {
-    width: 100%; max-width: 700px;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 16px; padding: 2.5rem;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    position: relative;
-  }
-
-  /* Header */
-  .key-header { text-align: center; margin-bottom: 2.5rem; }
-  .key-header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
-  .key-header p { color: var(--muted); font-size: 0.95rem; }
-
-  /* Progress Section */
-  .progress-section {
-    background: var(--panel-light); border: 1px solid var(--border);
-    border-radius: 12px; padding: 1.5rem; display: flex;
-    justify-content: space-between; align-items: center; margin-bottom: 2rem;
-  }
-  .progress-info { flex: 1; margin-right: 2rem; }
-  .progress-text { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; font-weight: 600; }
-  .progress-bar-bg {
-    width: 100%; height: 8px; background: #000; border-radius: 4px; overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%; width: 0%; background: var(--success); transition: width 0.3s ease;
-  }
-  .start-btn {
-    background: var(--success); color: #000; border: none;
-    padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700;
-    cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;
-    transition: 0.2s;
-  }
-  .start-btn:hover { background: #0d9668; transform: translateY(-2px); }
-
-  /* Keys List */
-  .keys-header {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.75rem; font-weight: 700; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;
-    padding: 0 0.5rem;
-  }
-  .keys-header div { flex: 1; }
-  .keys-header div:first-child { flex: 2; }
-  .keys-header div:nth-child(2) { text-align: center; }
-  .keys-header div:last-child { text-align: right; }
-
-  /* Key Item */
-  .key-item {
-    background: var(--panel-light); border: 1px solid var(--border);
-    border-radius: 12px; padding: 1rem; display: flex;
-    align-items: center; margin-bottom: 1rem;
-  }
-  .key-icon {
-    width: 40px; height: 40px; background: rgba(255,255,255,0.05);
-    border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    margin-right: 1rem; font-size: 1.2rem;
-  }
-  .key-details { flex: 2; }
-  .key-string { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 500; color: var(--text); word-break: break-all; }
-  .key-string.expired { text-decoration: line-through; color: var(--muted); }
-  
-  .key-time { flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--danger); font-weight: 600; }
-  .key-time.valid { color: var(--success); }
-
-  .key-status { flex: 1; text-align: right; }
-  .status-badge {
-    background: #f59e0b; color: #000; padding: 0.3rem 0.8rem;
-    border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-    display: inline-block;
-  }
-  .status-badge.valid { background: var(--success); }
-
-  .renew-btn {
-    background: transparent; border: 1px solid #f59e0b;
-    color: #f59e0b; padding: 0.4rem 1rem; border-radius: 6px;
-    font-size: 0.8rem; font-weight: 600; cursor: pointer;
-    transition: 0.2s; margin-left: 1rem;
-  }
-  .renew-btn:hover { background: rgba(245, 158, 11, 0.1); }
-
-  /* Get New Key Button */
-  .get-new-btn {
-    width: 100%; background: transparent; border: 1px solid var(--accent);
-    color: var(--accent); padding: 0.8rem; border-radius: 8px;
-    font-weight: 600; cursor: pointer; transition: 0.2s;
-    margin-top: 1rem;
-  }
-  .get-new-btn:hover { background: rgba(124, 58, 237, 0.1); }
-  
-  .hidden { display: none !important; }
+  body { background: #0f111a; color: #fff; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+  .container { background: #1a1d2d; padding: 3rem; border-radius: 16px; text-align: center; max-width: 500px; width: 100%; border: 1px solid #2d3348; }
+  .btn { display: block; width: 100%; padding: 1rem; background: #10b981; color: #000; text-decoration: none; font-weight: 800; border-radius: 8px; margin-top: 1rem; border: none; cursor: pointer; font-size: 1rem; }
+  .btn:hover { background: #059669; }
 </style>
 </head>
 <body>
-
-<nav class="nav-bar">
-  <div class="nav-logo">
-    <img src="/favicon.svg" width="24" height="24" style="border-radius:6px;"/>
-    LuaHub
-  </div>
-  <div class="nav-links">
-    <a href="/">Dashboard</a>
-    <a href="/register">Register</a>
-    <a href="/key-system">Create your own key system</a>
-    <a href="/faq">FAQ</a>
-  </div>
-</nav>
-
-<div class="main-container">
-  <div class="key-panel">
-    
-    <div class="key-header">
-      <h1 id="script-title">Script Keysystem</h1>
-      <p id="script-desc">Complete the gateway to generate your key.</p>
-    </div>
-
-    <!-- Progress / Start Section -->
-    <div class="progress-section" id="progress-section">
-      <div class="progress-info">
-        <div class="progress-text">Progress: <span id="progress-text">0/2</span></div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="progress-fill"></div>
-        </div>
-      </div>
-      <button class="start-btn" id="start-btn" onclick="startGateway()">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        START
-      </button>
-    </div>
-
-    <!-- Keys Section -->
-    <div id="keys-section" style="display: none;">
-      <div class="keys-header">
-        <div>YOUR KEYS (<span id="key-count">0</span>/1)</div>
-        <div>TIME LEFT</div>
-        <div>STATUS</div>
-        <div style="flex: 0.5;"></div>
-      </div>
-
-      <div class="key-item" id="key-item">
-        <div class="key-icon">📄</div>
-        <div class="key-details">
-          <div class="key-string" id="key-string">Loading...</div>
-        </div>
-        <div class="key-time" id="key-time">0:0:0</div>
-        <div class="key-status" id="key-status">
-          <span class="status-badge">EXPIRED</span>
-        </div>
-        <button class="renew-btn" onclick="startGateway()">RENEW</button>
-      </div>
-
-      <button class="get-new-btn" onclick="startGateway()">+ GET A NEW KEY</button>
-    </div>
-
-  </div>
+<div class="container">
+  <h1>Get Key</h1>
+  <p style="color: #94a3b8;">Click the button below to start the verification process.</p>
+  <button class="btn" id="startBtn" onclick="startProcess()">Start Verification</button>
 </div>
 
 <script>
   const urlParams = new URLSearchParams(window.location.search);
-  const scriptSlug = urlParams.get('slug') || 'default-script';
-  const apiUrl = '/api/keys';
-  
-  let currentKey = '';
-  let timerInterval = null;
+  const slug = urlParams.get('slug') || 'default-script';
 
-  async function init() {
-    // Fetch script info for the title
+  async function startProcess() {
+    const btn = document.getElementById('startBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generating Session...';
+
     try {
-      const res = await fetch('/api/scripts');
-      const scripts = await res.json();
-      const script = scripts.find(s => s.slug === scriptSlug);
-      if (script) {
-        document.getElementById('script-title').textContent = script.name + ' Keysystem';
-      }
-    } catch(e) {}
-    
-    // Check if we have a key in localStorage for this script
-    const savedKey = localStorage.getItem('key_' + scriptSlug);
-    if (savedKey) {
-      currentKey = savedKey;
-      showKeyUI();
-    }
-  }
-
-  function startGateway() {
-    const startBtn = document.getElementById('start-btn');
-    startBtn.innerHTML = 'Verifying...';
-    startBtn.disabled = true;
-
-    // Simulate the ad progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 50;
-      document.getElementById('progress-fill').style.width = progress + '%';
-      document.getElementById('progress-text').textContent = (progress / 50) + '/2';
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        generateKey();
-      }
-    }, 800);
-  }
-
-  async function generateKey() {
-    try {
-      const res = await fetch(apiUrl, {
+      // 1. Get the unique token
+      const res = await fetch('/api/keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate', slug: scriptSlug })
+        body: JSON.stringify({ action: 'start', slug })
       });
       const data = await res.json();
-      
-      if (data.key) {
-        currentKey = data.key;
-        localStorage.setItem('key_' + scriptSlug, currentKey);
-        localStorage.setItem('time_' + scriptSlug, data.time);
-        showKeyUI();
-      } else {
-        alert('Failed to generate key.');
-        resetUI();
+
+      if (data.token) {
+        // 2. Fetch the script's Linkvertise URL from the database
+        const scriptRes = await fetch('/api/scripts');
+        const scripts = await scriptRes.json();
+        const script = scripts.find(s => s.slug === slug);
+        
+        if (script && script.boosty_url) {
+          // Append the token to the URL so Linkvertise passes it back
+          const redirectUrl = `${script.boosty_url}?token=${data.token}`;
+          window.location.href = redirectUrl;
+        } else {
+          alert('BoostyLink URL not configured for this script.');
+          btn.disabled = false;
+          btn.textContent = 'Start Verification';
+        }
       }
-    } catch(e) {
+    } catch (e) {
       alert('Network error.');
-      resetUI();
+      btn.disabled = false;
+      btn.textContent = 'Start Verification';
     }
   }
-
-  function showKeyUI() {
-    document.getElementById('progress-section').style.display = 'none';
-    document.getElementById('keys-section').style.display = 'block';
-    
-    document.getElementById('key-string').textContent = currentKey;
-    document.getElementById('key-count').textContent = '1';
-    
-    startTimer();
-  }
-
-  function startTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    
-    let remaining = parseInt(localStorage.getItem('time_' + scriptSlug)) || 0;
-    
-    const updateDisplay = () => {
-      const hours = Math.floor(remaining / 3600);
-      const mins = Math.floor((remaining % 3600) / 60);
-      const secs = remaining % 60;
-      
-      const timeEl = document.getElementById('key-time');
-      const statusEl = document.getElementById('key-status');
-      const keyEl = document.getElementById('key-string');
-      
-      timeEl.textContent = `${hours}:${mins}:${secs}`;
-      
-      if (remaining > 0) {
-        timeEl.classList.add('valid');
-        statusEl.innerHTML = '<span class="status-badge valid">ACTIVE</span>';
-        keyEl.classList.remove('expired');
-      } else {
-        timeEl.classList.remove('valid');
-        statusEl.innerHTML = '<span class="status-badge">EXPIRED</span>';
-        keyEl.classList.add('expired');
-        clearInterval(timerInterval);
-      }
-    };
-    
-    updateDisplay();
-    timerInterval = setInterval(() => {
-      remaining--;
-      localStorage.setItem('time_' + scriptSlug, remaining);
-      updateDisplay();
-    }, 1000);
-  }
-
-  function resetUI() {
-    document.getElementById('progress-section').style.display = 'block';
-    document.getElementById('keys-section').style.display = 'none';
-    document.getElementById('start-btn').innerHTML = `<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> START`;
-    document.getElementById('start-btn').disabled = false;
-    document.getElementById('progress-fill').style.width = '0%';
-    document.getElementById('progress-text').textContent = '0/2';
-  }
-
-  init();
 </script>
 </body>
 </html>

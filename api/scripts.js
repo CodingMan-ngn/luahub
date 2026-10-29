@@ -11,7 +11,7 @@ function authUser(req) {
   try { return jwt.verify(token, JWT_SECRET); } catch { return null; }
 }
 
-// Generates the complete Luarmor-style loader
+// Generates the Luarmor-style loader
 function generateLoaderString(script) {
   const apiBase = process.env.SITE_URL || 'https://lua-axon.vercel.app';
   
@@ -175,16 +175,17 @@ function generateLoaderString(script) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('scripts')
-      .select('id, name, slug, hits, requires_key, is_public_source, source_code, owner_name, created_at, obf_method, boosty_url, key_duration')
+      .select('id, name, slug, hits, requires_key, is_public_source, source_code, owner_name, created_at, obf_method, boosty_url, key_duration, return_url, share_url')
       .order('created_at', { ascending: false })
       .limit(50);
+    
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json(data || []);
   }
@@ -198,32 +199,40 @@ module.exports = async (req, res) => {
 
     const method = ['loader', 'bootstrapper'].includes(obf_method) ? obf_method : 'loader';
     
-    // Simple obfuscation (same as before)
+    // Simple obfuscation
     const encrypted_content = `loadstring((function() local h='${Buffer.from(content).toString('hex')}'; local s=''; for i=1,#h,2 do s=s..string.char(tonumber(h:sub(i,i+1),16)) end; return s end)())()`;
+
+    const slug = slugify(name);
+    const baseUrl = process.env.SITE_URL || 'https://lua-axon.vercel.app';
+    
+    // Generate the URLs for the Key System
+    const share_url = `${baseUrl}/key-system?slug=${slug}`;
+    const return_url = `${baseUrl}/api/auth/boosty-callback?slug=${slug}`;
 
     const { data, error } = await supabase
       .from('scripts')
       .insert({
         owner_name: user.name,
         name,
-        slug: slugify(name),
+        slug: slug,
         content_enc: encrypted_content,
         source_code: is_public_source ? source_code : null,
         is_public_source: !!is_public_source,
         requires_key: !!requires_key,
         obf_method: method,
         boosty_url: boosty_url || null,
-        key_duration: parseInt(key_duration) || 600
+        key_duration: parseInt(key_duration) || 600,
+        return_url: requires_key ? return_url : null,
+        share_url: requires_key ? share_url : null
       })
-      .select('*') // Need full object to generate loader
+      .select('*')
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
     
-    // Return the fully generated loader string
     return res.status(200).json({ 
       slug: data.slug, 
-      loader: generateLoaderString(data) 
+      loader: generateLoaderString(data)
     });
   }
 
