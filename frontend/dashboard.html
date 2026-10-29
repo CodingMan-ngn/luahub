@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=25"/>
+<link rel="stylesheet" href="/assets/style.css?v=26"/>
 <style>
   .source-viewer {
     background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
@@ -85,8 +85,16 @@
         <div class="locked-overlay" id="dev-lock-msg">🔒 Developer Role Required</div>
         <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
         <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
-        <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:100px;"></textarea>
         
+        <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Raw Lua Source</label>
+        <textarea id="s-code" placeholder="Paste your raw Lua script here..." style="height:150px;"></textarea>
+        
+        <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Obfuscation Method</label>
+        <select id="obf-method">
+          <option value="loader">Loader (Standard String Split)</option>
+          <option value="bootstrapper">Bootstrapper (Environment Guard)</option>
+        </select>
+
         <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Public Source Code (Optional)</label>
         <textarea id="s-source" placeholder="If you want users to view the source, paste it here..." style="height:60px;"></textarea>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
@@ -144,7 +152,6 @@
   document.getElementById('user-name').textContent = payload?.name || 'User';
   if (payload?.avatar) document.getElementById('user-avatar').src = payload.avatar;
   
-  // Apply Role Gating
   if (payload?.is_dev) {
     document.getElementById('user-name').innerHTML += ` <span class="role-chip role-dev">DEV</span>`;
     document.getElementById('dev-panel').classList.remove('locked-panel');
@@ -216,6 +223,7 @@
         </div>
         <div class="script-meta" style="margin-bottom: 1rem; padding-bottom: 0.5rem;">
           <span>👁 ${s.hits || 0} Runs</span>
+          <span style="color:var(--accent-soft);">⚙️ ${s.obf_method || 'loader'}</span>
           ${s.requires_key ? '<span style="color:#ef4444;">🔑 Key Req</span>' : ''}
         </div>
         ${s.is_public_source ? `
@@ -248,14 +256,15 @@
     const source = document.getElementById('s-source').value.trim();
     const is_public_source = document.getElementById('t-source').checked;
     const requires_key = document.getElementById('t-key').checked;
+    const obf_method = document.getElementById('obf-method').value;
 
-    if (!name || !content) return alert('Name + payload required');
-    btn.disabled = true; btn.textContent = 'Deploying...';
+    if (!name || !content) return alert('Name + raw source required');
+    btn.disabled = true; btn.textContent = 'Obfuscating...';
 
     const res = await fetch('/api/scripts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ name, content, source_code: source, is_public_source, requires_key })
+      body: JSON.stringify({ name, content, source_code: source, is_public_source, requires_key, obf_method })
     });
     const data = await res.json();
 
@@ -292,7 +301,7 @@
         <strong style="display:block;font-size:1rem;color:#fff;">${s.name}</strong>
         <div style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;">
           ${s.requires_key ? '<span style="color:#ef4444;font-weight:600;">Key Required</span>' : '<span style="color:var(--success);font-weight:600;">Free Access</span>'}
-          · ${s.hits || 0} runs
+          · ${s.obf_method || 'loader'} · ${s.hits || 0} runs
         </div>
         <code style="display:block;margin-top:0.5rem;font-size:0.75rem;color:var(--muted); font-family: var(--mono);">${s.slug}</code>
       </div>`).join('');
