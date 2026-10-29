@@ -10,9 +10,15 @@
     { "src": "/api/members", "dest": "/api/members.js" },
     { "src": "/api/loader/(.*)", "dest": "/api/loader/[slug].js" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
+    
     { "src": "/favicon.svg", "dest": "/frontend/favicon.svg" },
     { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
+    
     { "src": "/dashboard", "dest": "/frontend/dashboard.html" },
+    { "src": "/how-it-works", "dest": "/frontend/how-it-works.html" },
+    { "src": "/terms", "dest": "/frontend/terms.html" },
+    { "src": "/privacy", "dest": "/frontend/privacy.html" },
+    
     { "src": "/", "dest": "/frontend/index.html" },
     { "src": "/(.*)", "dest": "/frontend/$1" }
   ]

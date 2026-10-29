@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=21"/>
+<link rel="stylesheet" href="/assets/style.css?v=24"/>
 <style>
   .source-viewer {
     background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
@@ -119,6 +119,7 @@
   const queryToken = urlParams.get('token');
   if (queryToken) {
     localStorage.setItem('token', queryToken);
+    // Strip token and .html from the URL bar
     window.history.replaceState({}, document.title, "/dashboard");
   }
 
@@ -151,7 +152,6 @@
   }
 
   async function init() {
-    // Fetch Scripts
     const grid = document.getElementById('script-grid');
     try {
       const res = await fetch('/api/scripts');
@@ -171,7 +171,6 @@
       grid.innerHTML = '<p style="color:#ef4444;">Failed to load scripts.</p>';
     }
 
-    // Fetch Latest Members
     try {
       const memRes = await fetch('/api/members');
       const members = await memRes.json();

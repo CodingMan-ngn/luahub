@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>How It Works — LuaHub</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css?v=22"/>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">
+    <img src="/favicon.svg" width="24" height="24" style="border-radius:6px; margin-right:6px;"/> LuaHub
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/dashboard" id="nav-dash">Dashboard</a>
+  </div>
+</nav>
+
+<section class="container" style="max-width: 800px; padding-top: 5rem;">
+  <h1 style="font-size: 3rem; margin-bottom: 2rem;">How It Works</h1>
+  
+  <div class="panel" style="margin-bottom: 2rem;">
+    <h2 style="margin-bottom: 1rem; color: var(--accent-soft);">1. Obfuscation Engine</h2>
+    <p style="color: var(--muted); line-height: 1.6;">When you upload a script, our engine compiles it into Lua bytecode and applies a rolling XOR encryption layer. This means the raw source code never touches our database. Executors load the bytecode directly, making it virtually impossible for skiddies to steal your work using standard string dumpers.</p>
+  </div>
+
+  <div class="panel" style="margin-bottom: 2rem;">
+    <h2 style="margin-bottom: 1rem; color: var(--accent-soft);">2. Loader Generation</h2>
+    <p style="color: var(--muted); line-height: 1.6;">Every script gets a unique, secure endpoint. Instead of pasting massive walls of code into an executor, users paste a single <code>loadstring</code> one-liner. This fetches the encrypted payload from our servers, decrypts it in memory, and runs it. Updates are instant—no need to redistribute the script.</p>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-bottom: 1rem; color: var(--accent-soft);">3. Key System & Monetization</h2>
+    <p style="color: var(--muted); line-height: 1.6;">Developers can enable the Key System to protect their premium scripts. We tie into BoostyLink to generate single-use keys. When a user runs the loader with a key, our backend verifies it and consumes it, ensuring the script cannot be reused without generating a new key. This prevents bot bypasses and ensures you get paid for your work.</p>
+  </div>
+</section>
+
+<footer style="text-align: center; padding: 3rem; border-top: 1px solid var(--glass-border); margin-top: 4rem;">
+  <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem;">
+    <a href="/how-it-works" style="color: var(--muted); text-decoration: none;">How it Works</a>
+    <a href="/terms" style="color: var(--muted); text-decoration: none;">Terms of Service</a>
+    <a href="/privacy" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
+  </div>
+  <p style="color: var(--muted); font-size: 0.85rem;">&copy; 2024 LuaHub. All rights reserved.</p>
+</footer>
+</body>
+</html>
