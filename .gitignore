@@ -5,3 +5,4 @@ lib/serve.py
 lib/test_loader.lua
 node_modules/
 .env*
+.vercel

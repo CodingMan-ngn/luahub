@@ -8,8 +8,8 @@
     { "src": "/api/loader/(.*)", "dest": "/api/loader/[slug].js" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
-    { "src": "/scripts", "dest": "/frontend/scripts.html" },
     { "src": "/dashboard", "dest": "/frontend/dashboard.html" },
+    { "src": "/scripts", "dest": "/frontend/scripts.html" },
     { "src": "/", "dest": "/frontend/index.html" }
   ]
 }
