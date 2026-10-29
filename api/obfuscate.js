@@ -11,17 +11,12 @@ module.exports = async (req, res) => {
     try {
       const { code } = req.body;
       if (!code) return res.status(400).json({ error: 'Code required' });
-
-      // Run the obfuscator
       const output = obfuscateLua(code);
-
-      // Add a small delay to simulate heavy processing
-      await new Promise(resolve => setTimeout(resolve, 800));
-
+      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate processing
       return res.status(200).json({ output });
     } catch (err) {
-      console.error("Obfuscation Error:", err);
-      return res.status(500).json({ error: 'Obfuscation engine failed' });
+      console.error(err);
+      return res.status(500).json({ error: 'Obfuscation failed' });
     }
   }
   return res.status(405).json({ error: 'Method not allowed' });
