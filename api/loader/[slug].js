@@ -1,26 +1,35 @@
-const { supabase } = require('../_supabase')
+const { supabase } = require('../_supabase');
 
 module.exports = async (req, res) => {
-  const { slug } = req.query
-
-  if (!slug) return res.status(400).send('-- missing slug')
+  const { slug } = req.query;
+  const { key } = req.query; 
 
   const { data, error } = await supabase
     .from('scripts')
-    .select('content_enc, hits, name')
+    .select('content_enc, hits, requires_key')
     .eq('slug', slug)
     .eq('is_public', true)
-    .single()
+    .single();
 
-  if (error || !data) return res.status(404).send('-- script not found')
+  if (error || !data) return res.status(404).send('-- script not found');
 
-  // increment hit counter async (don't await — keep response fast)
-  supabase.from('scripts')
-    .update({ hits: data.hits + 1 })
-    .eq('slug', slug)
+  // Key Validation Logic
+  if (data.requires_key) {
+    if (!key) {
+      // The Lua loader searches for this exact string to trigger the UI
+      return res.status(403).send('-- Key required. Please generate one via BoostyLink.'); 
+    }
+    
+    // Optional: Add a database check here if you want to whitelist generated keys
+    if (key.length < 8) {
+      return res.status(403).send('-- error: Invalid key format.');
+    }
+  }
 
-  // serve XOR+base64 encoded blob
-  res.setHeader('Content-Type', 'text/plain')
-  res.setHeader('Cache-Control', 'no-store')
-  return res.status(200).send(data.content_enc)
-}
+  // Increment hits
+  await supabase.from('scripts').update({ hits: data.hits + 1 }).eq('slug', slug);
+
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Cache-Control', 'no-cache');
+  return res.status(200).send(data.content_enc);
+};

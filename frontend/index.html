@@ -3,70 +3,60 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LuaHub — Premium Script Hosting</title>
+  <title>LuaHub — Premium Script Hub</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=4"/>
+  <link rel="stylesheet" href="/assets/style.css?v=5"/>
 </head>
 <body>
   <nav>
-    <a href="/" class="logo"><svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"/></svg> LuaHub</a>
+    <a href="/" class="logo">
+      <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> 
+      LuaHub
+    </a>
     <div class="nav-links">
-      <a href="#how-it-works">How it Works</a>
-      <a href="#faq">FAQ</a>
-      <a href="/dashboard" class="btn-primary" id="nav-dash" style="padding: 0.6rem 1.5rem; border-radius: 8px; text-decoration: none; color: white;">Dashboard</a>
+      <a href="#scripts">Scripts</a>
+      <a href="#keysystem">Key System</a>
+      <a href="/dashboard" id="nav-dash" style="display:none; color:var(--accent); font-weight:700;">Dashboard</a>
+      <button id="login-btn" onclick="loginDiscord()" style="background:none; border:1px solid var(--accent); color:var(--accent); padding: 0.5rem 1rem; border-radius:8px; font-weight:600; cursor:pointer; transition:0.3s;">Login</button>
     </div>
   </nav>
 
+  <!-- Hero / Stats -->
   <section class="hero">
-    <h1>Host your scripts.<br/><span>Own your code.</span></h1>
-    <p>The fastest, most secure way to serve obfuscated Roblox scripts to your users. No plain text, no leaks.</p>
-    <div class="hero-btns">
-      <a href="/dashboard" class="btn-primary">Go to Dashboard</a>
-      <a href="#how-it-works" class="btn-secondary">Learn More</a>
+    <h1>Welcome to LuaHub.<br/><span>The fastest script hub.</span></h1>
+    <p>Secure, obfuscated, and lightning fast script delivery.</p>
+    
+    <div class="stats-bar">
+      <div class="stat-item"><h3 id="stat-scripts">0</h3><p>Scripts</p></div>
+      <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
+      <div class="stat-item"><h3>100%</h3><p>Uptime</p></div>
     </div>
   </section>
 
-  <section id="features" class="reveal">
-    <h2 style="text-align:center; font-size: 2.5rem; margin-bottom: 2rem;">Why LuaHub?</h2>
-    <div class="features-grid">
-      <div class="feat-card"><h3>🔒 Bytecode Encryption</h3><p>Your scripts are compiled to Lua 5.1 bytecode and encrypted with a rolling key. No plaintext source ever hits the wire.</p></div>
-      <div class="feat-card"><h3>⚡ Global Edge Delivery</h3><p>Powered by Vercel Edge. Your loader URLs resolve in milliseconds, anywhere in the world.</p></div>
-      <div class="feat-card"><h3>📊 Hit Tracking</h3><p>Real-time analytics show you exactly how many times your scripts are executed.</p></div>
+  <!-- Search & Grid -->
+  <section id="scripts" style="padding-top: 2rem;">
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Search scripts..." onkeyup="filterScripts()">
+    </div>
+    <div class="script-grid" id="script-grid">
+      <p style="color: var(--muted); text-align: center; grid-column: 1/-1;">Loading scripts...</p>
     </div>
   </section>
 
-  <section id="how-it-works" class="reveal">
-    <h2 style="text-align:center; font-size: 2.5rem; margin-bottom: 2rem;">How to use LuaHub</h2>
-    <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
-      <div class="feat-card" style="display: flex; gap: 1.5rem; align-items: flex-start;">
-        <div style="background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; flex-shrink:0;">1</div>
-        <div><h3 style="margin-bottom: 0.5rem;">Obfuscate your script locally</h3><p>Run your Lua code through our Python obfuscator script to compile it to an encrypted `.bin` file.</p></div>
-      </div>
-      <div class="feat-card" style="display: flex; gap: 1.5rem; align-items: flex-start;">
-        <div style="background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; flex-shrink:0;">2</div>
-        <div><h3 style="margin-bottom: 0.5rem;">Upload to the Dashboard</h3><p>Log in with Discord, paste the `.bin` contents into the upload box, and get your instant loader URL.</p></div>
-      </div>
-      <div class="feat-card" style="display: flex; gap: 1.5rem; align-items: flex-start;">
-        <div style="background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; flex-shrink:0;">3</div>
-        <div><h3 style="margin-bottom: 0.5rem;">Execute in Roblox</h3><p>Paste the generated `loadstring(...)` one-liner into your executor. It fetches, decrypts, and runs securely.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="faq" class="reveal">
-    <h2 style="text-align:center; font-size: 2.5rem; margin-bottom: 2rem;">Is it safe?</h2>
-    <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem;">
-      <div class="feat-card">
-        <h3 style="margin-bottom: 0.5rem;">Can Roblox detect the loader?</h3>
-        <p>The loader itself is just a `game:HttpGet` string. The payload runs as standard Lua 5.1 bytecode. Most executors support this natively. Just like any script hub, standard anti-cheat rules apply.</p>
-      </div>
-      <div class="feat-card">
-        <h3 style="margin-bottom: 0.5rem;">Can someone steal my script?</h3>
-        <p>Because the payload is encrypted bytecode, users cannot simply read the script text. However, no client-side obfuscation is 100% unbreakable. Do not put private API keys directly inside your scripts.</p>
+  <!-- Key System Info -->
+  <section id="keysystem" style="margin-bottom: 4rem;">
+    <div class="feat-card" style="max-width: 800px; margin: 0 auto; text-align: center;">
+      <h2 style="font-size: 2rem; margin-bottom: 1rem;">🔑 Get your Key</h2>
+      <p style="color: var(--muted); margin-bottom: 2rem;">You need a valid key to execute premium scripts. Generate yours below.</p>
+      <button class="btn-primary" onclick="getKey()" style="width: 100%;">Generate Key (Linkvertise)</button>
+      <div id="key-display" class="hidden" style="margin-top: 1.5rem; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px;">
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Your Key:</p>
+        <code id="key-text" style="font-size: 1.2rem; color: #10b981; font-weight: bold; letter-spacing: 2px;"></code>
       </div>
     </div>
   </section>
 
-  <script src="/assets/app.js?v=4"></script>
+  <script src="/assets/app.js?v=5"></script>
 </body>
 </html>
