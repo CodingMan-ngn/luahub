@@ -6,74 +6,122 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=19"/>
+<link rel="stylesheet" href="/assets/style.css?v=21"/>
 <style>
+  .source-viewer {
+    background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
+    padding: 1rem; font-family: var(--mono); font-size: 0.8rem; color: #cbd5e1;
+    white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin-top: 1rem;
+  }
+  .members-bar {
+    display: flex; justify-content: center; align-items: center; gap: 1.5rem;
+    background: var(--surface); padding: 1rem 2rem; border-radius: 20px;
+    border: 1px solid var(--glass-border); backdrop-filter: blur(16px);
+    max-width: 650px; margin: 1.5rem auto 0; flex-wrap: wrap;
+  }
+  .member-item { display: flex; align-items: center; gap: 0.5rem; }
+  .member-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--glass-border); }
+  .member-dev { color: var(--accent-soft); font-weight: 700; font-size: 0.7rem; background: rgba(124,58,237,0.2); padding: 2px 6px; border-radius: 4px; margin-left: 4px;}
+  
   .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-left:0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);}
   .role-dev{background:var(--accent); color:#fff; border:none;}
   .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem;}
   .locked{position:relative; padding: 0.5rem; border: 1px dashed var(--glass-border); border-radius: 8px;}
   .locked-note{color:#f59e0b;font-weight:600;font-size:0.85rem;}
-  .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+  .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top: 2rem;}
   @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <nav>
   <a href="/" class="logo">
-    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub
+    <img src="/favicon.svg" width="24" height="24" style="border-radius:6px; margin-right:6px;"/> LuaHub
   </a>
   <div class="nav-links">
-    <a href="/">Hub</a>
-    <div style="display:flex; align-items:center; gap:10px; margin-left: 10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
       <img id="user-avatar" src="" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--accent);" />
       <span id="user-name" style="font-weight:600;color:#fff;">Loading...</span>
-      <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;font-family:inherit;">Logout</button>
+      <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;font-family:inherit; margin-left: 10px;">Logout</button>
     </div>
   </div>
 </nav>
 
-<section class="container" style="padding-top: 3rem;">
-  <h1 style="font-size: 2.5rem; margin-bottom: 2rem; font-weight: 800;">Dashboard</h1>
+<div class="container">
+  <div class="hero" style="padding: 2rem 0;">
+    <h1 style="font-size: clamp(2.5rem, 5vw, 4rem);">Script Hub.</h1>
+    <p style="margin-bottom: 2rem;">Access premium, obfuscated scripts.</p>
+    
+    <div class="stats-bar">
+      <div class="stat-item"><h3 id="stat-scripts">0</h3><p>Scripts</p></div>
+      <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
+      <div class="stat-item"><h3>99.9%</h3><p>Uptime</p></div>
+    </div>
+    
+    <div class="members-bar" id="members-bar" style="display:none;">
+      <span style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-right:1rem;">Latest Users</span>
+      <div id="members-list" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;"></div>
+    </div>
+  </div>
 
-  <div class="key-box">
-    <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔑 Master Key</h2>
-    <p style="color:var(--muted); margin-bottom: 1.5rem;">Generate a key for script execution. Single-use per script.</p>
-    <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.8rem 2rem; font-size: 0.95rem;">Generate Key Now</a>
-    <div style="color:#f59e0b;font-size:0.85rem;margin-top:1.2rem;">⚠️ Keys are single-use. One key = one script run.</div>
+  <div class="ticker-wrap" style="margin-bottom: 3rem;">
+    <div class="ticker" id="ticker">
+      <div class="ticker-item">Loading live scripts...</div>
+    </div>
   </div>
 
   <div class="dashboard-grid">
-    <div class="panel">
-      <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
-
-      <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
-      <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:120px;"></textarea>
-
-      <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Public Source Code (Optional)</label>
-      <textarea id="s-source" placeholder="If you want users to view the source, paste it here..." style="height:80px;"></textarea>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
-        <input type="checkbox" id="t-source" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
-        <label for="t-source" style="color:var(--muted);cursor:pointer; font-size: 0.95rem;">Make source code public</label>
+    <div>
+      <h2 style="margin-bottom:1.5rem; font-size: 1.5rem;">📦 Public Scripts</h2>
+      <div class="script-grid" id="script-grid" style="grid-template-columns: 1fr;">
+        <p style="color:var(--muted);">Loading scripts...</p>
       </div>
-
-      <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
-        <input type="checkbox" id="t-key" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
-        <label for="t-key" style="color:var(--muted);cursor:pointer; font-size: 0.95rem;">Require Key System</label>
-        <div class="locked-note" id="key-lock" style="display:none; margin-left: auto;">🔒 Developer role required</div>
-      </div>
-
-      <button class="btn-primary btn-full" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
-      <div id="upload-result" style="margin-top:1rem;"></div>
     </div>
 
-    <div class="panel">
-      <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📦 Your Scripts</h2>
-      <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
+    <div>
+      <div class="key-box">
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">🔑 Master Key</h2>
+        <p style="color:var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generate a key for script execution. Single-use.</p>
+        <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Generate Key Now</a>
+      </div>
+
+      <div class="panel" style="margin-bottom: 2rem;">
+        <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
+        <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
+        <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:100px;"></textarea>
+        
+        <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Public Source Code (Optional)</label>
+        <textarea id="s-source" placeholder="If you want users to view the source, paste it here..." style="height:60px;"></textarea>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+          <input type="checkbox" id="t-source" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
+          <label for="t-source" style="color:var(--muted);cursor:pointer; font-size: 0.85rem;">Make source code public</label>
+        </div>
+
+        <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
+          <input type="checkbox" id="t-key" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
+          <label for="t-key" style="color:var(--muted);cursor:pointer; font-size: 0.85rem;">Require Key System</label>
+          <div class="locked-note" id="key-lock" style="display:none; margin-left: auto;">🔒 Developer role required</div>
+        </div>
+
+        <button class="btn-primary btn-full" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
+        <div id="upload-result" style="margin-top:1rem;"></div>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📦 Your Scripts</h2>
+        <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
 <script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryToken = urlParams.get('token');
+  if (queryToken) {
+    localStorage.setItem('token', queryToken);
+    window.history.replaceState({}, document.title, "/dashboard");
+  }
+
   const token = localStorage.getItem('token');
   let payload = null;
 
@@ -88,6 +136,7 @@
   }
 
   document.getElementById('user-name').textContent = payload?.name || 'User';
+  if (payload?.avatar) document.getElementById('user-avatar').src = payload.avatar;
   
   if (payload?.is_dev) {
     document.getElementById('user-name').innerHTML += ` <span class="role-chip role-dev">DEV</span>`;
@@ -99,6 +148,84 @@
   function logout() {
     localStorage.clear();
     window.location.href = '/';
+  }
+
+  async function init() {
+    // Fetch Scripts
+    const grid = document.getElementById('script-grid');
+    try {
+      const res = await fetch('/api/scripts');
+      const allScripts = await res.json();
+      
+      document.getElementById('stat-scripts').textContent = allScripts.length;
+      let totalHits = allScripts.reduce((sum, s) => sum + (s.hits || 0), 0);
+      document.getElementById('stat-hits').textContent = totalHits;
+
+      if (!allScripts.length) { 
+        grid.innerHTML = '<p style="color:var(--muted);">No scripts available yet.</p>'; 
+      } else {
+        renderGrid(allScripts);
+        renderTicker(allScripts);
+      }
+    } catch (e) {
+      grid.innerHTML = '<p style="color:#ef4444;">Failed to load scripts.</p>';
+    }
+
+    // Fetch Latest Members
+    try {
+      const memRes = await fetch('/api/members');
+      const members = await memRes.json();
+      if (members.length > 0) {
+        document.getElementById('members-bar').style.display = 'flex';
+        document.getElementById('members-list').innerHTML = members.map(m => `
+          <div class="member-item" title="${m.discord_name}">
+            <img src="${m.discord_avatar}" class="member-avatar" alt="${m.discord_name}">
+            ${m.is_dev ? '<span class="member-dev">DEV</span>' : ''}
+          </div>
+        `).join('');
+      }
+    } catch(e) {}
+  }
+
+  function renderTicker(scripts) {
+    const ticker = document.getElementById('ticker');
+    const itemsHtml = scripts.map(s => `<div class="ticker-item"><span>${s.owner_name}</span> loaded ${s.name}</div>`).join('');
+    ticker.innerHTML = itemsHtml + itemsHtml + itemsHtml;
+  }
+
+  function renderGrid(scripts) {
+    const grid = document.getElementById('script-grid');
+    grid.innerHTML = scripts.map(s => `
+      <div class="script-card" style="padding: 1.2rem;">
+        <div class="script-header">
+          <div class="script-title" style="font-size:1.1rem;">${s.name}</div>
+          <div class="script-author">by ${s.owner_name}</div>
+        </div>
+        <div class="script-meta" style="margin-bottom: 1rem; padding-bottom: 0.5rem;">
+          <span>👁 ${s.hits || 0} Runs</span>
+          ${s.requires_key ? '<span style="color:#ef4444;">🔑 Key Req</span>' : ''}
+        </div>
+        ${s.is_public_source ? `
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-secondary" style="width:100%; padding:0.4rem; font-size:0.8rem;" onclick="toggleSource('${s.id}')">View Source</button>
+            <div class="source-viewer hidden" id="src-${s.id}">${s.source_code || 'No source provided.'}</div>
+          </div>
+        ` : ''}
+        <button class="btn-primary" style="width:100%; padding: 0.5rem; font-size: 0.85rem;" onclick="copyLoader('${s.slug}')">
+          Copy Loadstring
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function toggleSource(id) {
+    document.getElementById(`src-${id}`).classList.toggle('hidden');
+  }
+
+  function copyLoader(slug) {
+    const loader = `loadstring(game:HttpGet("${window.location.origin}/api/loader/${slug}"))()`;
+    navigator.clipboard.writeText(loader);
+    alert('Loader copied to clipboard!');
   }
 
   async function uploadScript() {
@@ -137,10 +264,8 @@
 
   async function loadScripts() {
     const box = document.getElementById('my-scripts');
-    const res = await fetch('/api/scripts'); // Just fetching all for now, or you could filter by owner_name
+    const res = await fetch('/api/scripts');
     const scripts = await res.json();
-    
-    // Filter for this user based on payload name
     const myScripts = scripts.filter(s => s.owner_name === payload.name);
 
     if (!myScripts.length) {
@@ -149,17 +274,17 @@
     }
     
     box.innerHTML = myScripts.map(s => `
-      <div style="padding:1.2rem;background:var(--surface);border-radius:12px;margin-bottom:1rem;border:1px solid var(--glass-border); transition: all 0.3s;">
-        <strong style="display:block;font-size:1.05rem;color:#fff;">${s.name}</strong>
+      <div style="padding:1rem;background:var(--surface);border-radius:12px;margin-bottom:0.8rem;border:1px solid var(--glass-border);">
+        <strong style="display:block;font-size:1rem;color:#fff;">${s.name}</strong>
         <div style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;">
           ${s.requires_key ? '<span style="color:#ef4444;font-weight:600;">Key Required</span>' : '<span style="color:var(--success);font-weight:600;">Free Access</span>'}
           · ${s.hits || 0} runs
-          ${s.is_public_source ? ' · <span style="color:var(--accent-soft);">Source Public</span>' : ''}
         </div>
-        <code style="display:block;margin-top:0.6rem;font-size:0.75rem;color:var(--muted); font-family: var(--mono);">${s.slug}</code>
+        <code style="display:block;margin-top:0.5rem;font-size:0.75rem;color:var(--muted); font-family: var(--mono);">${s.slug}</code>
       </div>`).join('');
   }
 
+  init();
   loadScripts();
 </script>
 </body>

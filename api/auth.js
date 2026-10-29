@@ -1,45 +1,62 @@
 const { supabase } = require('./_supabase');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  const { code } = req.query;
+  if (!code) return res.status(400).send('No code provided');
 
-  const { action, username, email, password } = req.body;
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+  const redirectUri = `${process.env.SITE_URL}/api/auth`;
 
-  if (action === 'register') {
-    if (!username || !email || !password) return res.status(400).json({ error: 'missing fields' });
-    const hash = await bcrypt.hash(password, 12);
-    const { data, error } = await supabase
-      .from('users')
-      .insert({ username, email, password_hash: hash })
-      .select('id, username, api_key, role, verified')
+  try {
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+      })
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) throw new Error('Discord token exchange failed');
+
+    const userRes = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+    const discordUser = await userRes.json();
+
+    const userId = discordUser.id;
+    const avatarUrl = discordUser.avatar
+      ? `https://cdn.discordapp.com/avatars/${userId}/${discordUser.avatar}.png`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
+
+    // Upsert into sessions table
+    const { data: session, error } = await supabase
+      .from('sessions')
+      .upsert({
+        user_id: userId,
+        discord_name: discordUser.username,
+        discord_avatar: avatarUrl
+      }, { onConflict: 'user_id' })
+      .select()
       .single();
-    if (error) return res.status(400).json({ error: error.message });
-    const token = jwt.sign({ id: data.id, username: data.username }, JWT_SECRET, { expiresIn: '30d' });
-    return res.status(200).json({
-      token, api_key: data.api_key, username: data.username,
-      role: data.role, verified: data.verified
-    });
-  }
 
-  if (action === 'login') {
-    const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
-    if (error || !user) return res.status(401).json({ error: 'invalid credentials' });
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(401).json({ error: 'invalid credentials' });
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
-    return res.status(200).json({
-      token, api_key: user.api_key, username: user.username,
-      role: user.role, verified: user.verified
-    });
-  }
+    if (error) throw error;
 
-  return res.status(400).json({ error: 'unknown action' });
+    const token = jwt.sign(
+      { id: session.user_id, is_dev: session.is_dev, name: session.discord_name, avatar: session.discord_avatar },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.redirect(`/dashboard?token=${token}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Authentication failed');
+  }
 };
