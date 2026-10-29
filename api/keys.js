@@ -1,36 +1,44 @@
 // language: JavaScript, file: api/keys.js
 const { supabase } = require('./_supabase');
-const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
+
+function authUser(req) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  try { return jwt.verify(token, JWT_SECRET); } catch { return null; }
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'POST') {
+    const user = authUser(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ error: 'Slug required' });
 
-    // 1. Fetch the script
-    const { data: script } = await supabase.from('scripts').select('id').eq('slug', slug).single();
-    if (!script) return res.status(404).json({ error: 'Script not found' });
+    // Generate a random 24-char key
+    const key_string = 'LH-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-    // 2. Update script to require key
-    await supabase.from('scripts').update({ requires_key: true }).eq('id', script.id);
-
-    // 3. Generate a random key
-    const newKey = crypto.randomBytes(8).toString('hex').toUpperCase(); // e.g. A1B2C3D4
-
-    // 4. Save to DB
-    const { error } = await supabase.from('script_keys').insert({
-      script_id: script.id,
-      key_value: newKey
-    });
+    const { data, error } = await supabase
+      .from('keys')
+      .insert({
+        key_string,
+        script_slug: slug,
+        owner_id: user.id,
+        remaining_time: 86400, // Default 24 hours if you use time-based keys
+        max_time: 86400
+      })
+      .select('key_string')
+      .single();
 
     if (error) return res.status(500).json({ error: error.message });
-    
-    return res.status(200).json({ key: newKey });
+    return res.status(200).json({ key: data.key_string });
   }
+
   return res.status(405).json({ error: 'Method not allowed' });
 };

@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=200"/>
+<link rel="stylesheet" href="/assets/style.css?v=241"/>
 <style>
   /* --- Custom Smooth Scrollbar --- */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -42,10 +42,10 @@
   .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; transition: 0.2s; }
   .logo img { border-radius: 6px; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
   .nav-links { display: flex; align-items: center; gap: 2rem; height: 100%; }
-  .nav-links a { color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.3s ease; height: 100%; display: flex; align-items: center; position: relative; cursor: pointer; }
-  .nav-links a:hover { color: #fff; }
-  .nav-links a.active { color: #fff; }
-  .nav-links a.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #7c3aed; box-shadow: 0 0 10px #7c3aed; }
+  .nav-btn { background: none; border: none; padding: 0; color: #888; font-size: 0.9rem; font-weight: 600; transition: color 0.3s ease; cursor: pointer; font-family: inherit; height: 100%; position: relative; }
+  .nav-btn:hover { color: #fff; }
+  .nav-btn.active { color: #fff; }
+  .nav-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #7c3aed; box-shadow: 0 0 10px #7c3aed; }
   
   .user-menu { display: flex; align-items: center; gap: 1.5rem; }
   .user-name { color: #ccc; font-size: 0.9rem; font-weight: 600; }
@@ -105,7 +105,7 @@
 
   /* --- Tabs (Obfuscator/Bootstrapper) --- */
   .tab-bar { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid #222; padding-bottom: 1rem; }
-  .tab-btn { background: none; border: none; color: #888; font-weight: 600; font-size: 1rem; cursor: pointer; padding: 0.5rem 0; position: relative; }
+  .tab-btn { background: none; border: none; color: #888; font-weight: 600; font-size: 1rem; cursor: pointer; padding: 0.5rem 0; position: relative; font-family: inherit; }
   .tab-btn.active { color: #fff; }
   .tab-btn.active::after { content: ''; position: absolute; bottom: -1rem; left: 0; width: 100%; height: 2px; background: #7c3aed; }
   .tab-content { display: none; animation: fadeIn 0.4s ease; }
@@ -129,11 +129,11 @@
 <nav>
   <a href="/" class="logo"><img src="/favicon.svg" width="24" height="24"/> LuaHub</a>
   <div class="nav-links">
-    <a href="#" id="nav-new" class="active" onclick="switchPage('new-paste', this)">New Paste</a>
-    <a href="#" id="nav-feed" onclick="switchPage('public-feed', this)">Public Feed</a>
-    <a href="#" id="nav-links" onclick="switchPage('my-links', this)">My Links</a>
-    <a href="#" id="nav-tools" onclick="switchPage('tools', this)">Tools</a>
-    <a href="#" id="nav-settings" onclick="switchPage('settings', this)">Settings</a>
+    <button id="nav-new" class="nav-btn active" onclick="switchPage('new-paste', this)">New Paste</button>
+    <button id="nav-feed" class="nav-btn" onclick="switchPage('public-feed', this)">Public Feed</button>
+    <button id="nav-links" class="nav-btn" onclick="switchPage('my-links', this)">My Links</button>
+    <button id="nav-tools" class="nav-btn" onclick="switchPage('tools', this)">Tools</button>
+    <button id="nav-settings" class="nav-btn" onclick="switchPage('settings', this)">Settings</button>
   </div>
   <div class="user-menu">
     <span class="user-name" id="user-name"></span>
@@ -162,6 +162,11 @@
           <input id="s-name" class="input-field" placeholder="e.g. Universal ESP" />
         </div>
         
+        <div class="form-row">
+          <label class="main-label">Place ID</label>
+          <input id="s-placeid" class="input-field" placeholder="e.g. 2753915549 (Blox Fruits)" />
+        </div>
+
         <div class="form-row">
           <label class="main-label">Auto-Obfuscate</label>
           <div class="toggle-wrap">
@@ -328,7 +333,7 @@
   function switchPage(pageId, el) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     document.getElementById('page-' + pageId).style.display = 'block';
-    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(a => a.classList.remove('active'));
     if(el) el.classList.add('active');
     if (pageId === 'public-feed') loadPublicFeed();
     if (pageId === 'my-links') loadMyLinks();
@@ -346,6 +351,7 @@
   async function publishPaste() {
     const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
+    const place_id = document.getElementById('s-placeid').value.trim();
     const content = editor.value.trim();
     const show_intro = document.getElementById('show-intro').checked;
     const is_private = document.getElementById('is-private').checked;
@@ -356,25 +362,27 @@
     btn.disabled = true; btn.textContent = 'Publishing...';
 
     try {
-      const payload = { name, content, show_intro, is_private, obfuscate };
+      const payload = { name, content, show_intro, is_private, obfuscate, place_id };
       if (editSlug) payload.slug = editSlug;
 
-      const res = await fetch('/api/paste', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/paste', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, 
+        body: JSON.stringify(payload) 
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Server error');
 
       if (data.slug) {
         showToast(editSlug ? 'Paste updated!' : 'Paste published!', 'success');
-        const fullUrl = `${location.origin}/api/loader/${data.slug}`;
-        document.getElementById('out-link').value = fullUrl;
-        document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}"))()`;
-        document.getElementById('success-modal').classList.add('active');
         
-        if (!editSlug) {
-          let myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
-          myLinks.unshift({ name, slug: data.slug });
-          localStorage.setItem('my_links', JSON.stringify(myLinks));
-        }
+        // SINGLE UNIVERSAL LOADSTRING
+        const fullUrl = `${location.origin}/api/loader`;
+        const loadstringCode = `local hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. hwid))()`;
+        
+        document.getElementById('out-link').value = fullUrl;
+        document.getElementById('out-loader-text').textContent = loadstringCode;
+        document.getElementById('success-modal').classList.add('active');
         resetForm();
       }
     } catch(e) { showToast(e.message, 'error'); }
@@ -388,6 +396,7 @@
     document.getElementById('submit-btn').textContent = 'Publish Paste';
     document.getElementById('cancel-btn').style.display = 'none';
     document.getElementById('is-private').checked = false;
+    document.getElementById('s-placeid').value = '';
     editor.value = '';
     document.getElementById('s-name').value = '';
     document.getElementById('line-count').textContent = '0 lines';
@@ -408,19 +417,27 @@
         <div class="card-meta">${s.hits} runs · ${new Date(s.created_at).toLocaleDateString()}</div>
         <div class="card-footer">
           <span style="font-size:0.75rem; color:#666; font-family:monospace;">${s.slug}</span>
-          <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Load</button>
+          <button class="copy-btn" onclick="copyLoad()">Copy Load</button>
         </div>
       </div>
     `).join('');
   }
 
-  function loadMyLinks() {
+  async function loadMyLinks() {
     const grid = document.getElementById('my-links-grid');
-    const myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
+    grid.innerHTML = '<p style="color:#888;">Loading...</p>';
+    
+    const res = await fetch('/api/scripts?mine=true', { 
+        headers: { Authorization: 'Bearer ' + token } 
+    });
+    const myScripts = await res.json();
 
-    if (!myLinks.length) { grid.innerHTML = '<p style="color:#888;">You haven\'t created any links yet.</p>'; return; }
+    if (!myScripts.length) { 
+        grid.innerHTML = '<p style="color:#888;">You haven\'t created any links yet.</p>'; 
+        return; 
+    }
 
-    grid.innerHTML = myLinks.map(s => `
+    grid.innerHTML = myScripts.map(s => `
       <div class="card">
         <div class="card-title">
           ${s.name}
@@ -432,7 +449,7 @@
         <div class="card-meta">${s.slug}</div>
         <div class="card-footer">
           <div class="btn-group">
-            <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Load</button>
+            <button class="copy-btn" onclick="copyLoad()">Copy Load</button>
             <button class="key-btn" onclick="generateKey('${s.slug}')">Gen Key</button>
           </div>
         </div>
@@ -444,15 +461,17 @@
     try {
       const res = await fetch('/api/keys', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ slug })
       });
       const data = await res.json();
       
       if (data.key) {
-        const fullUrl = `${location.origin}/api/loader/${slug}`;
+        const fullUrl = `${location.origin}/api/loader`;
+        const loadstringCode = `script_key = "${data.key}"\nlocal hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. hwid .. "&key=" .. script_key))()`;
+        
         document.getElementById('out-key').value = data.key;
-        document.getElementById('out-key-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}?key=${data.key}"))()`;
+        document.getElementById('out-key-loader-text').textContent = loadstringCode;
         document.getElementById('key-modal').classList.add('active');
       } else {
         showToast(data.error || 'Failed to generate key', 'error');
@@ -466,9 +485,6 @@
     if (!confirm('Are you sure you want to delete this paste?')) return;
     const res = await fetch('/api/scripts?slug=' + slug, { method: 'DELETE' });
     if (res.ok) {
-      let myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
-      myLinks = myLinks.filter(l => l.slug !== slug);
-      localStorage.setItem('my_links', JSON.stringify(myLinks));
       loadMyLinks();
       showToast('Paste deleted.', 'success');
     } else {
@@ -562,8 +578,8 @@ if not success then warn("[LuaHub] Failed: " .. tostring(err)) end`;
     showToast('Bootstrapper generated!', 'success');
   }
 
-  function copyLoad(slug) {
-    const load = `loadstring(game:HttpGet("${location.origin}/api/loader/${slug}"))()`;
+  function copyLoad() {
+    const load = `local hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${location.origin}/api/loader?placeId=" .. game.PlaceId .. "&hwid=" .. hwid))()`;
     navigator.clipboard.writeText(load);
     showToast('Loadstring copied!', 'success');
   }

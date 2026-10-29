@@ -1,6 +1,14 @@
 // language: JavaScript, file: api/paste.js
 const { supabase } = require('./_supabase');
 const { obfuscateLua } = require('../lib/obfuscator');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
+
+function authUser(req) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  try { return jwt.verify(token, JWT_SECRET); } catch { return null; }
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,7 +18,9 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     try {
-      const { name, content, show_intro, is_private, slug, obfuscate } = req.body;
+      const { name, content, show_intro, is_private, slug, obfuscate, place_id } = req.body;
+      const user = authUser(req);
+      const ownerId = user ? user.id : null;
       
       if (!name || !content) {
         return res.status(400).json({ error: 'Name and content are required.' });
@@ -36,7 +46,8 @@ module.exports = async (req, res) => {
             content_enc: finalContent, 
             show_intro: show_intro !== false,
             is_private: !!is_private,
-            obf_method: obfuscate ? 'vm' : 'integrated'
+            obf_method: obfuscate ? 'vm' : 'integrated',
+            place_id: place_id || null
           })
           .eq('slug', slug)
           .select('slug')
@@ -54,7 +65,7 @@ module.exports = async (req, res) => {
         const { data, error } = await supabase
           .from('scripts')
           .insert({
-            owner_id: null, // Anonymous
+            owner_id: ownerId, 
             name: name,
             slug: newSlug,
             content_enc: finalContent,
@@ -62,7 +73,8 @@ module.exports = async (req, res) => {
             show_intro: show_intro !== false,
             is_private: !!is_private,
             requires_key: false,
-            obf_method: obfuscate ? 'vm' : 'integrated'
+            obf_method: obfuscate ? 'vm' : 'integrated',
+            place_id: place_id || null
           })
           .select('slug')
           .single();
@@ -74,7 +86,7 @@ module.exports = async (req, res) => {
         
         return res.status(200).json({ 
           slug: data.slug, 
-          loader_url: `/api/loader/${data.slug}` 
+          loader_url: `/api/loader?placeId=${place_id}` // Universal Loader URL
         });
       }
     } catch (err) {
