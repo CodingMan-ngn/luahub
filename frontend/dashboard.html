@@ -6,57 +6,69 @@
 <title>New Paste — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=70"/>
+<link rel="stylesheet" href="/assets/style.css?v=80"/>
 <style>
-  /* Aurora-style Layout */
-  nav { 
-    padding: 0 2rem; height: 60px; 
-    background: #000; border-bottom: 1px solid var(--glass-border); 
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .logo { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; color: #fff; text-decoration: none; }
+  /* Base & Nav */
+  body { background: #050505; color: #fff; font-family: 'Inter', sans-serif; margin: 0; }
+  nav { padding: 1rem 2rem; background: #0a0a0a; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; color: #fff; text-decoration: none; }
+  .nav-links { display: flex; gap: 2rem; align-items: center; }
+  .nav-links a, .nav-links span { color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .nav-links a:hover, .nav-links span:hover { color: #fff; }
+  .nav-links .active { color: #fff; }
+  .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+
+  /* Layout */
+  .container { max-width: 900px; margin: 3rem auto; padding: 0 2rem; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   
-  .nav-links { display: flex; align-items: center; gap: 1.5rem; height: 100%; }
-  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: 0.2s; height: 100%; display: flex; align-items: center; padding: 0 0.5rem; }
-  .nav-links a:hover { color: #fff; }
+  h1 { font-size: 2rem; margin-bottom: 1rem; font-weight: 700; }
   
-  .container { max-width: 800px; margin: 3rem auto; padding: 0 2rem; }
-  .header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem; }
-  .header-row h1 { font-size: 2rem; font-weight: 700; margin: 0; }
-  .header-row a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  /* Editor */
+  .editor-box { background: #0a0a0a; border: 1px solid #222; border-radius: 8px; overflow: hidden; }
+  .editor-textarea { width: 100%; height: 400px; background: #000; color: #d4d4d4; border: none; padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; resize: vertical; outline: none; }
+  .editor-footer { display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #111; font-size: 0.8rem; color: #888; border-top: 1px solid #222; }
   
-  .editor-box { background: #0a0a0a; border: 1px solid var(--glass-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-  .editor-header { background: #111; padding: 0.5rem 1rem; display: flex; justify-content: flex-end; border-bottom: 1px solid var(--glass-border); }
-  .editor-textarea { width: 100%; height: 400px; background: #000; color: #d4d4d4; border: none; padding: 1rem; font-family: var(--mono); font-size: 0.9rem; resize: vertical; outline: none; line-height: 1.5; }
+  /* Settings Form */
+  .settings-box { margin-top: 1.5rem; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; padding: 2rem; }
+  .form-row { display: flex; align-items: center; margin-bottom: 1.5rem; }
+  .form-row label { width: 140px; color: #888; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-row input, .form-row select { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 0.8rem; border-radius: 6px; outline: none; font-family: 'Inter', sans-serif; transition: 0.2s; }
+  .form-row input:focus, .form-row select:focus { border-color: #7c3aed; box-shadow: 0 0 15px rgba(124,58,237,0.2); }
   
-  .editor-footer { display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #111; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--glass-border); font-family: var(--mono); }
-  
-  .settings-box { margin-top: 1.5rem; background: #0a0a0a; border: 1px solid var(--glass-border); border-radius: 6px; padding: 1.5rem; }
-  .settings-header { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 1.5rem; letter-spacing: 0.5px; }
-  
-  .form-row { display: flex; align-items: center; margin-bottom: 1rem; }
-  .form-row label { width: 120px; color: var(--muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-row input, .form-row select { flex: 1; background: #000; border: 1px solid var(--glass-border); color: #fff; padding: 0.7rem; border-radius: 4px; outline: none; font-family: var(--mono); font-size: 0.85rem; }
-  .form-row input:focus, .form-row select:focus { border-color: var(--accent); }
-  
-  .btn-submit { width: 100%; padding: 1rem; background: #fff; color: #000; font-weight: 700; font-size: 1rem; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; margin-top: 1.5rem; }
-  .btn-submit:hover { background: #ccc; }
+  /* Toggle Switch */
+  .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #7c3aed; }
+  input:checked + .slider:before { transform: translateX(24px); }
+
+  .btn-submit { width: 100%; padding: 1rem; background: #7c3aed; color: #fff; font-weight: 700; font-size: 1rem; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; margin-top: 1.5rem; }
+  .btn-submit:hover { background: #6d28d9; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124,58,237,0.3); }
   .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Success Modal */
-  .success-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 100; }
-  .success-modal.active { display: flex; }
-  .success-content { background: #0a0a0a; border: 1px solid var(--glass-border); border-radius: 8px; padding: 2rem; width: 100%; max-width: 500px; }
-  .success-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; }
-  .badge { background: #222; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
-  .success-title { font-size: 1rem; font-weight: 500; }
-  
-  .link-box { display: flex; gap: 0.5rem; margin-top: 1rem; }
-  .link-box input { flex: 1; background: #000; border: 1px solid var(--glass-border); color: #fff; padding: 0.7rem; border-radius: 4px; font-family: var(--mono); font-size: 0.85rem; }
-  .btn-copy { background: #fff; color: #000; border: none; padding: 0.7rem 1rem; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
-  
-  .loadstring-box { margin-top: 1.5rem; background: #000; border: 1px solid var(--glass-border); border-radius: 4px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-  .loadstring-box code { color: #a78bfa; font-size: 0.8rem; font-family: var(--mono); word-break: break-all; margin-right: 1rem; }
+  /* Feed Grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+  .card { background: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 1.5rem; transition: 0.3s; display: flex; flex-direction: column; }
+  .card:hover { transform: translateY(-5px); border-color: #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+  .card-meta { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+  .card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+  .copy-btn { background: #222; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+  .copy-btn:hover { background: #7c3aed; }
+
+  /* Modal */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 100; }
+  .modal.active { display: flex; }
+  .modal-content { background: #111; border: 1px solid #222; border-radius: 12px; padding: 2rem; width: 100%; max-width: 500px; }
+  .modal-title { font-size: 1.2rem; margin-bottom: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+  .link-input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 1rem; border-radius: 6px; font-family: monospace; margin-bottom: 1rem; }
+  .load-box { background: #000; border: 1px solid #333; border-radius: 6px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .load-code { font-family: monospace; color: #a78bfa; font-size: 0.8rem; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -66,67 +78,79 @@
     LuaHub
   </a>
   <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="#">My Links</a>
-    <a href="#">API Docs</a>
-    <span id="user-name" style="color:#fff; font-weight:600; font-size:0.9rem;"></span>
-    <button onclick="logout()" style="background:none; border:none; color:#ef4444; font-weight:600; cursor:pointer; font-size:0.9rem;">Logout</button>
+    <a href="#" class="active" onclick="switchPage('new-paste', this)">New Paste</a>
+    <a href="#" onclick="switchPage('public-feed', this)">Public Feed</a>
+    <a href="#" onclick="switchPage('my-links', this)">My Links</a>
+    <span id="user-name"></span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
   </div>
 </nav>
 
 <div class="container">
-  <div class="header-row">
-    <h1>New Paste</h1>
-    <a href="#">My links</a>
-  </div>
   
-  <div class="editor-box">
-    <div class="editor-header">
-      <span style="font-size:0.75rem; color:var(--muted);">Editor</span>
+  <!-- NEW PASTE PAGE -->
+  <div id="page-new-paste" class="page active">
+    <h1>New Paste</h1>
+    <div class="editor-box">
+      <textarea id="s-code" class="editor-textarea" placeholder="Paste your script here..."></textarea>
+      <div class="editor-footer">
+        <span id="line-count">0 lines</span>
+        <span id="char-count">0 KB</span>
+      </div>
     </div>
-    <textarea id="s-code" class="editor-textarea" placeholder="Paste your script here..."></textarea>
-    <div class="editor-footer">
-      <span id="line-count">0 lines</span>
-      <span id="char-count">0 KB</span>
+
+    <div class="settings-box">
+      <div class="form-row">
+        <label>Title</label>
+        <input id="s-name" placeholder="Give your script a name" />
+      </div>
+      
+      <div class="form-row">
+        <label>Show Intro</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="show-intro" checked>
+          <span class="slider"></span>
+        </label>
+        <span style="color:#888; font-size:0.75rem; margin-left:1rem;">Displays the Discord Liquid Glass UI before running.</span>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="submit-btn" onclick="generatePaste()">Create Paste</button>
+  </div>
+
+  <!-- PUBLIC FEED PAGE -->
+  <div id="page-public-feed" class="page">
+    <h1>Public Feed</h1>
+    <div class="grid" id="public-grid">
+      <p style="color:#888;">Loading...</p>
     </div>
   </div>
 
-  <div class="settings-box">
-    <div class="settings-header">OPTIONAL PASTE SETTINGS</div>
-    
-    <div class="form-row">
-      <label>Title</label>
-      <input id="s-name" placeholder="Script Title" />
-    </div>
-    
-    <div class="form-row">
-      <label>Exposure</label>
-      <select><option>Public</option><option>Unlisted</option></select>
+  <!-- MY LINKS PAGE -->
+  <div id="page-my-links" class="page">
+    <h1>My Links</h1>
+    <div class="grid" id="my-links-grid">
+      <p style="color:#888;">You haven't created any links yet.</p>
     </div>
   </div>
 
-  <button class="btn-submit" id="submit-btn" onclick="generatePaste()">Create Paste</button>
 </div>
 
 <!-- Success Modal -->
-<div class="success-modal" id="success-modal">
-  <div class="success-content">
-    <div class="success-header">
-      <span class="badge">PUBLIC</span>
-      <span class="success-title">Paste ready — share this link:</span>
-    </div>
+<div class="modal" id="success-modal">
+  <div class="modal-content">
+    <div class="modal-title"><span style="background:#222; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.7rem;">PUBLIC</span> Paste ready!</div>
     
-    <div class="link-box">
-      <input type="text" id="out-link" readonly />
-      <button class="btn-copy" onclick="copyVal('out-link')">Copy link</button>
+    <input type="text" id="out-link" class="link-input" readonly />
+    <button class="btn-submit" onclick="copyVal('out-link')" style="margin-top:0;">Copy Link</button>
+
+    <div style="margin-top: 1.5rem; font-size: 0.8rem; color: #888;">Run in executor:</div>
+    <div class="load-box">
+      <span class="load-code" id="out-loader-text"></span>
+      <button class="copy-btn" onclick="copyVal('out-loader-text')">Copy</button>
     </div>
 
-    <div class="loadstring-box">
-      <code id="out-loader-text">loadstring(...)</code>
-      <button class="btn-copy" onclick="copyVal('out-loader-text')">Copy</button>
-    </div>
-
-    <button class="btn-submit" style="margin-top: 2rem; background: #333; color: #fff;" onclick="closeModal()">Close</button>
+    <button class="btn-submit" style="background:#333;" onclick="document.getElementById('success-modal').classList.remove('active')">Close</button>
   </div>
 </div>
 
@@ -135,18 +159,31 @@
   if (!token) window.location.href = '/';
   document.getElementById('user-name').textContent = localStorage.getItem('username');
 
-  // Editor stats
+  // Page Switching
+  function switchPage(pageId, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+
+    if (pageId === 'public-feed') loadPublicFeed();
+    if (pageId === 'my-links') loadMyLinks();
+  }
+
+  // Editor Stats
   const editor = document.getElementById('s-code');
   editor.addEventListener('input', () => {
-    const text = editor.value;
-    document.getElementById('line-count').textContent = text.split('\n').length + ' lines';
-    document.getElementById('char-count').textContent = (new Blob([text]).size / 1024).toFixed(1) + ' KB';
+    document.getElementById('line-count').textContent = editor.value.split('\n').length + ' lines';
+    document.getElementById('char-count').textContent = (new Blob([editor.value]).size / 1024).toFixed(1) + ' KB';
   });
 
+  // Generate Paste
   async function generatePaste() {
     const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
     const content = editor.value.trim();
+    const show_intro = document.getElementById('show-intro').checked;
 
     if (!name || !content) return alert('Title and code required');
 
@@ -156,13 +193,10 @@
       const res = await fetch('/api/paste', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, content })
+        body: JSON.stringify({ name, content, show_intro })
       });
       
-      const textData = await res.text();
-      let data;
-      try { data = JSON.parse(textData); } catch(e) { throw new Error(textData || 'Invalid JSON'); }
-      
+      const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Server error');
 
       if (data.slug) {
@@ -170,8 +204,11 @@
         document.getElementById('out-link').value = fullUrl;
         document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}"))()`;
         document.getElementById('success-modal').classList.add('active');
-      } else {
-        throw new Error('No slug returned');
+        
+        // Save to local storage for "My Links"
+        let myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
+        myLinks.unshift({ name, slug: data.slug });
+        localStorage.setItem('my_links', JSON.stringify(myLinks));
       }
     } catch(e) {
       alert('Error: ' + e.message);
@@ -180,19 +217,65 @@
     btn.disabled = false; btn.textContent = 'Create Paste';
   }
 
+  // Load Public Feed
+  async function loadPublicFeed() {
+    const grid = document.getElementById('public-grid');
+    const res = await fetch('/api/scripts');
+    const scripts = await res.json();
+
+    if (!scripts.length) {
+      grid.innerHTML = '<p style="color:#888;">No public scripts yet.</p>';
+      return;
+    }
+
+    grid.innerHTML = scripts.map(s => `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${s.name}</div>
+        </div>
+        <div class="card-meta">${s.hits} runs · ${new Date(s.created_at).toLocaleDateString()}</div>
+        <div class="card-footer">
+          <span style="font-size:0.8rem; color:#888;">${s.slug}</span>
+          <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Load</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Load My Links
+  function loadMyLinks() {
+    const grid = document.getElementById('my-links-grid');
+    const myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
+
+    if (!myLinks.length) {
+      grid.innerHTML = '<p style="color:#888;">You haven\'t created any links yet.</p>';
+      return;
+    }
+
+    grid.innerHTML = myLinks.map(s => `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${s.name}</div>
+        </div>
+        <div class="card-meta">${s.slug}</div>
+        <div class="card-footer">
+          <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Load</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function copyLoad(slug) {
+    const load = `loadstring(game:HttpGet("${location.origin}/api/loader/${slug}"))()`;
+    navigator.clipboard.writeText(load);
+    alert('Copied to clipboard!');
+  }
+
   function copyVal(id) {
     const el = document.getElementById(id);
     const text = el.value || el.textContent;
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
-  }
-
-  function closeModal() {
-    document.getElementById('success-modal').classList.remove('active');
-    editor.value = '';
-    document.getElementById('s-name').value = '';
-    document.getElementById('line-count').textContent = '0 lines';
-    document.getElementById('char-count').textContent = '0 KB';
+    alert('Copied!');
   }
 
   function logout() { localStorage.clear(); window.location.href = '/'; }

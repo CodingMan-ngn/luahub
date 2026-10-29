@@ -9,11 +9,9 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     try {
-      const { name, content, requires_key } = req.body;
+      const { name, content, show_intro } = req.body;
       
-      if (!name || !content) {
-        return res.status(400).json({ error: 'Name and content are required.' });
-      }
+      if (!name || !content) return res.status(400).json({ error: 'Name and content required.' });
 
       const slug = Math.random().toString(36).substring(2, 10);
 
@@ -25,14 +23,15 @@ module.exports = async (req, res) => {
           slug: slug,
           content_enc: content,
           is_public: true,
-          requires_key: !!requires_key, // Converts true/false
+          show_intro: show_intro !== false,
+          requires_key: false,
           obf_method: 'integrated'
         })
         .select('slug')
         .single();
 
       if (error) {
-        console.error("DB Error:", error);
+        console.error("DB Insert Error:", error);
         return res.status(500).json({ error: error.message });
       }
       
@@ -42,10 +41,9 @@ module.exports = async (req, res) => {
       });
 
     } catch (err) {
-      console.error("Server Error:", err);
+      console.error("Paste Server Error:", err);
       return res.status(500).json({ error: err.message || 'Server crash' });
     }
   }
-  
   return res.status(405).json({ error: 'Method not allowed' });
 };
