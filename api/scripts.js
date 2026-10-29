@@ -1,5 +1,6 @@
 const { supabase } = require('./_supabase');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 function slugify(name) {
@@ -11,15 +12,11 @@ function authUser(req) {
   try { return jwt.verify(token, JWT_SECRET); } catch { return null; }
 }
 
-// Generates the Luarmor-style loader
+// Luarmor-style UI Loader
 function generateLoaderString(script) {
   const apiBase = process.env.SITE_URL || 'https://lua-axon.vercel.app';
   
-  return `--[[
-    LuaHub Key System Loader
-    Script: ${script.name}
-  ]]
-  
+  return `--[[ LuaHub Key System Loader | Script: ${script.name} ]]
   local CONFIG = {
       ScriptSlug = "${script.slug}",
       ApiUrl = "${apiBase}/api/keys",
@@ -39,18 +36,14 @@ function generateLoaderString(script) {
       end
   end
 
-  if not CONFIG.RequiresKey then
-      fetchPayload()
-      return
-  end
+  if not CONFIG.RequiresKey then fetchPayload() return end
 
   local CoreGui = game:GetService("CoreGui")
-  local UserInputService = game:GetService("UserInputService")
   local HttpService = game:GetService("HttpService")
 
   local function createUI()
       local ScreenGui = Instance.new("ScreenGui")
-      ScreenGui.Name = "LuaHub_KeySystem"
+      ScreenGui.Name = "LuaHub_UI"
       ScreenGui.ResetOnSpawn = false
       ScreenGui.Parent = CoreGui
 
@@ -198,16 +191,16 @@ module.exports = async (req, res) => {
     if (!name || !content) return res.status(400).json({ error: 'name + content required' });
 
     const method = ['loader', 'bootstrapper'].includes(obf_method) ? obf_method : 'loader';
-    
-    // Simple obfuscation
     const encrypted_content = `loadstring((function() local h='${Buffer.from(content).toString('hex')}'; local s=''; for i=1,#h,2 do s=s..string.char(tonumber(h:sub(i,i+1),16)) end; return s end)())()`;
 
     const slug = slugify(name);
     const baseUrl = process.env.SITE_URL || 'https://lua-axon.vercel.app';
     
-    // Generate the URLs for the Key System
+    // The key to the chicken-and-egg problem: Generate a generic callback token
+    const callbackToken = crypto.randomBytes(8).toString('hex');
     const share_url = `${baseUrl}/key-system?slug=${slug}`;
-    const return_url = `${baseUrl}/api/auth/boosty-callback?slug=${slug}`;
+    // This URL is safe to give to BoostyLink *before* you have the actual link
+    const return_url = `${baseUrl}/api/auth/boosty-callback?slug=${slug}&token=${callbackToken}`;
 
     const { data, error } = await supabase
       .from('scripts')
@@ -232,7 +225,9 @@ module.exports = async (req, res) => {
     
     return res.status(200).json({ 
       slug: data.slug, 
-      loader: generateLoaderString(data)
+      loader: generateLoaderString(data),
+      return_url: data.return_url,
+      share_url: data.share_url
     });
   }
 
