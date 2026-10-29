@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=130"/>
+<link rel="stylesheet" href="/assets/style.css?v=140"/>
 <style>
   /* --- Custom Smooth Scrollbar --- */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -14,7 +14,6 @@
   ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; border: 2px solid #050505; }
   ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
-  /* --- Base Styles --- */
   html { scroll-behavior: smooth; }
   body { 
     background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;
@@ -22,7 +21,7 @@
     background-attachment: fixed; -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
 
-  /* --- Toast Notifications --- */
+  /* --- Toast System --- */
   #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none; }
   .toast { 
     background: #0a0a0a; border: 1px solid #222; border-left: 4px solid #7c3aed; 
@@ -37,22 +36,13 @@
   @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
   .toast.fade-out { animation: slideOut 0.3s ease forwards; }
 
-  /* --- Navigation --- */
-  nav { 
-    padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.7); backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center; 
-    position: sticky; top: 0; z-index: 100;
-  }
+  /* --- Nav --- */
+  nav { padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; transition: 0.2s; }
-  .logo:hover { opacity: 0.8; }
   .logo img { border-radius: 6px; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
-  
   .nav-links { display: flex; align-items: center; gap: 2rem; height: 100%; }
-  .nav-links a { 
-    color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600; 
-    transition: color 0.3s ease, transform 0.3s ease; height: 100%; display: flex; align-items: center; position: relative; cursor: pointer;
-  }
-  .nav-links a:hover { color: #fff; transform: translateY(-1px); }
+  .nav-links a { color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.3s ease; height: 100%; display: flex; align-items: center; position: relative; cursor: pointer; }
+  .nav-links a:hover { color: #fff; }
   .nav-links a.active { color: #fff; }
   .nav-links a.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #7c3aed; box-shadow: 0 0 10px #7c3aed; }
   
@@ -61,18 +51,14 @@
   .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; padding: 0.5rem; border-radius: 6px; }
   .btn-logout:hover { color: #fff; background: rgba(239, 68, 68, 0.2); }
 
-  /* --- Container & Layout --- */
+  /* --- Layout --- */
   .container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
   .page-header { margin-bottom: 2rem; animation: slideDown 0.5s ease; }
   .page-header h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -0.03em; }
   .page-header p { color: #888; margin: 0; font-size: 0.95rem; }
   @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-  .glass-card {
-    background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px;
-    padding: 2.5rem; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
-    backdrop-filter: blur(16px); animation: fadeIn 0.6s ease;
-  }
+  .glass-card { background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); backdrop-filter: blur(16px); animation: fadeIn 0.6s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
   /* --- Editor --- */
@@ -80,7 +66,7 @@
   .editor-box:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2), 0 10px 30px rgba(124, 58, 237, 0.1); transform: translateY(-2px); }
   .editor-textarea { width: 100%; height: 350px; background: transparent; color: #d4d4d4; border: none; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; resize: vertical; outline: none; line-height: 1.6; }
   .editor-footer { display: flex; justify-content: space-between; padding: 0.8rem 1.5rem; background: #0a0a0a; font-size: 0.8rem; color: #666; border-top: 1px solid #222; font-family: 'JetBrains Mono', monospace; }
-  
+
   /* --- Inputs & Toggles --- */
   .settings-group { margin-top: 2rem; }
   .form-row { display: flex; align-items: center; margin-bottom: 1.5rem; gap: 1.5rem; }
@@ -99,32 +85,23 @@
   input:checked ~ .toggle-text { color: #fff; }
 
   /* --- Buttons --- */
-  .btn-submit { 
-    width: 100%; padding: 1.1rem; background: #7c3aed; color: #fff; font-weight: 700; font-size: 1rem; 
-    border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-    margin-top: 1rem; letter-spacing: 0.5px; box-shadow: 0 10px 20px rgba(124, 58, 237, 0.2);
-  }
+  .btn-submit { width: 100%; padding: 1.1rem; background: #7c3aed; color: #fff; font-weight: 700; font-size: 1rem; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin-top: 1rem; letter-spacing: 0.5px; box-shadow: 0 10px 20px rgba(124, 58, 237, 0.2); }
   .btn-submit:hover { background: #8b5cf6; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(124, 58, 237, 0.4); }
-  .btn-submit:active { transform: translateY(-1px); }
   .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* --- Cards Grid --- */
+  /* --- Cards --- */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-  .card { 
-    background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; 
-    padding: 1.5rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; backdrop-filter: blur(10px);
-  }
+  .card { background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; backdrop-filter: blur(10px); }
   .card:hover { transform: translateY(-8px); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(124,58,237,0.1); }
   .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;}
   .card-meta { font-size: 0.8rem; color: #888; margin-bottom: 1rem; }
   .card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-  
   .copy-btn { background: #222; color: #fff; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
   .copy-btn:hover { background: #7c3aed; box-shadow: 0 0 15px rgba(124,58,237,0.3); }
   .edit-btn { background: transparent; border: none; color: #7c3aed; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.2s; padding: 0; }
-  .edit-btn:hover { color: #a78bfa; text-decoration: underline; text-underline-offset: 4px; }
+  .edit-btn:hover { color: #a78bfa; text-decoration: underline; }
 
-  /* --- Settings Specific --- */
+  /* --- Settings --- */
   .discord-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #5865F2; color: #fff; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: 0.3s; }
   .discord-badge:hover { background: #4752c4; transform: translateY(-2px); }
 
@@ -132,13 +109,8 @@
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
   .modal.active { display: flex; animation: fadeInModal 0.3s ease; }
   @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
-  .modal-content { 
-    background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; 
-    width: 100%; max-width: 500px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); transform: scale(0.95); 
-    animation: popInModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  }
+  .modal-content { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 500px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); transform: scale(0.95); animation: popInModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
   @keyframes popInModal { to { transform: scale(1); } }
-  
   .modal-title { font-size: 1.3rem; margin-bottom: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.8rem; }
   .link-input { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 1rem; border-radius: 10px; font-family: monospace; margin-bottom: 1rem; font-size: 0.9rem; }
   .load-box { background: #000; border: 1px solid #222; border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
@@ -147,7 +119,6 @@
 </head>
 <body>
 
-<!-- Toast Container -->
 <div id="toast-container"></div>
 
 <nav>
@@ -192,13 +163,24 @@
         </div>
         
         <div class="form-row">
-          <label class="main-label">Options</label>
+          <label class="main-label">Show Intro</label>
           <div class="toggle-wrap">
             <label class="toggle-switch">
               <input type="checkbox" id="show-intro" checked>
               <span class="slider"></span>
             </label>
             <span class="toggle-text">Show Discord Intro (Liquid Glass)</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="main-label">Private Script</label>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="is-private">
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-text">Set to Private (Shows Kick UI)</span>
           </div>
         </div>
       </div>
@@ -291,35 +273,27 @@
   if (!token) window.location.href = '/';
   document.getElementById('user-name').textContent = localStorage.getItem('username');
 
-  // --- Toast System ---
+  // Toast System
   function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    
-    // Icon based on type
     let icon = 'ℹ️';
     if (type === 'error') icon = '❌';
     if (type === 'success') icon = '✅';
-
     toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
     container.appendChild(toast);
-
-    // Auto remove after 3 seconds
     setTimeout(() => {
       toast.classList.add('fade-out');
       toast.addEventListener('animationend', () => toast.remove());
     }, 3000);
   }
 
-  // --- Navigation ---
   function switchPage(pageId, el) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     document.getElementById('page-' + pageId).style.display = 'block';
-    
     document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
     if(el) el.classList.add('active');
-
     if (pageId === 'public-feed') loadPublicFeed();
     if (pageId === 'my-links') loadMyLinks();
     if (pageId === 'settings') loadSettings();
@@ -327,27 +301,25 @@
   
   document.getElementById('page-new-paste').style.display = 'block';
 
-  // --- Editor Stats ---
   const editor = document.getElementById('s-code');
   editor.addEventListener('input', () => {
     document.getElementById('line-count').textContent = editor.value.split('\n').length + ' lines';
     document.getElementById('char-count').textContent = (new Blob([editor.value]).size / 1024).toFixed(1) + ' KB';
   });
 
-  // --- Publish / Edit Paste ---
   async function publishPaste() {
     const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
     const content = editor.value.trim();
     const show_intro = document.getElementById('show-intro').checked;
+    const is_private = document.getElementById('is-private').checked;
     const editSlug = document.getElementById('edit-slug').value;
 
     if (!name || !content) return showToast('Title and code are required.', 'error');
-
     btn.disabled = true; btn.textContent = 'Publishing...';
 
     try {
-      const payload = { name, content, show_intro };
+      const payload = { name, content, show_intro, is_private };
       if (editSlug) payload.slug = editSlug;
 
       const res = await fetch('/api/paste', {
@@ -360,8 +332,7 @@
       if (!res.ok) throw new Error(data.error || 'Server error');
 
       if (data.slug) {
-        showToast(editSlug ? 'Paste updated successfully!' : 'Paste published!', 'success');
-        
+        showToast(editSlug ? 'Paste updated!' : 'Paste published!', 'success');
         const fullUrl = `${location.origin}/api/loader/${data.slug}`;
         document.getElementById('out-link').value = fullUrl;
         document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}"))()`;
@@ -372,13 +343,11 @@
           myLinks.unshift({ name, slug: data.slug });
           localStorage.setItem('my_links', JSON.stringify(myLinks));
         }
-        
         resetForm();
       }
     } catch(e) {
       showToast(e.message, 'error');
     }
-
     btn.disabled = false; btn.textContent = 'Publish Paste';
   }
 
@@ -388,18 +357,16 @@
     document.getElementById('editor-desc').textContent = 'Deploy your Lua script instantly and generate a loadstring.';
     document.getElementById('submit-btn').textContent = 'Publish Paste';
     document.getElementById('cancel-btn').style.display = 'none';
-    
+    document.getElementById('is-private').checked = false;
     editor.value = '';
     document.getElementById('s-name').value = '';
     document.getElementById('line-count').textContent = '0 lines';
     document.getElementById('char-count').textContent = '0 KB';
   }
 
-  // --- Load Public Feed ---
   async function loadPublicFeed() {
     const grid = document.getElementById('public-grid');
     grid.innerHTML = '<p style="color:#888;">Loading...</p>';
-    
     const res = await fetch('/api/scripts');
     const scripts = await res.json();
 
@@ -420,7 +387,6 @@
     `).join('');
   }
 
-  // --- Load My Links ---
   function loadMyLinks() {
     const grid = document.getElementById('my-links-grid');
     const myLinks = JSON.parse(localStorage.getItem('my_links') || '[]');
@@ -444,7 +410,6 @@
     `).join('');
   }
 
-  // --- Edit Paste ---
   function editPaste(slug, name) {
     document.getElementById('edit-slug').value = slug;
     document.getElementById('s-name').value = name;
@@ -452,14 +417,11 @@
     document.getElementById('editor-desc').textContent = 'Update your existing script. The link will remain the same.';
     document.getElementById('submit-btn').textContent = 'Save Changes';
     document.getElementById('cancel-btn').style.display = 'block';
-    
     editor.value = '';
     editor.placeholder = 'Paste new code here to overwrite existing...';
-    
     switchPage('new-paste', document.getElementById('nav-new'));
   }
 
-  // --- Settings ---
   async function loadSettings() {
     const res = await fetch('/api/profile', { headers: { Authorization: 'Bearer ' + token } });
     const data = await res.json();
@@ -491,14 +453,14 @@
   function copyLoad(slug) {
     const load = `loadstring(game:HttpGet("${location.origin}/api/loader/${slug}"))()`;
     navigator.clipboard.writeText(load);
-    showToast('Loadstring copied to clipboard!', 'success');
+    showToast('Loadstring copied!', 'success');
   }
 
   function copyVal(id) {
     const el = document.getElementById(id);
     const text = el.value || el.textContent;
     navigator.clipboard.writeText(text);
-    showToast('Copied to clipboard!', 'success');
+    showToast('Copied!', 'success');
   }
 
   function logout() { localStorage.clear(); window.location.href = '/'; }
