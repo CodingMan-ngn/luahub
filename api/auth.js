@@ -8,7 +8,6 @@ module.exports = async (req, res) => {
   if (action === 'login' && !code) {
     const clientId = process.env.DISCORD_CLIENT_ID;
     const redirectUri = `https://lua-axon.vercel.app/api/auth?action=callback`;
-    // Scopes required to get user info and their roles in your server
     const scope = 'identify guilds guilds.members.read'; 
     
     return res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}`);
@@ -17,7 +16,6 @@ module.exports = async (req, res) => {
   // 2. Handle Callback from Discord
   if (action === 'callback' && code) {
     try {
-      // Exchange code for access token
       const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
         method: 'POST',
         body: new URLSearchParams({
@@ -32,13 +30,11 @@ module.exports = async (req, res) => {
       const tokenData = await tokenRes.json();
       if (tokenData.error) throw new Error(tokenData.error);
 
-      // Fetch User Profile
       const userRes = await fetch('https://discord.com/api/users/@me', {
         headers: { Authorization: `Bearer ${tokenData.access_token}` }
       });
       const user = await userRes.json();
 
-      // Fetch User Guild Roles
       const guildRes = await fetch(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_GUILD_ID}/member`, {
         headers: { Authorization: `Bearer ${tokenData.access_token}` }
       });
@@ -49,17 +45,14 @@ module.exports = async (req, res) => {
         roles = guildData.roles || [];
       }
 
-      // Check Roles against Vercel Environment Variables
       const devRole = process.env.DISCORD_DEV_ROLE_ID; 
       const verifiedRole = process.env.DISCORD_ROLE_ID;
 
       const isDev = devRole ? roles.includes(devRole) : false;
       const isVerified = verifiedRole ? roles.includes(verifiedRole) : false;
 
-      // Generate Session ID
       const sessionId = crypto.randomBytes(32).toString('hex');
       
-      // Save to Supabase
       await supabase.from('sessions').insert({
         user_id: sessionId,
         discord_name: user.username,
@@ -68,7 +61,6 @@ module.exports = async (req, res) => {
         is_verified: isVerified
       });
 
-      // Set HttpOnly Cookie and redirect to dashboard
       res.setHeader('Set-Cookie', `luahub_session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`);
       return res.redirect('/dashboard');
 
@@ -78,9 +70,8 @@ module.exports = async (req, res) => {
     }
   }
 
-  // 3. Check Session (Frontend calls this to verify login)
+  // 3. Check Session
   if (action === 'check') {
-    // Parse cookie manually
     const cookieHeader = req.headers.cookie || '';
     const match = cookieHeader.match(/luahub_session=([^;]+)/);
     const sessionId = match ? match[1] : null;
@@ -99,7 +90,6 @@ module.exports = async (req, res) => {
     });
   }
 
-  // 4. Logout
   if (action === 'logout') {
     res.setHeader('Set-Cookie', `luahub_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
     return res.redirect('/');
