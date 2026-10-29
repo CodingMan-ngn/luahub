@@ -6,63 +6,82 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=250"/>
+<link rel="stylesheet" href="/assets/style.css?v=260"/>
 <style>
   /* --- Base & Variables --- */
   :root {
     --bg: #050505; --panel: rgba(15, 15, 15, 0.7); --border: rgba(255,255,255,0.08);
     --primary: #7c3aed; --primary-hover: #8b5cf6; --success: #10b981; --danger: #ef4444;
-    --text: #fff; --text-muted: #888;
+    --text: #fff; --text-muted: #888; --glass: blur(16px);
   }
+  
+  /* --- Smooth Animations --- */
+  * { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-sizing: border-box; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  
   ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); }
+  
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); overflow-x: hidden; }
 
   /* --- Nav --- */
-  nav { padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+  nav { padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.8); backdrop-filter: var(--glass); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; }
-  .nav-links { display: flex; align-items: center; gap: 2rem; }
-  .nav-btn { background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; padding: 0.5rem 0; position: relative; }
-  .nav-btn.active { color: #fff; } .nav-btn.active::after { content: ''; position: absolute; bottom: -1.4rem; left: 0; width: 100%; height: 2px; background: var(--primary); }
-  .user-menu { display: flex; align-items: center; gap: 1.5rem; } .btn-logout { color: var(--danger); font-weight: 700; background: none; border: none; cursor: pointer; }
+  .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-btn { background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; padding: 0.5rem 0; position: relative; font-size: 0.9rem; }
+  .nav-btn:hover { color: #ccc; }
+  .nav-btn.active { color: #fff; }
+  .nav-btn.active::after { content: ''; position: absolute; bottom: -1.4rem; left: 0; width: 100%; height: 2px; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+  .user-menu { display: flex; align-items: center; gap: 1.5rem; } .btn-logout { color: var(--danger); font-weight: 700; background: none; border: none; cursor: pointer; } .btn-logout:hover { text-shadow: 0 0 8px var(--danger); }
 
-  /* --- Layout --- */
-  .container { max-width: 1000px; margin: 0 auto; padding: 3rem 2rem; }
+  /* --- Layout & Cards --- */
+  .container { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+  .page { display: none; animation: fadeSlide 0.4s forwards; }
   .page-header h1 { font-size: 2rem; margin: 0 0 0.5rem 0; } .page-header p { color: var(--text-muted); margin: 0 0 2rem 0; }
-  .glass-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.6); backdrop-filter: blur(16px); margin-bottom: 2rem; }
+  .glass-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.6); backdrop-filter: var(--glass); margin-bottom: 2rem; }
+  .glass-card:hover { border-color: rgba(124, 58, 237, 0.3); box-shadow: 0 20px 50px rgba(124, 58, 237, 0.1); }
 
-  /* --- Inputs --- */
+  /* --- Inputs & Editors --- */
   .form-row { display: flex; align-items: center; margin-bottom: 1.2rem; gap: 1.5rem; }
-  .form-row label.main-label { width: 120px; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
-  .input-field { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 0.9rem; border-radius: 8px; outline: none; transition: 0.3s; }
-  .input-field:focus { border-color: var(--primary); }
+  .form-row label.main-label { width: 130px; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+  .input-field { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 0.9rem; border-radius: 8px; outline: none; }
+  .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
   .editor-box { background: #000; border: 1px solid #222; border-radius: 8px; overflow: hidden; }
+  .editor-box:focus-within { border-color: var(--primary); }
   .editor-textarea { width: 100%; height: 200px; background: transparent; color: #d4d4d4; border: none; padding: 1.2rem; font-family: 'JetBrains Mono', monospace; resize: vertical; outline: none; }
   
-  /* --- Toggles & Buttons --- */
+  /* --- Toggles --- */
   .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; inset: 0; background: #333; border-radius: 34px; transition: .4s; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #333; border-radius: 34px; }
   .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .4s; }
   input:checked + .slider { background: var(--primary); } input:checked + .slider:before { transform: translateX(22px); }
-  .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-top: 1rem; }
-  .btn-submit:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
-  /* --- Grid & Cards --- */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; transition: 0.3s; }
-  .card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.2); }
-  .card-title { font-size: 1.1rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-  .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4; flex: 1; }
-  .card-footer { border-top: 1px solid #222; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  /* --- Buttons --- */
+  .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 1rem; }
+  .btn-submit:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3); }
   .copy-btn { background: #222; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
   .copy-btn:hover { background: var(--primary); }
 
+  /* --- Grid --- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; }
+  .card:hover { transform: translateY(-4px) scale(1.02); border-color: rgba(255,255,255,0.2); box-shadow: 0 15px 30px rgba(0,0,0,0.5); z-index: 2; }
+  .card-title { font-size: 1.1rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4; flex: 1; }
+  .card-footer { border-top: 1px solid #222; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; }
+
   /* --- Modals --- */
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
-  .modal.active { display: flex; } .modal-content { background: #0a0a0a; padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; border: 1px solid #222; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+  .modal.active { display: flex; } .modal-content { background: #0a0a0a; padding: 2rem; border-radius: 16px; width: 90%; max-width: 550px; border: 1px solid #222; transform: scale(0.95); animation: popIn 0.3s forwards; }
+  @keyframes popIn { to { transform: scale(1); } }
   .load-box { background: #000; border: 1px solid #222; border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
   .load-code { font-family: 'JetBrains Mono', monospace; color: #a78bfa; font-size: 0.8rem; word-break: break-all; }
+  
+  /* Table for Keys */
+  table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 1rem; }
+  th, td { padding: 1rem; border-bottom: 1px solid #222; font-size: 0.9rem; }
+  th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
 </style>
 </head>
 <body>
@@ -72,8 +91,10 @@
   <div class="nav-links">
     <button id="nav-new" class="nav-btn active" onclick="switchPage('new-paste', this)">New Paste</button>
     <button id="nav-feed" class="nav-btn" onclick="switchPage('public-feed', this)">Public Feed</button>
+    <button id="nav-tools" class="nav-btn" onclick="switchPage('tools', this)">Tools</button>
     <button id="nav-keys" class="nav-btn" onclick="switchPage('keys', this)">Key System</button>
     <button id="nav-links" class="nav-btn" onclick="switchPage('my-links', this)">My Links</button>
+    <button id="nav-settings" class="nav-btn" onclick="switchPage('settings', this)">Settings</button>
   </div>
   <div class="user-menu">
     <span class="user-name" id="user-name">User</span>
@@ -83,8 +104,8 @@
 
 <div class="container">
   
-  <!-- NEW PASTE PAGE -->
-  <div id="page-new-paste" class="page">
+  <!-- NEW PASTE -->
+  <div id="page-new-paste" class="page" style="display:block;">
     <div class="page-header"><h1>Create a Paste</h1><p>Deploy your Lua script and generate a universal loadstring.</p></div>
     <div class="glass-card">
       <div class="editor-box">
@@ -96,7 +117,7 @@
         <div class="form-row">
           <label class="main-label">Universal</label>
           <label class="toggle-switch"><input type="checkbox" id="universal-toggle" onchange="toggleUniversalMode()"><span class="slider"></span></label>
-          <span style="color:#888; font-size:0.9rem;">Runs in ANY game</span>
+          <span style="color:#888; font-size:0.9rem; flex:1;">Runs in ANY game</span>
         </div>
         <div class="form-row" id="placeid-row" style="display:none;">
           <label class="main-label">Place ID</label>
@@ -105,71 +126,105 @@
         <div class="form-row">
           <label class="main-label">Require Key</label>
           <label class="toggle-switch"><input type="checkbox" id="require-key-toggle"><span class="slider"></span></label>
-          <span style="color:#888; font-size:0.9rem;">Lock script behind HWID key</span>
+          <span style="color:#888; font-size:0.9rem; flex:1;">Lock script behind HWID key</span>
         </div>
       </div>
-      <input type="hidden" id="edit-slug" value="" />
       <button class="btn-submit" id="submit-btn" onclick="publishPaste()">Publish Script</button>
     </div>
   </div>
 
-  <!-- PUBLIC FEED PAGE -->
-  <div id="page-public-feed" class="page" style="display:none;">
+  <!-- PUBLIC FEED -->
+  <div id="page-public-feed" class="page">
     <div class="page-header"><h1>Public Feed</h1><p>Discover scripts shared by the community.</p></div>
     <div class="grid" id="public-grid"></div>
   </div>
 
-  <!-- KEY SYSTEM PAGE -->
-  <div id="page-keys" class="page" style="display:none;">
-    <div class="page-header"><h1>Key System</h1><p>Manage HWID-locked keys for your scripts.</p></div>
+  <!-- TOOLS -->
+  <div id="page-tools" class="page">
+    <div class="page-header"><h1>Developer Tools</h1><p>Generate secure loaders and obfuscated payloads.</p></div>
     <div class="glass-card">
-      <h3 style="margin-top:0;">Generate New Key</h3>
-      <p style="color:#888; font-size:0.9rem;">Select a script to generate a single-use key locked to one PC.</p>
-      <div class="form-row" style="margin-top:1rem;">
-        <select id="key-script-select" class="input-field" style="background:#000;">
-          <option value="">Select a script...</option>
-        </select>
-        <button class="copy-btn" style="padding:0.9rem 1.5rem;" onclick="generateKeyFromDropdown()">Generate Key</button>
+      <h3 style="margin-top:0;">Obfuscator</h3>
+      <p style="color:#888; font-size:0.9rem;">Obfuscate raw Lua to protect your source code from skids.</p>
+      <div class="editor-box" style="margin-top:1rem;">
+        <textarea id="obf-input" class="editor-textarea" placeholder="Paste your raw Lua here..." style="height: 150px;"></textarea>
       </div>
-    </div>
-    <div class="glass-card">
-      <h3 style="margin-top:0;">Your Keys</h3>
-      <div id="key-list" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
-        <p style="color:#888;">Loading keys...</p>
+      <button class="btn-submit" onclick="runObfuscator()" style="margin-top:1rem;">Obfuscate Code</button>
+      <div id="obf-result" style="display:none; margin-top:1.5rem;">
+        <div class="load-box"><span class="load-code" id="obf-output"></span><button class="copy-btn" onclick="copyText('obf-output')">Copy</button></div>
       </div>
     </div>
   </div>
 
-  <!-- MY LINKS PAGE -->
-  <div id="page-my-links" class="page" style="display:none;">
-    <div class="page-header"><h1>My Links</h1><p>Your generated loadstrings.</p></div>
+  <!-- KEY SYSTEM -->
+  <div id="page-keys" class="page">
+    <div class="page-header"><h1>Key System</h1><p>Setup independent, time-accurate HWID keys for your scripts.</p></div>
+    
+    <div class="glass-card">
+      <h3 style="margin-top:0;">Create New Key</h3>
+      <div class="form-row" style="margin-top:1rem;">
+        <label class="main-label">Script</label>
+        <select id="key-script-select" class="input-field" style="background:#000;">
+          <option value="">Loading scripts...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="main-label">Destination URL</label>
+        <input id="key-dest-url" class="input-field" placeholder="https://lua-axon.vercel.app/api/loader?placeId=..." />
+      </div>
+      <div class="form-row">
+        <label class="main-label">Duration</label>
+        <select id="key-duration" class="input-field" style="background:#000;">
+          <option value="1">1 Day</option>
+          <option value="7">7 Days</option>
+          <option value="30" selected>30 Days</option>
+          <option value="999">Lifetime</option>
+        </select>
+      </div>
+      <button class="btn-submit" onclick="generateKeyFromDropdown()">Generate Independent Key</button>
+    </div>
+
+    <div class="glass-card">
+      <h3 style="margin-top:0;">Your Keys</h3>
+      <table id="key-table">
+        <thead><tr><th>Key</th><th>Script</th><th>Created</th><th>Expires</th><th>HWID</th></tr></thead>
+        <tbody id="key-tbody"><tr><td colspan="5" style="text-align:center; color:#888;">Loading keys...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MY LINKS -->
+  <div id="page-my-links" class="page">
+    <div class="page-header"><h1>My Links</h1><p>Your generated loadstrings and scripts.</p></div>
     <div class="grid" id="my-links-grid"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="page-header"><h1>Account Settings</h1><p>Manage your profile and integrations.</p></div>
+    <div class="glass-card">
+      <h3 style="margin-top:0;">Profile</h3>
+      <div class="form-row"><label class="main-label">Username</label><input id="set-username" class="input-field" /></div>
+      <div class="form-row"><label class="main-label">Bio</label><input id="set-bio" class="input-field" placeholder="Tell us about yourself..." /></div>
+      <button class="btn-submit" onclick="saveSettings()" style="margin-top:0;">Save Changes</button>
+    </div>
   </div>
 
 </div>
 
-<!-- SUCCESS MODAL -->
+<!-- MODALS -->
 <div class="modal" id="success-modal">
   <div class="modal-content">
     <div class="modal-title" style="font-size:1.3rem; font-weight:700; margin-bottom:1rem;">Paste Ready</div>
-    <input type="text" id="out-link" class="input-field" readonly style="width:100%; box-sizing:border-box; margin-bottom:1rem;"/>
-    <div class="load-box">
-      <span class="load-code" id="out-loader-text"></span>
-      <button class="copy-btn" onclick="copyText('out-loader-text')">Copy</button>
-    </div>
+    <div class="load-box"><span class="load-code" id="out-loader-text"></span><button class="copy-btn" onclick="copyText('out-loader-text')">Copy</button></div>
     <button class="btn-submit" style="background:#222;" onclick="document.getElementById('success-modal').classList.remove('active')">Close</button>
   </div>
 </div>
 
-<!-- KEY MODAL -->
 <div class="modal" id="key-modal">
   <div class="modal-content">
     <div class="modal-title" style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; color:#10b981;">Key Generated</div>
-    <input type="text" id="out-key" class="input-field" readonly style="width:100%; box-sizing:border-box; margin-bottom:1rem; color:#10b981; font-weight:bold;"/>
-    <div class="load-box">
-      <span class="load-code" id="out-key-loader-text" style="color:#10b981;"></span>
-      <button class="copy-btn" onclick="copyText('out-key-loader-text')">Copy</button>
-    </div>
+    <input type="text" id="out-key" class="input-field" readonly style="width:100%; margin-bottom:1rem; color:#10b981; font-weight:bold;"/>
+    <div class="load-box"><span class="load-code" id="out-key-loader-text" style="color:#10b981;"></span><button class="copy-btn" onclick="copyText('out-key-loader-text')">Copy</button></div>
     <button class="btn-submit" style="background:#222;" onclick="document.getElementById('key-modal').classList.remove('active')">Close</button>
   </div>
 </div>
@@ -179,8 +234,8 @@
   if (!token) window.location.href = '/';
   document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
 
-  function showToast(msg) { alert(msg); } // Simple alert for now, replace with toast if you have CSS
   function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).textContent || document.getElementById(id).value); }
+  function showToast(msg) { alert(msg); }
 
   function switchPage(pageId, el) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
@@ -190,8 +245,8 @@
     if (pageId === 'public-feed') loadPublicFeed();
     if (pageId === 'my-links') loadMyLinks();
     if (pageId === 'keys') loadKeysPage();
+    if (pageId === 'settings') loadSettings();
   }
-  document.getElementById('page-new-paste').style.display = 'block';
 
   function toggleUniversalMode() {
     document.getElementById('placeid-row').style.display = document.getElementById('universal-toggle').checked ? 'none' : 'flex';
@@ -206,27 +261,22 @@
     const place_id = isUniversal ? 'universal' : document.getElementById('s-placeid').value.trim();
     const requires_key = document.getElementById('require-key-toggle').checked;
 
-    if (!name || !content) return alert('Title and code required.');
-
+    if (!name || !content) return showToast('Title and code required.');
     btn.disabled = true; btn.textContent = 'Publishing...';
 
     try {
       const res = await fetch('/api/paste', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, 
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, 
         body: JSON.stringify({ name, description, content, place_id, requires_key, obfuscate: true }) 
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Server error');
+      if (!res.ok) throw new Error(data.error);
 
-      if (data.slug) {
-        const fullUrl = `${location.origin}/api/loader`;
-        document.getElementById('out-link').value = fullUrl;
-        document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId()))()`;
-        document.getElementById('success-modal').classList.add('active');
-        document.getElementById('s-name').value = ''; document.getElementById('s-desc').value = ''; document.getElementById('s-code').value = '';
-      }
-    } catch(e) { alert(e.message); }
+      const fullUrl = `${location.origin}/api/loader`;
+      document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId()))()`;
+      document.getElementById('success-modal').classList.add('active');
+      document.getElementById('s-name').value = ''; document.getElementById('s-desc').value = ''; document.getElementById('s-code').value = '';
+    } catch(e) { showToast(e.message); }
     btn.disabled = false; btn.textContent = 'Publish Script';
   }
 
@@ -237,7 +287,7 @@
     const scripts = await res.json();
     grid.innerHTML = scripts.map(s => `
       <div class="card">
-        <div class="card-title">${s.name}</div>
+        <div class="card-title">${s.name} ${s.requires_key ? '🔒' : ''}</div>
         <div class="card-desc">${s.description || 'No description provided.'}</div>
         <div class="card-footer">
           <span style="font-size:0.75rem; color:#666;">${s.hits} runs</span>
@@ -267,33 +317,74 @@
     const select = document.getElementById('key-script-select');
     const res = await fetch('/api/scripts?mine=true', { headers: { Authorization: 'Bearer ' + token } });
     const scripts = await res.json();
-    
     select.innerHTML = '<option value="">Select a script...</option>' + scripts.map(s => `<option value="${s.slug}">${s.name}</option>`).join('');
     
-    // Load existing keys (mocked for now, you'd fetch from a /api/keys GET route)
-    const keyList = document.getElementById('key-list');
-    keyList.innerHTML = `<p style="color:#888;">Keys are managed via your database for security. Click 'Generate Key' above to create one.</p>`;
+    // Auto-fill destination URL for universal fallback
+    document.getElementById('key-dest-url').value = `${location.origin}/api/loader?placeId=universal&hwid=`;
+
+    // Fetch keys
+    const keyRes = await fetch('/api/keys', { headers: { Authorization: 'Bearer ' + token } });
+    const keys = await keyRes.json();
+    
+    const tbody = document.getElementById('key-tbody');
+    if(!keys.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No keys generated yet.</td></tr>'; return; }
+    
+    tbody.innerHTML = keys.map(k => `
+      <tr>
+        <td style="color:#10b981; font-family:monospace;">${k.key_string}</td>
+        <td>${k.script_slug}</td>
+        <td>${new Date(k.created_at).toLocaleDateString()}</td>
+        <td>${k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Lifetime'}</td>
+        <td>${k.hwid || 'Unlocked'}</td>
+      </tr>
+    `).join('');
   }
 
   async function generateKeyFromDropdown() {
     const slug = document.getElementById('key-script-select').value;
-    if (!slug) return alert('Select a script first.');
+    const duration = document.getElementById('key-duration').value;
+    const destination_url = document.getElementById('key-dest-url').value;
+    if (!slug) return showToast('Select a script first.');
 
     const res = await fetch('/api/keys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ slug })
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ slug, duration: parseInt(duration), destination_url })
     });
     const data = await res.json();
     
     if (data.key) {
-      const fullUrl = `${location.origin}/api/loader`;
       document.getElementById('out-key').value = data.key;
-      document.getElementById('out-key-loader-text').textContent = `script_key = "${data.key}"\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId() .. "&key=" .. script_key))()`;
+      document.getElementById('out-key-loader-text').textContent = `script_key = "${data.key}"\nloadstring(game:HttpGet("${destination_url}" .. script_key))()`;
       document.getElementById('key-modal').classList.add('active');
+      loadKeysPage(); // Refresh table
     } else {
-      alert(data.error || 'Failed to generate key');
+      showToast(data.error || 'Failed to generate key');
     }
+  }
+
+  async function runObfuscator() {
+    const input = document.getElementById('obf-input').value.trim();
+    if (!input) return showToast('Paste code first.');
+    const res = await fetch('/api/obfuscate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: input }) });
+    const data = await res.json();
+    if(data.output) { document.getElementById('obf-output').textContent = data.output; document.getElementById('obf-result').style.display = 'block'; }
+    else showToast(data.error);
+  }
+
+  async function loadSettings() {
+    const res = await fetch('/api/profile', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.username) document.getElementById('set-username').value = data.username;
+    if (data.bio) document.getElementById('set-bio').value = data.bio;
+  }
+
+  async function saveSettings() {
+    const username = document.getElementById('set-username').value.trim();
+    const bio = document.getElementById('set-bio').value.trim();
+    const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ username, bio }) });
+    const data = await res.json();
+    if (data.token) { localStorage.setItem('username', data.username); document.getElementById('user-name').textContent = data.username; showToast('Saved!'); }
+    else showToast(data.error);
   }
 </script>
 </body>
