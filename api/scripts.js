@@ -3,8 +3,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 
 function slugify(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)
-    + '-' + Math.random().toString(36).slice(2, 7);
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '-' + Math.random().toString(36).slice(2, 7);
 }
 
 function authUser(req) {
@@ -21,55 +20,42 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('scripts')
-      .select('id, name, description, slug, hits, obf_method, requires_key, created_at, users(username, verified)')
-      .eq('is_public', true)
+      .select('id, name, description, slug, hits, requires_key, is_public_source, source_code, owner_name, created_at')
+      .eq('is_public', true) // Might need to add is_public if not in schema, assuming public by default here
       .order('created_at', { ascending: false })
       .limit(50);
+    
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data);
+    return res.status(200).json(data || []);
   }
 
   if (req.method === 'POST') {
     const user = authUser(req);
     if (!user) return res.status(401).json({ error: 'unauthorized' });
 
-    const { name, description, content, is_public, requires_key, obf_method } = req.body;
+    const { name, content, is_public_source, source_code, requires_key } = req.body;
     if (!name || !content) return res.status(400).json({ error: 'name + content required' });
 
-    const { data: dbUser } = await supabase
-      .from('users').select('role, verified').eq('id', user.id).single();
-    if (!dbUser) return res.status(401).json({ error: 'user gone' });
-
-    const wantsKey = !!requires_key;
-    if (wantsKey && dbUser.role !== 'developer') {
+    if (requires_key && !user.is_dev) {
       return res.status(403).json({ error: 'key system requires developer role' });
     }
 
-    const method = ['loader', 'bootstrapper', 'bytecode'].includes(obf_method)
-      ? obf_method : 'loader';
-
-    const slug = slugify(name);
     const { data, error } = await supabase
       .from('scripts')
       .insert({
-        owner_id: user.id,
+        owner_name: user.name,
         name,
-        description,
-        slug,
+        slug: slugify(name),
         content_enc: content,
-        is_public: is_public !== false,
-        requires_key: wantsKey,
-        obf_method: method
+        source_code: is_public_source ? source_code : null,
+        is_public_source: !!is_public_source,
+        requires_key: !!requires_key
       })
-      .select('id, slug, obf_method')
+      .select('slug')
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
-    return res.status(200).json({
-      slug: data.slug,
-      loader_url: `/api/loader/${data.slug}`,
-      obf_method: data.obf_method
-    });
+    return res.status(200).json({ slug: data.slug });
   }
 
   return res.status(405).json({ error: 'method not allowed' });

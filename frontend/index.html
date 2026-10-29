@@ -3,147 +3,163 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LuaHub — Script Hosting</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>LuaHub — Premium Scripts</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=17"/>
-<script src="/assets/app.js?v=17" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v=19"/>
+<style>
+  .source-viewer {
+    background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
+    padding: 1rem; font-family: var(--mono); font-size: 0.8rem; color: #cbd5e1;
+    white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin-top: 1rem;
+  }
+</style>
 </head>
 <body>
 <nav>
   <a href="/" class="logo">
-    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
-    LuaHub
+    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub
   </a>
   <div class="nav-links">
-    <a href="/dashboard">Dashboard</a>
-    <span id="user-name" style="color:#fff;font-weight:600"></span>
-    <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
+    <a href="#scripts">Scripts</a>
+    <a href="/dashboard" id="nav-dash" style="display:none; color:var(--accent); font-weight:700;">Dashboard</a>
+    <button id="login-btn" class="btn-primary" style="padding: 0.5rem 1rem; font-size:0.9rem;" onclick="loginDiscord()">Login with Discord</button>
+    <div id="user-info" style="display:none; align-items:center; gap:10px;">
+      <img id="user-avatar" src="" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--accent);" />
+      <span id="user-name" style="font-weight:600;color:#fff;"></span>
+      <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;font-family:inherit;">Logout</button>
+    </div>
   </div>
 </nav>
 
-<div class="hero">
-  <h1>Elevate Your <span>Roblox</span> Experience</h1>
-  <p>Host, obfuscate, and deploy scripts with industrial-grade security. Loader URLs, key systems, and role-gated distribution built for creators.</p>
-  
+<section class="hero">
+  <h1>The #1 Script Hub.<br/><span>Secure & Fast.</span></h1>
+  <p>Access premium, obfuscated Roblox scripts. Join the community today.</p>
   <div class="hero-btns">
-    <a href="#scripts" class="btn-primary">Browse Scripts</a>
-    <a href="/dashboard" class="btn-secondary">Developer Dashboard</a>
+    <button class="btn-primary" onclick="loginDiscord()" id="hero-login-btn">Get Started with Discord</button>
+    <a href="https://discord.gg/yourinvite" target="_blank" class="btn-secondary">Join Discord</a>
   </div>
-
+  
   <div class="stats-bar">
-    <div class="stat-item">
-      <h3>10K+</h3>
-      <p>Active Users</p>
-    </div>
-    <div class="stat-item">
-      <h3>50K+</h3>
-      <p>Executions</p>
-    </div>
-    <div class="stat-item">
-      <h3>99.9%</h3>
-      <p>Uptime</p>
-    </div>
-  </div>
-</div>
-
-<section id="scripts" style="padding-top: 2rem;">
-  <div id="auth-section" class="auth-box panel" style="background: var(--surface);">
-    <h2 style="margin-bottom:1rem;">Sign In</h2>
-    <input id="a-email" placeholder="Email"/>
-    <input id="a-pass" type="password" placeholder="Password"/>
-    <button class="btn-primary btn-full" onclick="login()">Login</button>
-    <button class="btn-secondary btn-full" onclick="register()">Register</button>
-    <div id="auth-result" style="margin-top:1rem;"></div>
-  </div>
-
-  <h2 style="margin-bottom:1.5rem; font-size: 2rem;">Public Scripts</h2>
-  <div id="scripts-grid" class="grid-cards">
-    <p style="color:var(--muted);">Loading...</p>
+    <div class="stat-item"><h3 id="stat-scripts">0</h3><p>Scripts</p></div>
+    <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
+    <div class="stat-item"><h3>99.9%</h3><p>Uptime</p></div>
   </div>
 </section>
 
 <div class="ticker-wrap">
-  <div class="ticker">
-    <div class="ticker-item"><span>System:</span> Operational</div>
-    <div class="ticker-item"><span>Latest:</span> Universal ESP v2.4</div>
-    <div class="ticker-item"><span>Security:</span> Obfuscation Engine Active</div>
-    <div class="ticker-item"><span>System:</span> Operational</div>
-    <div class="ticker-item"><span>Latest:</span> Universal ESP v2.4</div>
-    <div class="ticker-item"><span>Security:</span> Obfuscation Engine Active</div>
+  <div class="ticker" id="ticker">
+    <div class="ticker-item">Loading live scripts...</div>
   </div>
 </div>
 
+<section id="scripts">
+  <h2 style="font-size: 2rem; margin-bottom: 2rem;">Public Scripts</h2>
+  <div class="script-grid" id="script-grid">
+    <p style="color:var(--muted); text-align:center; grid-column: 1/-1;">Loading scripts...</p>
+  </div>
+</section>
+
 <script>
-  async function login() {
-    const email = document.getElementById('a-email').value.trim();
-    const password = document.getElementById('a-pass').value;
-    const r = await fetch('/api/auth', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ action: 'login', email, password })
-    });
-    const d = await r.json();
-    if (d.token) {
-      localStorage.setItem('token', d.token);
-      localStorage.setItem('username', d.username);
-      localStorage.setItem('role', d.role || 'user');
-      localStorage.setItem('verified', d.verified ? 'true' : 'false');
-      location.href = '/dashboard';
-    } else {
-      document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Login failed'}</span>`;
-    }
+  // Check for token redirect from OAuth
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  if (token) {
+    localStorage.setItem('token', token);
+    window.history.replaceState({}, document.title, "/"); // strip token from URL
   }
 
-  async function register() {
-    const email = document.getElementById('a-email').value.trim();
-    const password = document.getElementById('a-pass').value;
-    const username = email.split('@')[0] + Math.floor(Math.random()*1000);
-    const r = await fetch('/api/auth', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ action: 'register', username, email, password })
-    });
-    const d = await r.json();
-    if (d.token) {
-      localStorage.setItem('token', d.token);
-      localStorage.setItem('username', d.username);
-      localStorage.setItem('role', d.role || 'user');
-      localStorage.setItem('verified', d.verified ? 'true' : 'false');
-      location.href = '/dashboard';
-    } else {
-      document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Register failed'}</span>`;
-    }
+  function loginDiscord() {
+    const clientId = "YOUR_DISCORD_CLIENT_ID";
+    const redirectUri = encodeURIComponent(window.location.origin + '/api/auth');
+    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`;
   }
 
   function logout() {
     localStorage.clear();
-    location.href = '/';
+    window.location.href = '/';
   }
 
-  document.getElementById('user-name').textContent = localStorage.getItem('username') || '';
-  if (localStorage.getItem('token')) {
-    document.getElementById('auth-section').style.display = 'none';
-  }
-
-  fetch('/api/scripts').then(r => r.json()).then(list => {
-    const grid = document.getElementById('scripts-grid');
-    if (!Array.isArray(list) || !list.length) {
-      grid.innerHTML = '<p style="color:var(--muted)">No public scripts yet.</p>';
-      return;
+  async function init() {
+    const userToken = localStorage.getItem('token');
+    
+    if (userToken) {
+      // decode JWT payload for display (no verify needed client-side)
+      try {
+        const payload = JSON.parse(atob(userToken.split('.')[1]));
+        document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('hero-login-btn').style.display = 'none';
+        document.getElementById('nav-dash').style.display = 'inline-block';
+        document.getElementById('user-info').style.display = 'flex';
+        document.getElementById('user-name').textContent = payload.name;
+      } catch(e) {}
     }
-    grid.innerHTML = list.map(s => `
+
+    const grid = document.getElementById('script-grid');
+    try {
+      const res = await fetch('/api/scripts');
+      const allScripts = await res.json();
+      
+      document.getElementById('stat-scripts').textContent = allScripts.length;
+      let totalHits = allScripts.reduce((sum, s) => sum + (s.hits || 0), 0);
+      document.getElementById('stat-hits').textContent = totalHits;
+
+      if (!allScripts.length) { 
+        grid.innerHTML = '<p style="color:var(--muted); grid-column:1/-1; text-align:center;">No scripts available yet.</p>'; 
+        return; 
+      }
+      
+      renderGrid(allScripts);
+      renderTicker(allScripts);
+    } catch (e) {
+      grid.innerHTML = '<p style="color:#ef4444; grid-column:1/-1; text-align:center;">No scripts found.</p>';
+    }
+  }
+
+  function renderTicker(scripts) {
+    const ticker = document.getElementById('ticker');
+    const itemsHtml = scripts.map(s => `<div class="ticker-item"><span>${s.owner_name}</span> loaded ${s.name}</div>`).join('');
+    ticker.innerHTML = itemsHtml + itemsHtml + itemsHtml;
+  }
+
+  function renderGrid(scripts) {
+    const grid = document.getElementById('script-grid');
+    grid.innerHTML = scripts.map(s => `
       <div class="script-card">
         <div class="script-header">
           <div class="script-title">${s.name}</div>
-          <div class="script-author">@${s.users?.username || 'anon'}</div>
+          <div class="script-author">by ${s.owner_name}</div>
         </div>
         <div class="script-meta">
-          <span>${s.obf_method}</span>
-          <span>${s.hits || 0} runs</span>
-          <span>${s.requires_key ? 'Key Required' : 'Free'}</span>
+          <span>👁 ${s.hits || 0} Runs</span>
+          ${s.requires_key ? '<span style="color:#ef4444;">🔑 Key Req</span>' : ''}
         </div>
-        <code class="script-code" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\'${location.origin}/api/loader/${s.slug}\'))()'); this.style.color='#fff'; setTimeout(()=>this.style.color='', 500);">loadstring(game:HttpGet('${location.origin}/api/loader/${s.slug}'))()</code>
-      </div>`).join('');
-  }).catch(() => {});
+        ${s.is_public_source ? `
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-secondary" style="width:100%; padding:0.5rem; font-size:0.8rem;" onclick="toggleSource('${s.id}')">View Source</button>
+            <div class="source-viewer hidden" id="src-${s.id}">${s.source_code || 'No source provided.'}</div>
+          </div>
+        ` : ''}
+        <button class="btn-primary" style="width:100%; margin-top:auto; padding: 0.6rem;" onclick="copyLoader('${s.slug}')">
+          Copy Loadstring
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function toggleSource(id) {
+    const el = document.getElementById(`src-${id}`);
+    el.classList.toggle('hidden');
+  }
+
+  function copyLoader(slug) {
+    if (!localStorage.getItem('token')) return loginDiscord();
+    const loader = `loadstring(game:HttpGet("${window.location.origin}/api/loader/${slug}"))()`;
+    navigator.clipboard.writeText(loader);
+    alert('Loader copied to clipboard!');
+  }
+
+  init();
 </script>
 </body>
 </html>

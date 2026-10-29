@@ -4,15 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dashboard — LuaHub</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=17"/>
-<script src="/assets/app.js?v=17" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v=19"/>
 <style>
   .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-left:0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);}
   .role-dev{background:var(--accent); color:#fff; border:none;}
-  .verified-chip{background:var(--success); color:#052e1a; border:none;}
-  .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem; backdrop-filter: blur(10px);}
+  .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem;}
   .locked{position:relative; padding: 0.5rem; border: 1px dashed var(--glass-border); border-radius: 8px;}
   .locked-note{color:#f59e0b;font-weight:600;font-size:0.85rem;}
   .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
@@ -22,23 +20,24 @@
 <body>
 <nav>
   <a href="/" class="logo">
-    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
-    LuaHub
+    <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub
   </a>
   <div class="nav-links">
     <a href="/">Hub</a>
-    <span id="user-name" style="color:#fff;">User</span>
-    <span id="user-chips"></span>
-    <button onclick="localStorage.clear();location.href='/'" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600; font-family:inherit; font-size: 0.95rem;">Logout</button>
+    <div style="display:flex; align-items:center; gap:10px; margin-left: 10px;">
+      <img id="user-avatar" src="" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--accent);" />
+      <span id="user-name" style="font-weight:600;color:#fff;">Loading...</span>
+      <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;font-family:inherit;">Logout</button>
+    </div>
   </div>
 </nav>
 
-<section class="container" style="padding-top: 4rem;">
+<section class="container" style="padding-top: 3rem;">
   <h1 style="font-size: 2.5rem; margin-bottom: 2rem; font-weight: 800;">Dashboard</h1>
 
   <div class="key-box">
     <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔑 Master Key</h2>
-    <p style="color:var(--muted); margin-bottom: 1.5rem;">Generate a key for script execution. Single-use per script to prevent bypasses.</p>
+    <p style="color:var(--muted); margin-bottom: 1.5rem;">Generate a key for script execution. Single-use per script.</p>
     <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.8rem 2rem; font-size: 0.95rem;">Generate Key Now</a>
     <div style="color:#f59e0b;font-size:0.85rem;margin-top:1.2rem;">⚠️ Keys are single-use. One key = one script run.</div>
   </div>
@@ -48,17 +47,16 @@
       <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
 
       <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
+      <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:120px;"></textarea>
 
-      <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500;">Obfuscation Method</label>
-      <select id="obf-method">
-        <option value="loader">Loader (Standard)</option>
-        <option value="bootstrapper">Bootstrapper (Advanced)</option>
-        <option value="bytecode">Bytecode (Raw)</option>
-      </select>
+      <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Public Source Code (Optional)</label>
+      <textarea id="s-source" placeholder="If you want users to view the source, paste it here..." style="height:80px;"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
+        <input type="checkbox" id="t-source" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
+        <label for="t-source" style="color:var(--muted);cursor:pointer; font-size: 0.95rem;">Make source code public</label>
+      </div>
 
-      <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:180px;"></textarea>
-
-      <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin:1.5rem 0;">
+      <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
         <input type="checkbox" id="t-key" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
         <label for="t-key" style="color:var(--muted);cursor:pointer; font-size: 0.95rem;">Require Key System</label>
         <div class="locked-note" id="key-lock" style="display:none; margin-left: auto;">🔒 Developer role required</div>
@@ -73,104 +71,96 @@
       <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
     </div>
   </div>
-
-  <div class="panel" id="profile-panel" style="margin-top:2rem; display:none;">
-    <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">👤 Profile</h2>
-    <input id="p-bio" placeholder="Bio"/>
-    <input id="p-avatar" placeholder="Avatar URL"/>
-    <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
-  </div>
 </section>
 
 <script>
-  const ROLE = localStorage.getItem('role') || 'user';
-  const VERIFIED = localStorage.getItem('verified') === 'true';
-  document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
-  document.getElementById('user-chips').innerHTML =
-    `<span class="role-chip ${ROLE === 'developer' ? 'role-dev' : ''}">${ROLE}</span>` +
-    (VERIFIED ? `<span class="role-chip verified-chip">verified</span>` : '');
+  const token = localStorage.getItem('token');
+  let payload = null;
 
-  if (ROLE !== 'developer') {
+  if (!token) {
+    window.location.href = '/';
+  } else {
+    try {
+      payload = JSON.parse(atob(token.split('.')[1]));
+    } catch(e) {
+      localStorage.clear(); window.location.href = '/';
+    }
+  }
+
+  document.getElementById('user-name').textContent = payload?.name || 'User';
+  
+  if (payload?.is_dev) {
+    document.getElementById('user-name').innerHTML += ` <span class="role-chip role-dev">DEV</span>`;
+  } else {
     document.getElementById('key-lock').style.display = 'block';
     document.getElementById('t-key').disabled = true;
   }
-  if (VERIFIED) document.getElementById('profile-panel').style.display = 'block';
 
-  async function apiFetch(path, method='GET', body=null) {
-    const opts = {
-      method,
-      headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + localStorage.getItem('token')}
-    };
-    if (body) opts.body = JSON.stringify(body);
-    const r = await fetch(path, opts);
-    return r.json();
+  function logout() {
+    localStorage.clear();
+    window.location.href = '/';
   }
 
   async function uploadScript() {
     const btn = document.getElementById('upload-btn');
     const name = document.getElementById('s-name').value.trim();
     const content = document.getElementById('s-code').value.trim();
-    const obf_method = document.getElementById('obf-method').value;
-    const requires_key = ROLE === 'developer' && document.getElementById('t-key').checked;
+    const source = document.getElementById('s-source').value.trim();
+    const is_public_source = document.getElementById('t-source').checked;
+    const requires_key = payload?.is_dev && document.getElementById('t-key').checked;
 
     if (!name || !content) return alert('Name + payload required');
     btn.disabled = true; btn.textContent = 'Deploying...';
 
-    const res = await apiFetch('/api/scripts', 'POST', { name, content, is_public: true, requires_key, obf_method });
-    const box = document.getElementById('upload-result');
+    const res = await fetch('/api/scripts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ name, content, source_code: source, is_public_source, requires_key })
+    });
+    const data = await res.json();
 
-    if (res && res.slug) {
-      const url = `${location.origin}/api/loader/${res.slug}`;
+    const box = document.getElementById('upload-result');
+    if (data.slug) {
+      const url = `${location.origin}/api/loader/${data.slug}`;
       let one = `loadstring(game:HttpGet("${url}"))()`;
       if (requires_key) one = `script_key = "YOUR_KEY"\n` + one;
       box.innerHTML = `<p style="color:var(--success);font-weight:600;">✅ Deployed Successfully</p>
         <code style="display:block;margin-top:0.8rem;color:var(--success);white-space:pre-wrap;font-size:0.8rem;background:#000;padding:1rem;border-radius:8px;border:1px solid rgba(16,185,129,0.2);">${one}</code>`;
-      ['s-name','s-code'].forEach(id => document.getElementById(id).value='');
+      ['s-name','s-code','s-source'].forEach(id => document.getElementById(id).value='');
       document.getElementById('t-key').checked = false;
       loadScripts();
     } else {
-      box.innerHTML = `<p style="color:#ef4444;">Error: ${res?.error || 'unknown'}</p>`;
+      box.innerHTML = `<p style="color:#ef4444;">Error: ${data?.error || 'unknown'}</p>`;
     }
     btn.disabled = false; btn.textContent = 'Deploy Script';
   }
 
   async function loadScripts() {
     const box = document.getElementById('my-scripts');
-    const scripts = await apiFetch('/api/scripts', 'GET');
-    if (!Array.isArray(scripts) || !scripts.length) {
+    const res = await fetch('/api/scripts'); // Just fetching all for now, or you could filter by owner_name
+    const scripts = await res.json();
+    
+    // Filter for this user based on payload name
+    const myScripts = scripts.filter(s => s.owner_name === payload.name);
+
+    if (!myScripts.length) {
       box.innerHTML = '<p style="color:var(--muted);">No scripts deployed yet.</p>';
       return;
     }
-    box.innerHTML = scripts.map(s => `
+    
+    box.innerHTML = myScripts.map(s => `
       <div style="padding:1.2rem;background:var(--surface);border-radius:12px;margin-bottom:1rem;border:1px solid var(--glass-border); transition: all 0.3s;">
         <strong style="display:block;font-size:1.05rem;color:#fff;">${s.name}</strong>
-        <div style="font-size:0.8rem;color:var(--accent-soft);margin: 0.4rem 0; font-weight: 600;">${s.obf_method.toUpperCase()}</div>
         <div style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;">
           ${s.requires_key ? '<span style="color:#ef4444;font-weight:600;">Key Required</span>' : '<span style="color:var(--success);font-weight:600;">Free Access</span>'}
           · ${s.hits || 0} runs
+          ${s.is_public_source ? ' · <span style="color:var(--accent-soft);">Source Public</span>' : ''}
         </div>
         <code style="display:block;margin-top:0.6rem;font-size:0.75rem;color:var(--muted); font-family: var(--mono);">${s.slug}</code>
       </div>`).join('');
   }
 
-  async function saveProfile() {
-    const bio = document.getElementById('p-bio').value;
-    const avatar_url = document.getElementById('p-avatar').value;
-    const r = await apiFetch('/api/profile', 'PATCH', { bio, avatar_url });
-    alert(r.ok ? 'Saved' : ('Error: ' + r.error));
-  }
-
-  if (localStorage.getItem('token')) {
-    loadScripts();
-    if (VERIFIED) {
-      apiFetch('/api/profile').then(r => {
-        if (r.profile) {
-          document.getElementById('p-bio').value = r.profile.bio || '';
-          document.getElementById('p-avatar').value = r.profile.avatar_url || '';
-        }
-      });
-    }
-  }
+  loadScripts();
 </script>
 </body>
 </html>
