@@ -6,13 +6,24 @@
 <title>LuaHub — Premium Scripts</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=19"/>
+<link rel="stylesheet" href="/assets/style.css?v=20"/>
 <style>
   .source-viewer {
     background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
     padding: 1rem; font-family: var(--mono); font-size: 0.8rem; color: #cbd5e1;
     white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin-top: 1rem;
   }
+  /* New member display */
+  .members-bar {
+    display: flex; justify-content: center; align-items: center; gap: 1.5rem;
+    background: var(--surface); padding: 1rem 2rem; border-radius: 20px;
+    border: 1px solid var(--glass-border); backdrop-filter: blur(16px);
+    max-width: 650px; margin: 1.5rem auto 0; flex-wrap: wrap;
+  }
+  .member-item { display: flex; align-items: center; gap: 0.5rem; }
+  .member-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--glass-border); }
+  .member-name { font-size: 0.85rem; font-weight: 500; color: var(--muted); }
+  .member-dev { color: var(--accent-soft); font-weight: 700; font-size: 0.7rem; background: rgba(124,58,237,0.2); padding: 2px 6px; border-radius: 4px; margin-left: 4px;}
 </style>
 </head>
 <body>
@@ -45,6 +56,12 @@
     <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
     <div class="stat-item"><h3>99.9%</h3><p>Uptime</p></div>
   </div>
+  
+  <!-- NEW MEMBERS BAR -->
+  <div class="members-bar" id="members-bar" style="display:none;">
+    <span style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-right:1rem;">Latest Users</span>
+    <div id="members-list" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;"></div>
+  </div>
 </section>
 
 <div class="ticker-wrap">
@@ -61,12 +78,11 @@
 </section>
 
 <script>
-  // Check for token redirect from OAuth
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
   if (token) {
     localStorage.setItem('token', token);
-    window.history.replaceState({}, document.title, "/"); // strip token from URL
+    window.history.replaceState({}, document.title, "/");
   }
 
   function loginDiscord() {
@@ -84,7 +100,6 @@
     const userToken = localStorage.getItem('token');
     
     if (userToken) {
-      // decode JWT payload for display (no verify needed client-side)
       try {
         const payload = JSON.parse(atob(userToken.split('.')[1]));
         document.getElementById('login-btn').style.display = 'none';
@@ -95,6 +110,7 @@
       } catch(e) {}
     }
 
+    // Fetch Scripts
     const grid = document.getElementById('script-grid');
     try {
       const res = await fetch('/api/scripts');
@@ -114,6 +130,21 @@
     } catch (e) {
       grid.innerHTML = '<p style="color:#ef4444; grid-column:1/-1; text-align:center;">No scripts found.</p>';
     }
+
+    // Fetch Latest Members
+    try {
+      const memRes = await fetch('/api/members');
+      const members = await memRes.json();
+      if (members.length > 0) {
+        document.getElementById('members-bar').style.display = 'flex';
+        document.getElementById('members-list').innerHTML = members.map(m => `
+          <div class="member-item" title="${m.discord_name}">
+            <img src="${m.discord_avatar}" class="member-avatar" alt="${m.discord_name}">
+            ${m.is_dev ? '<span class="member-dev">DEV</span>' : ''}
+          </div>
+        `).join('');
+      }
+    } catch(e) {}
   }
 
   function renderTicker(scripts) {

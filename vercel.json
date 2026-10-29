@@ -2,19 +2,16 @@
   "version": 2,
   "builds": [
     { "src": "frontend/**", "use": "@vercel/static" },
-    { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "frontend/favicon.svg", "use": "@vercel/static" }
+    { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/auth", "dest": "/api/auth.js" },
     { "src": "/api/scripts", "dest": "/api/scripts.js" },
-    { "src": "/api/profile", "dest": "/api/profile.js" },
+    { "src": "/api/members", "dest": "/api/members.js" },
     { "src": "/api/loader/(.*)", "dest": "/api/loader/[slug].js" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    
     { "src": "/favicon.svg", "dest": "/frontend/favicon.svg" },
     { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
-    
     { "src": "/dashboard", "dest": "/frontend/dashboard.html" },
     { "src": "/", "dest": "/frontend/index.html" },
     { "src": "/(.*)", "dest": "/frontend/$1" }
