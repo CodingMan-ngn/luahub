@@ -4,16 +4,14 @@ const crypto = require('crypto');
 module.exports = async (req, res) => {
   const { code, action } = req.query;
 
-  // 1. Redirect to Discord OAuth
   if (action === 'login' && !code) {
     const clientId = process.env.DISCORD_CLIENT_ID;
     const redirectUri = `https://lua-axon.vercel.app/api/auth?action=callback`;
-    const scope = 'identify guilds guilds.members.read'; 
+    const scope = 'identify guilds guilds.members.read';
     
     return res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}`);
   }
 
-  // 2. Handle Callback from Discord
   if (action === 'callback' && code) {
     try {
       const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
@@ -45,11 +43,8 @@ module.exports = async (req, res) => {
         roles = guildData.roles || [];
       }
 
-      const devRole = process.env.DISCORD_DEV_ROLE_ID; 
-      const verifiedRole = process.env.DISCORD_ROLE_ID;
-
-      const isDev = devRole ? roles.includes(devRole) : false;
-      const isVerified = verifiedRole ? roles.includes(verifiedRole) : false;
+      const isDev = process.env.DISCORD_DEV_ROLE_ID ? roles.includes(process.env.DISCORD_DEV_ROLE_ID) : false;
+      const isVerified = process.env.DISCORD_ROLE_ID ? roles.includes(process.env.DISCORD_ROLE_ID) : false;
 
       const sessionId = crypto.randomBytes(32).toString('hex');
       
@@ -65,12 +60,11 @@ module.exports = async (req, res) => {
       return res.redirect('/dashboard');
 
     } catch (err) {
-      console.error("Auth Error:", err);
+      console.error(err);
       return res.redirect('/?error=auth_failed');
     }
   }
 
-  // 3. Check Session
   if (action === 'check') {
     const cookieHeader = req.headers.cookie || '';
     const match = cookieHeader.match(/luahub_session=([^;]+)/);
