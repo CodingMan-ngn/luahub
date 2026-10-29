@@ -1,16 +1,6 @@
+// language: JavaScript, file: api/keys.js
 const { supabase } = require('./_supabase');
 const crypto = require('crypto');
-
-function generateKeyString() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 12; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-  return result + 'Inv';
-}
-
-function generateToken() {
-  return crypto.randomBytes(16).toString('hex');
-}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,60 +9,28 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'POST') {
-    const { action, slug, token } = req.body;
+    const { slug } = req.body;
+    if (!slug) return res.status(400).json({ error: 'Slug required' });
 
-    // 1. GENERATE SESSION TOKEN (Before they go to Linkvertise)
-    if (action === 'start') {
-      const newToken = generateToken();
-      await supabase.from('key_sessions').insert({
-        token: newToken,
-        script_slug: slug
-      });
-      
-      // The frontend will append this token to the Linkvertise URL
-      return res.status(200).json({ token: newToken });
-    }
+    // 1. Fetch the script
+    const { data: script } = await supabase.from('scripts').select('id').eq('slug', slug).single();
+    if (!script) return res.status(404).json({ error: 'Script not found' });
 
-    // 2. VERIFY TOKEN AND GENERATE KEY (When they return)
-    if (action === 'claim') {
-      if (!token || !slug) return res.status(400).json({ error: 'Missing token or slug' });
+    // 2. Update script to require key
+    await supabase.from('scripts').update({ requires_key: true }).eq('id', script.id);
 
-      // Check if token exists and is not used
-      const { data: session, error } = await supabase
-        .from('key_sessions')
-        .select('*')
-        .eq('token', token)
-        .eq('script_slug', slug)
-        .eq('used', false)
-        .single();
+    // 3. Generate a random key
+    const newKey = crypto.randomBytes(8).toString('hex').toUpperCase(); // e.g. A1B2C3D4
 
-      if (error || !session) {
-        return res.status(403).json({ error: 'Invalid or expired session. Please restart.' });
-      }
+    // 4. Save to DB
+    const { error } = await supabase.from('script_keys').insert({
+      script_id: script.id,
+      key_value: newKey
+    });
 
-      // ANTI-BYPASS: Check time elapsed (Must be at least 15 seconds)
-      const createdAt = new Date(session.created_at).getTime();
-      const now = new Date().getTime();
-      if (now - createdAt < 15000) {
-        return res.status(403).json({ error: 'You completed the ads too fast. Please wait.' });
-      }
-
-      // Mark token as used
-      await supabase.from('key_sessions').update({ used: true }).eq('id', session.id);
-
-      // Generate the actual key
-      const { data: script } = await supabase.from('scripts').select('key_duration').eq('slug', slug).single();
-      const duration = script?.key_duration || 600;
-      const newKey = generateKeyString();
-
-      await supabase.from('keys').insert({
-        key_string: newKey,
-        script_slug: slug,
-        remaining_time: duration
-      });
-
-      return res.status(200).json({ key: newKey });
-    }
+    if (error) return res.status(500).json({ error: error.message });
+    
+    return res.status(200).json({ key: newKey });
   }
-  return res.status(405).json({ error: 'method not allowed' });
+  return res.status(405).json({ error: 'Method not allowed' });
 };

@@ -6,9 +6,9 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=180"/>
+<link rel="stylesheet" href="/assets/style.css?v=200"/>
 <style>
-  /* --- Scrollbar --- */
+  /* --- Custom Smooth Scrollbar --- */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: #050505; }
   ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; border: 2px solid #050505; }
@@ -91,11 +91,15 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
   .card { background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; transition: 0.3s; display: flex; flex-direction: column; }
   .card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  .card-title { font-size: 1.1rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .card-title { font-size: 1.1rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; align-items: center; }
   .card-meta { font-size: 0.8rem; color: #888; margin-bottom: 1rem; }
   .card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+  
+  .btn-group { display: flex; gap: 0.5rem; }
   .copy-btn { background: #222; color: #fff; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
   .copy-btn:hover { background: #7c3aed; }
+  .key-btn { background: #10b981; color: #fff; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+  .key-btn:hover { background: #059669; }
   .del-btn { background: transparent; border: none; color: #ef4444; font-weight: 700; font-size: 0.8rem; cursor: pointer; padding: 0; margin-left: 0.5rem; }
   .del-btn:hover { text-decoration: underline; }
 
@@ -107,7 +111,7 @@
   .tab-content { display: none; animation: fadeIn 0.4s ease; }
   .tab-content.active { display: block; }
 
-  /* --- Fixed Modal --- */
+  /* --- Modals --- */
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
   .modal.active { display: flex; }
   .modal-content { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; width: 90%; max-width: 500px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); transform: scale(0.95); animation: popInModal 0.4s forwards; }
@@ -197,7 +201,7 @@
 
   <!-- MY LINKS PAGE -->
   <div id="page-my-links" class="page" style="display:none;">
-    <div class="page-header"><h1>My Links</h1><p>Your generated loadstrings.</p></div>
+    <div class="page-header"><h1>My Links</h1><p>Your generated loadstrings and keys.</p></div>
     <div class="grid" id="my-links-grid"></div>
   </div>
 
@@ -260,7 +264,7 @@
 
 </div>
 
-<!-- FIXED SUCCESS MODAL -->
+<!-- SUCCESS MODAL (Paste) -->
 <div class="modal" id="success-modal">
   <div class="modal-content">
     <div class="modal-title"><span style="background:#222; padding:0.3rem 0.6rem; border-radius:4px; font-size:0.7rem; letter-spacing:1px; border:1px solid #333;">PUBLIC</span> Paste Ready</div>
@@ -275,6 +279,24 @@
     </div>
 
     <button class="btn-submit" style="background:#222; color:#aaa;" onclick="document.getElementById('success-modal').classList.remove('active')">Close</button>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL (Key) -->
+<div class="modal" id="key-modal">
+  <div class="modal-content">
+    <div class="modal-title"><span style="background:#10b981; color:#000; padding:0.3rem 0.6rem; border-radius:4px; font-size:0.7rem; letter-spacing:1px; border:1px solid #333;">KEY GENERATED</span> Access Key</div>
+    
+    <input type="text" id="out-key" class="link-input" readonly style="color: #10b981; font-weight: bold;" />
+    <button class="btn-submit" onclick="copyText('out-key')" style="margin-top:0; padding:0.8rem; font-size:0.9rem; margin-bottom:2rem; background: #10b981; color: #000;">Copy Key</button>
+
+    <div style="font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase;">Loadstring with Key</div>
+    <div class="load-box">
+      <span class="load-code" id="out-key-loader-text" style="color:#10b981;"></span>
+      <button class="copy-btn" onclick="copyText('out-key-loader-text')">Copy</button>
+    </div>
+
+    <button class="btn-submit" style="background:#222; color:#aaa;" onclick="document.getElementById('key-modal').classList.remove('active')">Close</button>
   </div>
 </div>
 
@@ -409,10 +431,35 @@
         </div>
         <div class="card-meta">${s.slug}</div>
         <div class="card-footer">
-          <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Load</button>
+          <div class="btn-group">
+            <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Load</button>
+            <button class="key-btn" onclick="generateKey('${s.slug}')">Gen Key</button>
+          </div>
         </div>
       </div>
     `).join('');
+  }
+
+  async function generateKey(slug) {
+    try {
+      const res = await fetch('/api/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug })
+      });
+      const data = await res.json();
+      
+      if (data.key) {
+        const fullUrl = `${location.origin}/api/loader/${slug}`;
+        document.getElementById('out-key').value = data.key;
+        document.getElementById('out-key-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}?key=${data.key}"))()`;
+        document.getElementById('key-modal').classList.add('active');
+      } else {
+        showToast(data.error || 'Failed to generate key', 'error');
+      }
+    } catch(e) {
+      showToast('Failed to connect', 'error');
+    }
   }
 
   async function deletePaste(slug) {
