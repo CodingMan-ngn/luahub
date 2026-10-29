@@ -4,152 +4,102 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard — LuaHub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css"/>
+  <link rel="stylesheet" href="/assets/style.css?v=4"/>
 </head>
 <body>
-  <div id="preloader">
-    <div class="loader-logo">LuaHub</div>
-    <div class="loader-bar"><div class="loader-fill"></div></div>
-  </div>
-
   <nav>
-    <a href="/" class="logo">
-      <svg class="logo-icon" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
-      <div class="logo-text">Lua<span>Hub</span></div>
-    </a>
+    <a href="/" class="logo"><svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"/></svg> LuaHub</a>
     <div class="nav-links">
-      <a href="/scripts">Browse</a>
-      <a href="/dashboard">Dashboard</a>
-      <a href="#" id="nav-logout">Logout</a>
+      <a href="/">Home</a>
+      <span style="color: var(--muted);">|</span>
+      <span id="user-name" style="color: white; font-weight: 600;">User</span>
+      <button onclick="localStorage.clear(); window.location.href='/'" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:600;">Logout</button>
     </div>
   </nav>
 
-  <div class="dashboard-wrap">
-    <div class="dash-header">
-      <h1>Dashboard</h1>
-      <div class="user-info">Signed in as <strong id="user-name">…</strong></div>
-    </div>
+  <section style="padding-top: 4rem;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800;">Your Dashboard</h1>
+    <p style="color: var(--muted); margin-bottom: 3rem;">Manage your obfuscated payloads and loader URLs.</p>
 
-    <div class="dashboard">
+    <div class="dashboard-grid">
       <div class="panel">
-        <h2>📤 Upload Script</h2>
-        <input id="s-name" placeholder="Script name" type="text"/>
-        <textarea id="s-code" placeholder="Paste your base64 obfuscated payload here (the .bin output from obfuscator.py)"></textarea>
-        <button class="action" id="upload-btn" onclick="uploadScript()">Upload</button>
+        <h2 style="margin-bottom: 1.5rem;">📤 Upload Payload</h2>
+        <input id="s-name" placeholder="Script Name (e.g., Universal ESP)" />
+        <textarea id="s-code" placeholder="Paste your encrypted .bin contents here..."></textarea>
+        <button class="action" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
         <div id="upload-result" class="result-box hidden"></div>
       </div>
 
       <div class="panel">
-        <h2>📦 Your Scripts</h2>
-        <div id="my-scripts"><div class="empty-state">Loading…</div></div>
+        <h2 style="margin-bottom: 1.5rem;">📦 Active Scripts</h2>
+        <div id="my-scripts"><p style="color: var(--muted);">Loading...</p></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script src="/assets/app.js"></script>
   <script>
-    // Check token AFTER app.js has executed its synchronous capture
-    if (!localStorage.getItem('token')) {
-      window.location.href = '/'
+    // Set username in nav
+    document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
+    
+    async function apiFetch(path, method = 'GET', body = null) {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      }
+      if (body) opts.body = JSON.stringify(body)
+      const res = await fetch(path, opts)
+      return res.json()
     }
-
-    const username = localStorage.getItem('username') || 'user'
-    document.getElementById('user-name').textContent = username
 
     async function uploadScript() {
       const btn = document.getElementById('upload-btn')
       const name = document.getElementById('s-name').value.trim()
       const content = document.getElementById('s-code').value.trim()
+      if (!name || !content) return alert('Name and payload required')
 
-      if (!name || !content) {
-        alert('Name and payload are required.')
-        return
-      }
-
-      btn.disabled = true
-      btn.textContent = 'Uploading…'
-
+      btn.disabled = true; btn.textContent = 'Deploying...'
       try {
-        const res = await apiFetch('/api/scripts', 'POST', {
-          name,
-          content,
-          is_public: true
-        })
-
+        const res = await apiFetch('/api/scripts', 'POST', { name, content, is_public: true })
         const box = document.getElementById('upload-result')
         box.classList.remove('hidden')
-
         if (res && res.slug) {
           const url = `${window.location.origin}/api/loader/${res.slug}`
-          const oneLiner = `loadstring(game:HttpGet("${url}"))()`
-          box.innerHTML = `
-            <p>✅ Uploaded successfully.</p>
-            <p>Loader URL:</p>
-            <pre>${url}</pre>
-            <p>Executor one-liner:</p>
-            <pre>${oneLiner}</pre>
-            <button class="action" style="margin-top:0.5rem" onclick="navigator.clipboard.writeText('${oneLiner.replace(/'/g, "\\'")}')">Copy one-liner</button>
-          `
+          box.innerHTML = `<p>✅ Deployed! Loader URL:</p><code style="display:block;margin-top:0.5rem;color:#10b981">loadstring(game:HttpGet("${url}"))()</code>`
           document.getElementById('s-name').value = ''
           document.getElementById('s-code').value = ''
-          loadMyScripts()
+          loadScripts()
         } else {
-          box.innerHTML = `<p style="color:var(--red)">Upload failed: ${res?.error || 'unknown error'}</p>`
+          box.innerHTML = `<p style="color:#ef4444">Error: ${res?.error}</p>`
         }
-      } catch (e) {
-        alert('Network error: ' + e.message)
-      } finally {
-        btn.disabled = false
-        btn.textContent = 'Upload'
-      }
+      } catch (e) { alert(e.message) }
+      btn.disabled = false; btn.textContent = 'Deploy Script'
     }
 
-    async function loadMyScripts() {
+    async function loadScripts() {
       const box = document.getElementById('my-scripts')
       try {
         const scripts = await apiFetch('/api/scripts', 'GET')
-        if (!Array.isArray(scripts) || scripts.length === 0) {
-          box.innerHTML = '<div class="empty-state">No scripts yet. Upload one to get started.</div>'
+        if (!Array.isArray(scripts) || !scripts.length) {
+          box.innerHTML = '<p style="color: var(--muted)">No scripts deployed yet.</p>'
           return
         }
-        box.innerHTML = scripts.map(s => {
-          const url = `${window.location.origin}/api/loader/${s.slug}`
-          const oneLiner = `loadstring(game:HttpGet("${url}"))()`
-          return `
-            <div class="script-card">
-              <strong>${escapeHtml(s.name)}</strong>
-              <div class="meta"><span>👁 ${s.hits || 0} hits</span><span>·</span><span>${new Date(s.created_at).toLocaleDateString()}</span></div>
-              <code>${oneLiner}</code>
-              <div class="actions">
-                <button onclick="navigator.clipboard.writeText('${oneLiner.replace(/'/g, "\\'")}')">Copy</button>
-                <button onclick="window.open('${url}','_blank')">Test</button>
-                <button class="danger" onclick="deleteScript('${s.slug}')">Delete</button>
-              </div>
-            </div>
-          `
-        }).join('')
+        box.innerHTML = scripts.map(s => `
+          <div class="script-card">
+            <strong>${s.name}</strong>
+            <span style="font-size:0.8rem;color:var(--muted)">👁 ${s.hits || 0} hits</span>
+            <code>loadstring(game:HttpGet("${window.location.origin}/api/loader/${s.slug}"))()</code>
+          </div>
+        `).join('')
       } catch (e) {
-        box.innerHTML = `<div class="empty-state">Error loading scripts: ${e.message}</div>`
+        box.innerHTML = `<p style="color: #ef4444">Error loading scripts.</p>`
       }
     }
 
-    async function deleteScript(slug) {
-      if (!confirm('Delete this script?')) return
-      const res = await apiFetch('/api/scripts?slug=' + encodeURIComponent(slug), 'DELETE')
-      if (res.ok) loadMyScripts()
-      else alert('Delete failed: ' + (res.error || 'unknown'))
+    // Only load scripts if we made it past the app.js check
+    if (localStorage.getItem('token')) {
+      loadScripts();
     }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-    }
-
-    document.getElementById('nav-logout').onclick = (e) => { e.preventDefault(); logout() }
-
-    loadMyScripts()
   </script>
 </body>
 </html>
