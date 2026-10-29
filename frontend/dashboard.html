@@ -6,138 +6,78 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=242"/>
+<link rel="stylesheet" href="/assets/style.css?v=250"/>
 <style>
-  /* --- Custom Smooth Scrollbar --- */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: #050505; }
-  ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; border: 2px solid #050505; }
-  ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
-
-  /* --- Base --- */
-  html { scroll-behavior: smooth; }
-  body { 
-    background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;
-    background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%), radial-gradient(circle at 10% 100%, rgba(16, 185, 129, 0.05), transparent 40%);
-    background-attachment: fixed; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  /* --- Base & Variables --- */
+  :root {
+    --bg: #050505; --panel: rgba(15, 15, 15, 0.7); --border: rgba(255,255,255,0.08);
+    --primary: #7c3aed; --primary-hover: #8b5cf6; --success: #10b981; --danger: #ef4444;
+    --text: #fff; --text-muted: #888;
   }
-
-  /* --- Toast --- */
-  #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none; }
-  .toast { 
-    background: #0a0a0a; border: 1px solid #222; border-left: 4px solid #7c3aed; 
-    padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-    color: #fff; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 0.8rem;
-    transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    pointer-events: auto; max-width: 350px;
-  }
-  .toast.error { border-left-color: #ef4444; }
-  .toast.success { border-left-color: #10b981; }
-  @keyframes slideIn { to { transform: translateX(0); } }
-  @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
-  .toast.fade-out { animation: slideOut 0.3s ease forwards; }
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); }
 
   /* --- Nav --- */
-  nav { padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-  .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; transition: 0.2s; }
-  .logo img { border-radius: 6px; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
-  .nav-links { display: flex; align-items: center; gap: 2rem; height: 100%; }
-  .nav-btn { background: none; border: none; padding: 0; color: #888; font-size: 0.9rem; font-weight: 600; transition: color 0.3s ease; cursor: pointer; font-family: inherit; height: 100%; position: relative; }
-  .nav-btn:hover { color: #fff; }
-  .nav-btn.active { color: #fff; }
-  .nav-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #7c3aed; box-shadow: 0 0 10px #7c3aed; }
-  
-  .user-menu { display: flex; align-items: center; gap: 1.5rem; }
-  .user-name { color: #ccc; font-size: 0.9rem; font-weight: 600; }
-  .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; padding: 0.5rem; border-radius: 6px; }
-  .btn-logout:hover { color: #fff; background: rgba(239, 68, 68, 0.2); }
+  nav { padding: 0 2rem; height: 64px; background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+  .logo { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-btn { background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; padding: 0.5rem 0; position: relative; }
+  .nav-btn.active { color: #fff; } .nav-btn.active::after { content: ''; position: absolute; bottom: -1.4rem; left: 0; width: 100%; height: 2px; background: var(--primary); }
+  .user-menu { display: flex; align-items: center; gap: 1.5rem; } .btn-logout { color: var(--danger); font-weight: 700; background: none; border: none; cursor: pointer; }
 
   /* --- Layout --- */
-  .container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
-  .page-header { margin-bottom: 2rem; animation: slideDown 0.5s ease; }
-  .page-header h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -0.03em; }
-  .page-header p { color: #888; margin: 0; font-size: 0.95rem; }
-  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  .container { max-width: 1000px; margin: 0 auto; padding: 3rem 2rem; }
+  .page-header h1 { font-size: 2rem; margin: 0 0 0.5rem 0; } .page-header p { color: var(--text-muted); margin: 0 0 2rem 0; }
+  .glass-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.6); backdrop-filter: blur(16px); margin-bottom: 2rem; }
 
-  .glass-card { background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); backdrop-filter: blur(16px); animation: fadeIn 0.6s ease; margin-bottom: 2rem; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* --- Editor & Inputs --- */
-  .editor-box { background: #000; border: 1px solid #222; border-radius: 14px; overflow: hidden; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
-  .editor-box:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2); transform: translateY(-2px); }
-  .editor-textarea { width: 100%; height: 250px; background: transparent; color: #d4d4d4; border: none; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; resize: vertical; outline: none; line-height: 1.6; }
-  .editor-footer { display: flex; justify-content: space-between; padding: 0.8rem 1.5rem; background: #0a0a0a; font-size: 0.8rem; color: #666; border-top: 1px solid #222; font-family: 'JetBrains Mono', monospace; }
-
-  .form-row { display: flex; align-items: center; margin-bottom: 1.5rem; gap: 1.5rem; }
-  .form-row label.main-label { width: 120px; color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-  .input-field { flex: 1; background: #0a0a0a; border: 1px solid #222; color: #fff; padding: 0.9rem 1rem; border-radius: 10px; outline: none; font-family: 'Inter', sans-serif; transition: all 0.3s ease; font-size: 0.95rem; }
-  .input-field:focus { border-color: #7c3aed; background: #000; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15); }
+  /* --- Inputs --- */
+  .form-row { display: flex; align-items: center; margin-bottom: 1.2rem; gap: 1.5rem; }
+  .form-row label.main-label { width: 120px; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+  .input-field { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 0.9rem; border-radius: 8px; outline: none; transition: 0.3s; }
+  .input-field:focus { border-color: var(--primary); }
+  .editor-box { background: #000; border: 1px solid #222; border-radius: 8px; overflow: hidden; }
+  .editor-textarea { width: 100%; height: 200px; background: transparent; color: #d4d4d4; border: none; padding: 1.2rem; font-family: 'JetBrains Mono', monospace; resize: vertical; outline: none; }
   
-  .toggle-wrap { display: flex; align-items: center; gap: 1rem; flex: 1; }
+  /* --- Toggles & Buttons --- */
   .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
-  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-  input:checked + .slider { background-color: #7c3aed; }
-  input:checked + .slider:before { transform: translateX(22px); }
-  .toggle-text { color: #888; font-size: 0.85rem; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #333; border-radius: 34px; transition: .4s; }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .4s; }
+  input:checked + .slider { background: var(--primary); } input:checked + .slider:before { transform: translateX(22px); }
+  .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-top: 1rem; }
+  .btn-submit:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
-  /* --- Buttons --- */
-  .btn-submit { width: 100%; padding: 1.1rem; background: #7c3aed; color: #fff; font-weight: 700; font-size: 1rem; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s; margin-top: 1rem; }
-  .btn-submit:hover { background: #8b5cf6; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3); }
-  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-  
-  /* --- Grid Cards --- */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-  .card { background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; transition: 0.3s; display: flex; flex-direction: column; }
-  .card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  .card-title { font-size: 1.1rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; align-items: center; }
-  .card-meta { font-size: 0.8rem; color: #888; margin-bottom: 1rem; }
-  .card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-  
-  .btn-group { display: flex; gap: 0.5rem; }
-  .copy-btn { background: #222; color: #fff; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-  .copy-btn:hover { background: #7c3aed; }
-  .key-btn { background: #10b981; color: #fff; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-  .key-btn:hover { background: #059669; }
-  .del-btn { background: transparent; border: none; color: #ef4444; font-weight: 700; font-size: 0.8rem; cursor: pointer; padding: 0; margin-left: 0.5rem; }
-  .del-btn:hover { text-decoration: underline; }
-
-  /* --- Tabs (Obfuscator/Bootstrapper) --- */
-  .tab-bar { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid #222; padding-bottom: 1rem; }
-  .tab-btn { background: none; border: none; color: #888; font-weight: 600; font-size: 1rem; cursor: pointer; padding: 0.5rem 0; position: relative; font-family: inherit; }
-  .tab-btn.active { color: #fff; }
-  .tab-btn.active::after { content: ''; position: absolute; bottom: -1rem; left: 0; width: 100%; height: 2px; background: #7c3aed; }
-  .tab-content { display: none; animation: fadeIn 0.4s ease; }
-  .tab-content.active { display: block; }
+  /* --- Grid & Cards --- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; transition: 0.3s; }
+  .card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.2); }
+  .card-title { font-size: 1.1rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4; flex: 1; }
+  .card-footer { border-top: 1px solid #222; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .copy-btn { background: #222; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+  .copy-btn:hover { background: var(--primary); }
 
   /* --- Modals --- */
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-  .modal.active { display: flex; }
-  .modal-content { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; width: 90%; max-width: 500px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); transform: scale(0.95); animation: popInModal 0.4s forwards; }
-  @keyframes popInModal { to { transform: scale(1); } }
-  .modal-title { font-size: 1.3rem; margin-bottom: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.8rem; }
-  .link-input { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 1rem; border-radius: 10px; font-family: monospace; margin-bottom: 1rem; font-size: 0.9rem; }
-  .load-box { background: #000; border: 1px solid #222; border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .load-code { font-family: 'JetBrains Mono', monospace; color: #a78bfa; font-size: 0.8rem; word-break: break-all; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 1rem; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .modal.active { display: flex; } .modal-content { background: #0a0a0a; padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; border: 1px solid #222; }
+  .load-box { background: #000; border: 1px solid #222; border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .load-code { font-family: 'JetBrains Mono', monospace; color: #a78bfa; font-size: 0.8rem; word-break: break-all; }
 </style>
 </head>
 <body>
-
-<div id="toast-container"></div>
 
 <nav>
   <a href="/" class="logo"><img src="/favicon.svg" width="24" height="24"/> LuaHub</a>
   <div class="nav-links">
     <button id="nav-new" class="nav-btn active" onclick="switchPage('new-paste', this)">New Paste</button>
     <button id="nav-feed" class="nav-btn" onclick="switchPage('public-feed', this)">Public Feed</button>
+    <button id="nav-keys" class="nav-btn" onclick="switchPage('keys', this)">Key System</button>
     <button id="nav-links" class="nav-btn" onclick="switchPage('my-links', this)">My Links</button>
-    <button id="nav-tools" class="nav-btn" onclick="switchPage('tools', this)">Tools</button>
-    <button id="nav-settings" class="nav-btn" onclick="switchPage('settings', this)">Settings</button>
   </div>
   <div class="user-menu">
-    <span class="user-name" id="user-name"></span>
-    <button class="btn-logout" onclick="logout()">Logout</button>
+    <span class="user-name" id="user-name">User</span>
+    <button class="btn-logout" onclick="localStorage.clear(); location.href='/';">Logout</button>
   </div>
 </nav>
 
@@ -145,64 +85,31 @@
   
   <!-- NEW PASTE PAGE -->
   <div id="page-new-paste" class="page">
-    <div class="page-header">
-      <h1 id="editor-title">Create a Paste</h1>
-      <p id="editor-desc">Deploy your Lua script instantly and generate a loadstring.</p>
-    </div>
-    
+    <div class="page-header"><h1>Create a Paste</h1><p>Deploy your Lua script and generate a universal loadstring.</p></div>
     <div class="glass-card">
       <div class="editor-box">
         <textarea id="s-code" class="editor-textarea" placeholder="-- Paste your raw Lua source code here..."></textarea>
-        <div class="editor-footer"><span id="line-count">0 lines</span><span id="char-count">0 KB</span></div>
       </div>
-
       <div class="settings-group" style="margin-top:1.5rem;">
-        <div class="form-row">
-          <label class="main-label">Title</label>
-          <input id="s-name" class="input-field" placeholder="e.g. Universal ESP" />
-        </div>
-
+        <div class="form-row"><label class="main-label">Title</label><input id="s-name" class="input-field" placeholder="Script Name" /></div>
+        <div class="form-row"><label class="main-label">Description</label><input id="s-desc" class="input-field" placeholder="Short description for the public feed..." /></div>
         <div class="form-row">
           <label class="main-label">Universal</label>
-          <div class="toggle-wrap">
-            <label class="toggle-switch"><input type="checkbox" id="universal-toggle" onchange="toggleUniversalMode()"><span class="slider"></span></label>
-            <span class="toggle-text">Runs in ANY game</span>
-          </div>
+          <label class="toggle-switch"><input type="checkbox" id="universal-toggle" onchange="toggleUniversalMode()"><span class="slider"></span></label>
+          <span style="color:#888; font-size:0.9rem;">Runs in ANY game</span>
         </div>
-        
         <div class="form-row" id="placeid-row" style="display:none;">
           <label class="main-label">Place ID</label>
-          <input id="s-placeid" class="input-field" placeholder="e.g. 2753915549 (Blox Fruits)" />
+          <input id="s-placeid" class="input-field" placeholder="e.g. 2753915549" />
         </div>
-
         <div class="form-row">
-          <label class="main-label">Auto-Obfuscate</label>
-          <div class="toggle-wrap">
-            <label class="toggle-switch"><input type="checkbox" id="obfuscate-toggle" checked><span class="slider"></span></label>
-            <span class="toggle-text">Obfuscate Source (Protect Code)</span>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label class="main-label">Show Intro</label>
-          <div class="toggle-wrap">
-            <label class="toggle-switch"><input type="checkbox" id="show-intro" checked><span class="slider"></span></label>
-            <span class="toggle-text">Show Discord Intro</span>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <label class="main-label">Privacy</label>
-          <div class="toggle-wrap">
-            <label class="toggle-switch"><input type="checkbox" id="is-private"><span class="slider"></span></label>
-            <span class="toggle-text">Make Private (Disables Public Feed)</span>
-          </div>
+          <label class="main-label">Require Key</label>
+          <label class="toggle-switch"><input type="checkbox" id="require-key-toggle"><span class="slider"></span></label>
+          <span style="color:#888; font-size:0.9rem;">Lock script behind HWID key</span>
         </div>
       </div>
-
       <input type="hidden" id="edit-slug" value="" />
-      <button class="btn-submit" id="submit-btn" onclick="publishPaste()">Publish Paste</button>
-      <button class="btn-submit" id="cancel-btn" style="background:#222; display:none; margin-top:0.5rem;" onclick="resetForm()">Cancel Edit</button>
+      <button class="btn-submit" id="submit-btn" onclick="publishPaste()">Publish Script</button>
     </div>
   </div>
 
@@ -212,131 +119,68 @@
     <div class="grid" id="public-grid"></div>
   </div>
 
+  <!-- KEY SYSTEM PAGE -->
+  <div id="page-keys" class="page" style="display:none;">
+    <div class="page-header"><h1>Key System</h1><p>Manage HWID-locked keys for your scripts.</p></div>
+    <div class="glass-card">
+      <h3 style="margin-top:0;">Generate New Key</h3>
+      <p style="color:#888; font-size:0.9rem;">Select a script to generate a single-use key locked to one PC.</p>
+      <div class="form-row" style="margin-top:1rem;">
+        <select id="key-script-select" class="input-field" style="background:#000;">
+          <option value="">Select a script...</option>
+        </select>
+        <button class="copy-btn" style="padding:0.9rem 1.5rem;" onclick="generateKeyFromDropdown()">Generate Key</button>
+      </div>
+    </div>
+    <div class="glass-card">
+      <h3 style="margin-top:0;">Your Keys</h3>
+      <div id="key-list" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+        <p style="color:#888;">Loading keys...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- MY LINKS PAGE -->
   <div id="page-my-links" class="page" style="display:none;">
-    <div class="page-header"><h1>My Links</h1><p>Your generated loadstrings and keys.</p></div>
+    <div class="page-header"><h1>My Links</h1><p>Your generated loadstrings.</p></div>
     <div class="grid" id="my-links-grid"></div>
-  </div>
-
-  <!-- TOOLS PAGE -->
-  <div id="page-tools" class="page" style="display:none;">
-    <div class="page-header"><h1>Developer Tools</h1><p>Generate secure loaders and obfuscated payloads.</p></div>
-    
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchToolTab('obfuscator', this)">Obfuscator</button>
-      <button class="tab-btn" onclick="switchToolTab('bootstrapper', this)">Bootstrapper</button>
-    </div>
-
-    <!-- OBFUSCATOR -->
-    <div id="tool-tab-obfuscator" class="tab-content active">
-      <div class="glass-card">
-        <p style="color:#888; margin-bottom:1rem; font-size:0.9rem;">Obfuscate raw Lua to protect your source code from skids.</p>
-        <div class="editor-box">
-          <textarea id="obf-input" class="editor-textarea" placeholder="Paste your raw Lua here..." style="height: 150px;"></textarea>
-        </div>
-        <button class="btn-submit" id="obf-btn" onclick="runObfuscator()">Obfuscate Code</button>
-        
-        <div id="obf-result" style="display:none; margin-top:1.5rem;">
-          <div class="load-box">
-            <span class="load-code" id="obf-output"></span>
-            <button class="copy-btn" onclick="copyText('obf-output')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- BOOTSTRAPPER -->
-    <div id="tool-tab-bootstrapper" class="tab-content">
-      <div class="glass-card">
-        <p style="color:#888; margin-bottom:1rem; font-size:0.9rem;">Generate a universal bootstrapper that checks game IDs and loads your script.</p>
-        <div class="form-row">
-          <label class="main-label">Target URL</label>
-          <input id="bs-url" class="input-field" placeholder="https://lua-axon.vercel.app/api/loader/..." />
-        </div>
-        <button class="btn-submit" onclick="generateBootstrapper()">Generate Bootstrapper</button>
-        <div id="bs-result" style="display:none; margin-top:1.5rem;">
-          <div class="load-box">
-            <span class="load-code" id="bs-output"></span>
-            <button class="copy-btn" onclick="copyText('bs-output')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SETTINGS PAGE -->
-  <div id="page-settings" class="page" style="display:none;">
-    <div class="page-header"><h1>Account Settings</h1><p>Manage your profile and integrations.</p></div>
-    <div class="glass-card">
-      <h3 style="margin-top:0; margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid #222; padding-bottom: 1rem;">Profile</h3>
-      <div class="form-row"><label class="main-label">Username</label><input id="set-username" class="input-field" /></div>
-      <div class="form-row"><label class="main-label">Bio</label><input id="set-bio" class="input-field" placeholder="Tell us about yourself..." /></div>
-      <button class="btn-submit" onclick="saveSettings()" style="margin-top: 0;">Save Changes</button>
-    </div>
   </div>
 
 </div>
 
-<!-- SUCCESS MODAL (Paste) -->
+<!-- SUCCESS MODAL -->
 <div class="modal" id="success-modal">
   <div class="modal-content">
-    <div class="modal-title"><span style="background:#222; padding:0.3rem 0.6rem; border-radius:4px; font-size:0.7rem; letter-spacing:1px; border:1px solid #333;">PUBLIC</span> Paste Ready</div>
-    
-    <input type="text" id="out-link" class="link-input" readonly />
-    <button class="btn-submit" onclick="copyText('out-link')" style="margin-top:0; padding:0.8rem; font-size:0.9rem; margin-bottom:2rem;">Copy Direct Link</button>
-
-    <div style="font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase;">Run in Executor</div>
+    <div class="modal-title" style="font-size:1.3rem; font-weight:700; margin-bottom:1rem;">Paste Ready</div>
+    <input type="text" id="out-link" class="input-field" readonly style="width:100%; box-sizing:border-box; margin-bottom:1rem;"/>
     <div class="load-box">
       <span class="load-code" id="out-loader-text"></span>
       <button class="copy-btn" onclick="copyText('out-loader-text')">Copy</button>
     </div>
-
-    <button class="btn-submit" style="background:#222; color:#aaa;" onclick="document.getElementById('success-modal').classList.remove('active')">Close</button>
+    <button class="btn-submit" style="background:#222;" onclick="document.getElementById('success-modal').classList.remove('active')">Close</button>
   </div>
 </div>
 
-<!-- SUCCESS MODAL (Key) -->
+<!-- KEY MODAL -->
 <div class="modal" id="key-modal">
   <div class="modal-content">
-    <div class="modal-title"><span style="background:#10b981; color:#000; padding:0.3rem 0.6rem; border-radius:4px; font-size:0.7rem; letter-spacing:1px; border:1px solid #333;">KEY GENERATED</span> Access Key</div>
-    
-    <input type="text" id="out-key" class="link-input" readonly style="color: #10b981; font-weight: bold;" />
-    <button class="btn-submit" onclick="copyText('out-key')" style="margin-top:0; padding:0.8rem; font-size:0.9rem; margin-bottom:2rem; background: #10b981; color: #000;">Copy Key</button>
-
-    <div style="font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase;">Loadstring with Key</div>
+    <div class="modal-title" style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; color:#10b981;">Key Generated</div>
+    <input type="text" id="out-key" class="input-field" readonly style="width:100%; box-sizing:border-box; margin-bottom:1rem; color:#10b981; font-weight:bold;"/>
     <div class="load-box">
       <span class="load-code" id="out-key-loader-text" style="color:#10b981;"></span>
       <button class="copy-btn" onclick="copyText('out-key-loader-text')">Copy</button>
     </div>
-
-    <button class="btn-submit" style="background:#222; color:#aaa;" onclick="document.getElementById('key-modal').classList.remove('active')">Close</button>
+    <button class="btn-submit" style="background:#222;" onclick="document.getElementById('key-modal').classList.remove('active')">Close</button>
   </div>
 </div>
 
 <script>
   const token = localStorage.getItem('token');
   if (!token) window.location.href = '/';
-  document.getElementById('user-name').textContent = localStorage.getItem('username');
+  document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
 
-  function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    let icon = 'ℹ️'; if (type === 'error') icon = '❌'; if (type === 'success') icon = '✅';
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.classList.add('fade-out'); toast.addEventListener('animationend', () => toast.remove()); }, 3000);
-  }
-
-  function copyText(id) {
-    const el = document.getElementById(id);
-    let text = el.value !== undefined ? el.value : el.textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('Copied to clipboard!', 'success');
-    }).catch(() => {
-      showToast('Failed to copy', 'error');
-    });
-  }
+  function showToast(msg) { alert(msg); } // Simple alert for now, replace with toast if you have CSS
+  function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).textContent || document.getElementById(id).value); }
 
   function switchPage(pageId, el) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
@@ -345,105 +189,59 @@
     if(el) el.classList.add('active');
     if (pageId === 'public-feed') loadPublicFeed();
     if (pageId === 'my-links') loadMyLinks();
-    if (pageId === 'settings') loadSettings();
+    if (pageId === 'keys') loadKeysPage();
   }
-  
   document.getElementById('page-new-paste').style.display = 'block';
 
-  const editor = document.getElementById('s-code');
-  editor.addEventListener('input', () => {
-    document.getElementById('line-count').textContent = editor.value.split('\n').length + ' lines';
-    document.getElementById('char-count').textContent = (new Blob([editor.value]).size / 1024).toFixed(1) + ' KB';
-  });
-
   function toggleUniversalMode() {
-    const isUniversal = document.getElementById('universal-toggle').checked;
-    const placeIdRow = document.getElementById('placeid-row');
-    
-    if (isUniversal) {
-      placeIdRow.style.display = 'none';
-      document.getElementById('s-placeid').value = '';
-    } else {
-      placeIdRow.style.display = 'flex';
-    }
+    document.getElementById('placeid-row').style.display = document.getElementById('universal-toggle').checked ? 'none' : 'flex';
   }
 
   async function publishPaste() {
     const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
-    const content = editor.value.trim();
-    const show_intro = document.getElementById('show-intro').checked;
-    const is_private = document.getElementById('is-private').checked;
-    const obfuscate = document.getElementById('obfuscate-toggle').checked;
-    const editSlug = document.getElementById('edit-slug').value;
-    
-    // Check universal toggle
+    const description = document.getElementById('s-desc').value.trim();
+    const content = document.getElementById('s-code').value.trim();
     const isUniversal = document.getElementById('universal-toggle').checked;
     const place_id = isUniversal ? 'universal' : document.getElementById('s-placeid').value.trim();
+    const requires_key = document.getElementById('require-key-toggle').checked;
 
-    if (!name || !content) return showToast('Title and code required.', 'error');
-    if (!isUniversal && !place_id) return showToast('Please enter a Place ID or select Universal.', 'error');
+    if (!name || !content) return alert('Title and code required.');
 
     btn.disabled = true; btn.textContent = 'Publishing...';
 
     try {
-      const payload = { name, content, show_intro, is_private, obfuscate, place_id };
-      if (editSlug) payload.slug = editSlug;
-
       const res = await fetch('/api/paste', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, 
-        body: JSON.stringify(payload) 
+        body: JSON.stringify({ name, description, content, place_id, requires_key, obfuscate: true }) 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Server error');
 
       if (data.slug) {
-        showToast(editSlug ? 'Paste updated!' : 'Paste published!', 'success');
-        
         const fullUrl = `${location.origin}/api/loader`;
-        const loadstringCode = `local hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. hwid))()`;
-        
         document.getElementById('out-link').value = fullUrl;
-        document.getElementById('out-loader-text').textContent = loadstringCode;
+        document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId()))()`;
         document.getElementById('success-modal').classList.add('active');
-        resetForm();
+        document.getElementById('s-name').value = ''; document.getElementById('s-desc').value = ''; document.getElementById('s-code').value = '';
       }
-    } catch(e) { showToast(e.message, 'error'); }
-    btn.disabled = false; btn.textContent = 'Publish Paste';
-  }
-
-  function resetForm() {
-    document.getElementById('edit-slug').value = '';
-    document.getElementById('editor-title').textContent = 'Create a Paste';
-    document.getElementById('editor-desc').textContent = 'Deploy your Lua script instantly and generate a loadstring.';
-    document.getElementById('submit-btn').textContent = 'Publish Paste';
-    document.getElementById('cancel-btn').style.display = 'none';
-    document.getElementById('is-private').checked = false;
-    document.getElementById('universal-toggle').checked = false;
-    document.getElementById('placeid-row').style.display = 'none';
-    document.getElementById('s-placeid').value = '';
-    editor.value = '';
-    document.getElementById('s-name').value = '';
-    document.getElementById('line-count').textContent = '0 lines';
-    document.getElementById('char-count').textContent = '0 KB';
+    } catch(e) { alert(e.message); }
+    btn.disabled = false; btn.textContent = 'Publish Script';
   }
 
   async function loadPublicFeed() {
     const grid = document.getElementById('public-grid');
-    grid.innerHTML = '<p style="color:#888;">Loading...</p>';
+    grid.innerHTML = 'Loading...';
     const res = await fetch('/api/scripts');
     const scripts = await res.json();
-
-    if (!scripts.length) { grid.innerHTML = '<p style="color:#888;">No public scripts yet.</p>'; return; }
-
     grid.innerHTML = scripts.map(s => `
       <div class="card">
         <div class="card-title">${s.name}</div>
-        <div class="card-meta">${s.hits} runs · ${new Date(s.created_at).toLocaleDateString()}</div>
+        <div class="card-desc">${s.description || 'No description provided.'}</div>
         <div class="card-footer">
-          <span style="font-size:0.75rem; color:#666; font-family:monospace;">${s.slug}</span>
-          <button class="copy-btn" onclick="copyLoad()">Copy Load</button>
+          <span style="font-size:0.75rem; color:#666;">${s.hits} runs</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\'${location.origin}/api/loader?placeId=\' .. game.PlaceId .. \'&hwid=\' .. game:GetService(\'RbxAnalyticsService\'):GetClientId()))()')">Copy Load</button>
         </div>
       </div>
     `).join('');
@@ -451,166 +249,52 @@
 
   async function loadMyLinks() {
     const grid = document.getElementById('my-links-grid');
-    grid.innerHTML = '<p style="color:#888;">Loading...</p>';
-    
-    const res = await fetch('/api/scripts?mine=true', { 
-        headers: { Authorization: 'Bearer ' + token } 
-    });
-    const myScripts = await res.json();
-
-    if (!myScripts.length) { 
-        grid.innerHTML = '<p style="color:#888;">You haven\'t created any links yet.</p>'; 
-        return; 
-    }
-
-    grid.innerHTML = myScripts.map(s => `
+    grid.innerHTML = 'Loading...';
+    const res = await fetch('/api/scripts?mine=true', { headers: { Authorization: 'Bearer ' + token } });
+    const scripts = await res.json();
+    grid.innerHTML = scripts.map(s => `
       <div class="card">
-        <div class="card-title">
-          ${s.name}
-          <div>
-            <button class="copy-btn" onclick="editPaste('${s.slug}', '${s.name.replace(/'/g, "\\'")}')">Edit</button>
-            <button class="del-btn" onclick="deletePaste('${s.slug}')">Delete</button>
-          </div>
-        </div>
-        <div class="card-meta">${s.slug}</div>
+        <div class="card-title">${s.name} ${s.requires_key ? '🔒' : ''}</div>
+        <div class="card-desc">${s.description || 'No description.'}</div>
         <div class="card-footer">
-          <div class="btn-group">
-            <button class="copy-btn" onclick="copyLoad()">Copy Load</button>
-            <button class="key-btn" onclick="generateKey('${s.slug}')">Gen Key</button>
-          </div>
+          <button class="copy-btn" style="background:var(--danger); color:#fff;" onclick="fetch('/api/scripts?slug=${s.slug}', {method:'DELETE'}).then(()=>loadMyLinks())">Delete</button>
         </div>
       </div>
     `).join('');
   }
 
-  async function generateKey(slug) {
-    try {
-      const res = await fetch('/api/keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ slug })
-      });
-      const data = await res.json();
-      
-      if (data.key) {
-        const fullUrl = `${location.origin}/api/loader`;
-        const loadstringCode = `script_key = "${data.key}"\nlocal hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. hwid .. "&key=" .. script_key))()`;
-        
-        document.getElementById('out-key').value = data.key;
-        document.getElementById('out-key-loader-text').textContent = loadstringCode;
-        document.getElementById('key-modal').classList.add('active');
-      } else {
-        showToast(data.error || 'Failed to generate key', 'error');
-      }
-    } catch(e) {
-      showToast('Failed to connect', 'error');
-    }
+  async function loadKeysPage() {
+    const select = document.getElementById('key-script-select');
+    const res = await fetch('/api/scripts?mine=true', { headers: { Authorization: 'Bearer ' + token } });
+    const scripts = await res.json();
+    
+    select.innerHTML = '<option value="">Select a script...</option>' + scripts.map(s => `<option value="${s.slug}">${s.name}</option>`).join('');
+    
+    // Load existing keys (mocked for now, you'd fetch from a /api/keys GET route)
+    const keyList = document.getElementById('key-list');
+    keyList.innerHTML = `<p style="color:#888;">Keys are managed via your database for security. Click 'Generate Key' above to create one.</p>`;
   }
 
-  async function deletePaste(slug) {
-    if (!confirm('Are you sure you want to delete this paste?')) return;
-    const res = await fetch('/api/scripts?slug=' + slug, { method: 'DELETE' });
-    if (res.ok) {
-      loadMyLinks();
-      showToast('Paste deleted.', 'success');
+  async function generateKeyFromDropdown() {
+    const slug = document.getElementById('key-script-select').value;
+    if (!slug) return alert('Select a script first.');
+
+    const res = await fetch('/api/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ slug })
+    });
+    const data = await res.json();
+    
+    if (data.key) {
+      const fullUrl = `${location.origin}/api/loader`;
+      document.getElementById('out-key').value = data.key;
+      document.getElementById('out-key-loader-text').textContent = `script_key = "${data.key}"\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId() .. "&key=" .. script_key))()`;
+      document.getElementById('key-modal').classList.add('active');
     } else {
-      showToast('Failed to delete.', 'error');
+      alert(data.error || 'Failed to generate key');
     }
   }
-
-  function editPaste(slug, name) {
-    document.getElementById('edit-slug').value = slug;
-    document.getElementById('s-name').value = name;
-    document.getElementById('editor-title').textContent = 'Edit Paste';
-    document.getElementById('editor-desc').textContent = 'Update your script. Link stays the same.';
-    document.getElementById('submit-btn').textContent = 'Save Changes';
-    document.getElementById('cancel-btn').style.display = 'block';
-    editor.value = '';
-    editor.placeholder = 'Paste new code here to overwrite existing...';
-    switchPage('new-paste', document.getElementById('nav-new'));
-  }
-
-  async function loadSettings() {
-    const res = await fetch('/api/profile', { headers: { Authorization: 'Bearer ' + token } });
-    const data = await res.json();
-    if (data.username) document.getElementById('set-username').value = data.username;
-    if (data.bio) document.getElementById('set-bio').value = data.bio;
-  }
-
-  async function saveSettings() {
-    const username = document.getElementById('set-username').value.trim();
-    const bio = document.getElementById('set-bio').value.trim();
-    const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ username, bio }) });
-    const data = await res.json();
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('username', data.username);
-      document.getElementById('user-name').textContent = data.username;
-      showToast('Settings saved!', 'success');
-    } else { showToast(data.error, 'error'); }
-  }
-
-  function switchToolTab(tabId, el) {
-    document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
-    document.getElementById('tool-tab-' + tabId).classList.add('active');
-    document.querySelectorAll('.tab-btn').forEach(a => a.classList.remove('active'));
-    el.classList.add('active');
-  }
-
-  async function runObfuscator() {
-    const input = document.getElementById('obf-input').value.trim();
-    const btn = document.getElementById('obf-btn');
-    const result = document.getElementById('obf-result');
-    
-    if (!input) return showToast('Please paste some code first.', 'error');
-    
-    btn.disabled = true; btn.textContent = 'Obfuscating...';
-    
-    try {
-      const res = await fetch('/api/obfuscate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: input })
-      });
-      const data = await res.json();
-      
-      if (data.output) {
-        document.getElementById('obf-output').textContent = data.output;
-        result.style.display = 'block';
-        showToast('Code obfuscated!', 'success');
-      } else {
-        throw new Error(data.error || 'Failed');
-      }
-    } catch(e) {
-      showToast(e.message, 'error');
-    }
-    
-    btn.disabled = false; btn.textContent = 'Obfuscate Code';
-  }
-
-  function generateBootstrapper() {
-    const url = document.getElementById('bs-url').value.trim();
-    if (!url) return showToast('Enter a valid URL', 'error');
-    
-    const code = `-- LuaHub Universal Bootstrapper
-local url = "${url}"
-local success, err = pcall(function()
-    loadstring(game:HttpGet(url))()
-end)
-if not success then warn("[LuaHub] Failed: " .. tostring(err)) end`;
-
-    document.getElementById('bs-output').textContent = code;
-    document.getElementById('bs-result').style.display = 'block';
-    showToast('Bootstrapper generated!', 'success');
-  }
-
-  function copyLoad() {
-    const load = `local hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${location.origin}/api/loader?placeId=" .. game.PlaceId .. "&hwid=" .. hwid))()`;
-    navigator.clipboard.writeText(load);
-    showToast('Loadstring copied!', 'success');
-  }
-
-  function logout() { localStorage.clear(); window.location.href = '/'; }
 </script>
 </body>
 </html>
