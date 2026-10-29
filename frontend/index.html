@@ -6,7 +6,7 @@
   <title>LuaHub — Premium Script Hub</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=5"/>
+  <link rel="stylesheet" href="/assets/style.css?v=6"/>
 </head>
 <body>
   <nav>
@@ -18,11 +18,11 @@
       <a href="#scripts">Scripts</a>
       <a href="#keysystem">Key System</a>
       <a href="/dashboard" id="nav-dash" style="display:none; color:var(--accent); font-weight:700;">Dashboard</a>
-      <button id="login-btn" onclick="loginDiscord()" style="background:none; border:1px solid var(--accent); color:var(--accent); padding: 0.5rem 1rem; border-radius:8px; font-weight:600; cursor:pointer; transition:0.3s;">Login</button>
+      <div id="nav-profile" style="display:none; align-items:center;"></div>
+      <a href="/api/auth?action=login" id="login-btn" style="background:var(--accent); color:white; padding: 0.5rem 1rem; border-radius:8px; font-weight:600; text-decoration:none;">Login with Discord</a>
     </div>
   </nav>
 
-  <!-- Hero / Stats -->
   <section class="hero">
     <h1>Welcome to LuaHub.<br/><span>The fastest script hub.</span></h1>
     <p>Secure, obfuscated, and lightning fast script delivery.</p>
@@ -34,7 +34,6 @@
     </div>
   </section>
 
-  <!-- Search & Grid -->
   <section id="scripts" style="padding-top: 2rem;">
     <div class="search-bar">
       <input type="text" id="search-input" placeholder="Search scripts..." onkeyup="filterScripts()">
@@ -44,19 +43,68 @@
     </div>
   </section>
 
-  <!-- Key System Info -->
   <section id="keysystem" style="margin-bottom: 4rem;">
     <div class="feat-card" style="max-width: 800px; margin: 0 auto; text-align: center;">
       <h2 style="font-size: 2rem; margin-bottom: 1rem;">🔑 Get your Key</h2>
-      <p style="color: var(--muted); margin-bottom: 2rem;">You need a valid key to execute premium scripts. Generate yours below.</p>
-      <button class="btn-primary" onclick="getKey()" style="width: 100%;">Generate Key (Linkvertise)</button>
-      <div id="key-display" class="hidden" style="margin-top: 1.5rem; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px;">
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Your Key:</p>
-        <code id="key-text" style="font-size: 1.2rem; color: #10b981; font-weight: bold; letter-spacing: 2px;"></code>
-      </div>
+      <p style="color: var(--muted); margin-bottom: 2rem;">Generate a key to access premium scripts.</p>
+      <a href="https://boostylink.com/links" target="_blank" class="btn-primary" style="display:block; width: 100%; text-decoration:none;">Generate Key via BoostyLink</a>
     </div>
   </section>
 
-  <script src="/assets/app.js?v=5"></script>
+  <script src="/assets/app.js?v=6"></script>
+  <script>
+    let allScripts = [];
+    
+    async function loadScripts() {
+      const grid = document.getElementById('script-grid');
+      try {
+        const res = await fetch('/api/scripts');
+        allScripts = await res.json();
+        
+        document.getElementById('stat-scripts').textContent = allScripts.length;
+        let totalHits = allScripts.reduce((sum, s) => sum + (s.hits || 0), 0);
+        document.getElementById('stat-hits').textContent = totalHits;
+
+        if (!allScripts.length) {
+          grid.innerHTML = '<p style="color: var(--muted); grid-column: 1/-1; text-align: center;">No scripts uploaded yet.</p>';
+          return;
+        }
+        renderGrid(allScripts);
+      } catch (e) {
+        grid.innerHTML = '<p style="color: #ef4444; grid-column: 1/-1; text-align: center;">Failed to load scripts.</p>';
+      }
+    }
+
+    function renderGrid(scripts) {
+      const grid = document.getElementById('script-grid');
+      grid.innerHTML = scripts.map(s => {
+        const url = `${window.location.origin}/api/loader/${s.slug}`;
+        const loader = `loadstring(game:HttpGet("${url}"))()`;
+        return `
+          <div class="script-card">
+            <div class="script-header">
+              <div class="script-title">${s.name}</div>
+              <div class="script-author">${s.requires_key ? '<span style="color:#ef4444">KEY</span>' : 'FREE'}</div>
+            </div>
+            <div class="script-meta">
+              <span>👁 ${s.hits || 0} Executions</span>
+              <span>📅 ${new Date(s.created_at).toLocaleDateString()}</span>
+            </div>
+            <div class="script-code" onclick="navigator.clipboard.writeText('${loader.replace(/'/g, "\\'")}'); alert('Loader copied!')" title="Click to copy" style="cursor:pointer;">
+              ${loader}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterScripts() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const filtered = allScripts.filter(s => s.name.toLowerCase().includes(query));
+      renderGrid(filtered);
+    }
+
+    loadScripts();
+  </script>
 </body>
 </html>
