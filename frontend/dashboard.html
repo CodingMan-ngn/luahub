@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=241"/>
+<link rel="stylesheet" href="/assets/style.css?v=242"/>
 <style>
   /* --- Custom Smooth Scrollbar --- */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -161,8 +161,16 @@
           <label class="main-label">Title</label>
           <input id="s-name" class="input-field" placeholder="e.g. Universal ESP" />
         </div>
-        
+
         <div class="form-row">
+          <label class="main-label">Universal</label>
+          <div class="toggle-wrap">
+            <label class="toggle-switch"><input type="checkbox" id="universal-toggle" onchange="toggleUniversalMode()"><span class="slider"></span></label>
+            <span class="toggle-text">Runs in ANY game</span>
+          </div>
+        </div>
+        
+        <div class="form-row" id="placeid-row" style="display:none;">
           <label class="main-label">Place ID</label>
           <input id="s-placeid" class="input-field" placeholder="e.g. 2753915549 (Blox Fruits)" />
         </div>
@@ -348,17 +356,34 @@
     document.getElementById('char-count').textContent = (new Blob([editor.value]).size / 1024).toFixed(1) + ' KB';
   });
 
+  function toggleUniversalMode() {
+    const isUniversal = document.getElementById('universal-toggle').checked;
+    const placeIdRow = document.getElementById('placeid-row');
+    
+    if (isUniversal) {
+      placeIdRow.style.display = 'none';
+      document.getElementById('s-placeid').value = '';
+    } else {
+      placeIdRow.style.display = 'flex';
+    }
+  }
+
   async function publishPaste() {
     const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
-    const place_id = document.getElementById('s-placeid').value.trim();
     const content = editor.value.trim();
     const show_intro = document.getElementById('show-intro').checked;
     const is_private = document.getElementById('is-private').checked;
     const obfuscate = document.getElementById('obfuscate-toggle').checked;
     const editSlug = document.getElementById('edit-slug').value;
+    
+    // Check universal toggle
+    const isUniversal = document.getElementById('universal-toggle').checked;
+    const place_id = isUniversal ? 'universal' : document.getElementById('s-placeid').value.trim();
 
     if (!name || !content) return showToast('Title and code required.', 'error');
+    if (!isUniversal && !place_id) return showToast('Please enter a Place ID or select Universal.', 'error');
+
     btn.disabled = true; btn.textContent = 'Publishing...';
 
     try {
@@ -376,7 +401,6 @@
       if (data.slug) {
         showToast(editSlug ? 'Paste updated!' : 'Paste published!', 'success');
         
-        // SINGLE UNIVERSAL LOADSTRING
         const fullUrl = `${location.origin}/api/loader`;
         const loadstringCode = `local hwid = game:GetService("RbxAnalyticsService"):GetClientId()\nloadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. hwid))()`;
         
@@ -396,6 +420,8 @@
     document.getElementById('submit-btn').textContent = 'Publish Paste';
     document.getElementById('cancel-btn').style.display = 'none';
     document.getElementById('is-private').checked = false;
+    document.getElementById('universal-toggle').checked = false;
+    document.getElementById('placeid-row').style.display = 'none';
     document.getElementById('s-placeid').value = '';
     editor.value = '';
     document.getElementById('s-name').value = '';

@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
         
         return res.status(200).json({ 
           slug: data.slug, 
-          loader_url: `/api/loader?placeId=${place_id}` // Universal Loader URL
+          loader_url: `/api/loader?placeId=${place_id}` 
         });
       }
     } catch (err) {

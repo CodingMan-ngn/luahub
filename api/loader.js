@@ -6,11 +6,11 @@ module.exports = async (req, res) => {
   const placeId = req.query.placeId || req.query.place; 
   const hwid = req.query.hwid || "UNKNOWN_HWID";
 
-  // 1. Fetch the script for this specific game
+  // 1. Fetch the script (match specific Place ID OR universal fallback)
   const { data: script, error } = await supabase
     .from('scripts')
     .select('*')
-    .eq('place_id', placeId)
+    .or(`place_id.eq.${placeId},place_id.eq.universal,place_id.is.null`)
     .maybeSingle();
 
   if (error) {
@@ -118,9 +118,8 @@ end)
       return res.status(403).send('-- Invalid Key');
     }
 
-    // HWID Locking Logic using the new 'hwid' column
+    // HWID Locking Logic
     if (!dbKey.hwid) {
-      // First time use, lock it to this HWID
       await supabase.from('keys').update({ hwid: hwid }).eq('id', dbKey.id);
     } else if (dbKey.hwid !== hwid) {
       res.setHeader('Content-Type', 'text/plain');
