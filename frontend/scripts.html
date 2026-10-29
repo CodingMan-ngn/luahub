@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Scripts — LuaHub</title>
+  <link rel="stylesheet" href="/assets/style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">🌙 LuaHub</a>
+  <div class="nav-links">
+    <a href="/scripts">Browse</a>
+    <a href="/dashboard" id="nav-dash" style="display:none">Dashboard</a>
+    <span id="nav-user" style="color:var(--muted);font-size:.9rem"></span>
+    <a href="#" id="nav-login" onclick="openAuthModal()">Login</a>
+    <a href="#" id="nav-logout" style="display:none" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>🌐 Public Scripts</h1>
+  <p>Community-uploaded Roblox scripts — copy the loader and go.</p>
+</div>
+
+<div class="browse-grid" id="browse-grid">
+  <p style="color:var(--muted);padding:1rem">Loading scripts...</p>
+</div>
+
+<div id="auth-modal" class="modal hidden">
+  <div class="modal-box">
+    <span class="close" onclick="closeModal()">✕</span>
+    <h2 id="modal-title">Login</h2>
+    <input id="auth-email"    type="email"    placeholder="Email"/>
+    <input id="auth-username" type="text"     placeholder="Username" style="display:none"/>
+    <input id="auth-pass"     type="password" placeholder="Password"/>
+    <button onclick="submitAuth()" style="width:100%">Submit</button>
+    <div class="modal-error" id="modal-error"></div>
+    <p id="modal-toggle">No account? <a href="#" onclick="toggleModal()">Register</a></p>
+  </div>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  }
+
+  async function loadScripts() {
+    const grid = document.getElementById('browse-grid')
+    const data = await apiFetch('/api/scripts', 'GET')
+
+    if (!Array.isArray(data) || !data.length) {
+      grid.innerHTML = '<p style="color:var(--muted);padding:1rem">No public scripts yet — be the first to upload!</p>'
+      return
+    }
+
+    grid.innerHTML = data.map(s => {
+      const url = `${location.origin}/api/loader/${s.slug}`
+      const one = `loadstring(game:HttpGet("${url}"))()`
+      const by  = s.users ? s.users.username : 'unknown'
+      const date = new Date(s.created_at).toLocaleDateString()
+      return `
+        <div class="browse-card">
+          <h3>${escHtml(s.name)}</h3>
+          <div class="by">by ${escHtml(by)} · ${date}</div>
+          ${s.description ? `<p style="color:var(--muted);font-size:.85rem;margin-bottom:.5rem">${escHtml(s.description)}</p>` : ''}
+          <code>${escHtml(one)}</code>
+          <div class="browse-card-foot">
+            <span class="hits">👁 ${s.hits} executions</span>
+            <button class="btn-small" onclick="navigator.clipboard.writeText('${one.replace(/'/g,"\\'")}')">📋 Copy</button>
+          </div>
+        </div>
+      `
+    }).join('')
+  }
+
+  loadScripts()
+</script>
+</body>
+</html>

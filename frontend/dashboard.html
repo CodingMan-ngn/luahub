@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — LuaHub</title>
+  <link rel="stylesheet" href="/assets/style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">🌙 LuaHub</a>
+  <div class="nav-links">
+    <a href="/scripts">Browse</a>
+    <a href="/dashboard" id="nav-dash">Dashboard</a>
+    <span id="nav-user" style="color:var(--muted);font-size:.9rem"></span>
+    <a href="#" id="nav-login" onclick="openAuthModal()" style="display:none">Login</a>
+    <a href="#" id="nav-logout" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<div class="dashboard">
+
+  <!-- Upload panel -->
+  <div class="panel">
+    <h2>📤 Upload Script</h2>
+    <input  id="s-name" type="text"  placeholder="Script name (e.g. Dark Hub v2)"/>
+    <input  id="s-desc" type="text"  placeholder="Description (optional)"/>
+    <textarea id="s-code" rows="14"  placeholder="-- Paste your Lua code here..."></textarea>
+    <label>
+      <input type="checkbox" id="s-public" checked/>
+      Public (visible in Browse)
+    </label>
+    <button onclick="uploadScript()" style="width:100%">🚀 Upload & Get Loader URL</button>
+    <div id="upload-result" class="result hidden"></div>
+  </div>
+
+  <!-- My scripts panel -->
+  <div class="panel">
+    <h2>📁 Your Scripts</h2>
+    <div id="my-scripts"><p style="color:var(--muted)">Loading...</p></div>
+  </div>
+
+</div>
+
+<!-- Auth Modal (fallback if not logged in) -->
+<div id="auth-modal" class="modal hidden">
+  <div class="modal-box">
+    <span class="close" onclick="closeModal()">✕</span>
+    <h2 id="modal-title">Login</h2>
+    <input id="auth-email"    type="email"    placeholder="Email"/>
+    <input id="auth-username" type="text"     placeholder="Username" style="display:none"/>
+    <input id="auth-pass"     type="password" placeholder="Password"/>
+    <button onclick="submitAuth()" style="width:100%">Submit</button>
+    <div class="modal-error" id="modal-error"></div>
+    <p id="modal-toggle">No account? <a href="#" onclick="toggleModal()">Register</a></p>
+  </div>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+  // redirect to home if not logged in
+  if (!localStorage.getItem('token')) {
+    openAuthModal()
+  } else {
+    loadMyScripts()
+  }
+
+  async function uploadScript() {
+    const name    = document.getElementById('s-name').value.trim()
+    const desc    = document.getElementById('s-desc').value.trim()
+    const content = document.getElementById('s-code').value.trim()
+    const pub     = document.getElementById('s-public').checked
+    const box     = document.getElementById('upload-result')
+
+    if (!name || !content) {
+      box.classList.remove('hidden')
+      box.style.borderColor = 'var(--red)'
+      box.innerHTML = '<p>❌ Name and code are required.</p>'
+      return
+    }
+
+    box.classList.remove('hidden')
+    box.style.borderColor = 'var(--accent)'
+    box.innerHTML = '<p>⏳ Uploading...</p>'
+
+    const res = await apiFetch('/api/scripts', 'POST', { name, description: desc, content, is_public: pub })
+
+    if (res.slug) {
+      const loaderUrl = `${location.origin}/api/loader/${res.slug}`
+      const oneliner  = `loadstring(game:HttpGet("${loaderUrl}"))()`
+      box.style.borderColor = 'var(--green)'
+      box.innerHTML = `
+        <p>✅ Uploaded! Here's your loader:</p>
+        <pre>${oneliner}</pre>
+        <button onclick="navigator.clipboard.writeText('${oneliner.replace(/'/g,"\\'")}')">📋 Copy Loader</button>
+      `
+      loadMyScripts()
+      document.getElementById('s-name').value = ''
+      document.getElementById('s-desc').value = ''
+      document.getElementById('s-code').value = ''
+    } else {
+      box.style.borderColor = 'var(--red)'
+      box.innerHTML = `<p>❌ Error: ${res.error}</p>`
+    }
+  }
+
+  async function loadMyScripts() {
+    const box = document.getElementById('my-scripts')
+    const data = await apiFetch('/api/scripts', 'GET')
+
+    if (!Array.isArray(data) || !data.length) {
+      box.innerHTML = '<p style="color:var(--muted)">No scripts yet — upload one!</p>'
+      return
+    }
+
+    box.innerHTML = data.map(s => {
+      const url = `${location.origin}/api/loader/${s.slug}`
+      const one = `loadstring(game:HttpGet("${url}"))()`
+      return `
+        <div class="script-card">
+          <div class="script-card-head">
+            <strong>${escHtml(s.name)}</strong>
+            <span class="hits">👁 ${s.hits}</span>
+          </div>
+          ${s.description ? `<div class="desc">${escHtml(s.description)}</div>` : ''}
+          <code>${escHtml(one)}</code>
+          <div class="script-card-footer">
+            <button class="btn-small" onclick="navigator.clipboard.writeText('${one.replace(/'/g,"\\'")}')">📋 Copy</button>
+            <button class="btn-small btn-danger" onclick="deleteScript('${s.slug}')">🗑 Delete</button>
+          </div>
+        </div>
+      `
+    }).join('')
+  }
+
+  async function deleteScript(slug) {
+    if (!confirm('Delete this script?')) return
+    await apiFetch('/api/scripts?slug=' + slug, 'DELETE')
+    loadMyScripts()
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  }
+</script>
+</body>
+</html>
