@@ -10,24 +10,23 @@ function authUser(req) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // --- GET: Public Feed OR User's Scripts ---
   if (req.method === 'GET') {
     const user = authUser(req);
-    const { mine } = req.query; // If ?mine=true, fetch only user's scripts
+    const { mine } = req.query;
 
     let query = supabase
       .from('scripts')
-      .select('id, name, slug, hits, is_private, created_at, requires_key')
+      .select('id, name, description, slug, hits, is_private, created_at, requires_key')
+      .eq('is_deleted', false) // Hide deleted scripts
       .order('created_at', { ascending: false });
 
     if (mine && user) {
-      query = query.eq('owner_id', user.id); // Fetch only logged-in user's scripts
+      query = query.eq('owner_id', user.id);
     } else {
-      query = query.eq('is_private', false); // Public feed
+      query = query.eq('is_private', false);
     }
 
     const { data, error } = await query.limit(50);
@@ -35,11 +34,12 @@ module.exports = async (req, res) => {
     return res.status(200).json(data || []);
   }
 
-  // --- DELETE SCRIPT ---
   if (req.method === 'DELETE') {
     const { slug } = req.query;
     if (!slug) return res.status(400).json({ error: 'Slug required' });
-    const { error } = await supabase.from('scripts').delete().eq('slug', slug);
+    
+    // Soft delete
+    const { error } = await supabase.from('scripts').update({ is_deleted: true }).eq('slug', slug);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }
