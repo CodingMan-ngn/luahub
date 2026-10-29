@@ -9,12 +9,11 @@
     { "src": "/api/scripts", "dest": "/api/scripts.js" },
     { "src": "/api/paste", "dest": "/api/paste.js" },
     { "src": "/api/profile", "dest": "/api/profile.js" },
+    { "src": "/api/obfuscate", "dest": "/api/obfuscate.js" }, 
     { "src": "/api/loader/(.*)", "dest": "/api/loader/[slug].js" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    
     { "src": "/favicon.svg", "dest": "/frontend/favicon.svg" },
     { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
-    
     { "src": "/dashboard", "dest": "/frontend/dashboard.html" },
     { "src": "/", "dest": "/frontend/index.html" },
     { "src": "/(.*)", "dest": "/frontend/$1" }
