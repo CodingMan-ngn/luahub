@@ -6,219 +6,205 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=17"/>
-<script src="/assets/app.js?v=17" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v=45"/>
 <style>
-  .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;margin-left:0.4rem;}
-  .role-dev{background:#7c3aed;color:#fff;}
-  .role-user{background:#334155;color:#cbd5e1;}
-  .verified-chip{background:#10b981;color:#052e1a;}
+  .admin-layout { display: flex; min-height: calc(100vh - 75px); max-width: 1400px; margin: 0 auto; }
+  .sidebar { width: 260px; border-right: 1px solid var(--glass-border); padding: 2rem 1rem; }
+  .main-content { flex: 1; padding: 2rem 3rem; }
+  
+  .tab-btn {
+    display: flex; align-items: center; gap: 1rem; width: 100%;
+    padding: 1rem 1.5rem; background: transparent; border: none;
+    color: var(--muted); font-size: 1rem; font-weight: 600;
+    text-align: left; cursor: pointer; border-radius: 8px; transition: 0.2s;
+    margin-bottom: 0.5rem;
+  }
+  .tab-btn:hover { background: var(--surface); color: #fff; }
+  .tab-btn.active { background: rgba(124,58,237,0.15); color: var(--accent-soft); border-left: 3px solid var(--accent); }
+  .tab-btn svg { width: 20px; height: 20px; }
 
-  .key-box{background:rgba(124,58,237,0.1);border:1px solid #7c3aed;border-radius:12px;padding:1.75rem;text-align:center;margin-bottom:2rem;}
-  .key-box a{display:inline-block;background:#7c3aed;color:#fff;padding:0.9rem 1.8rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:1rem;transition:0.15s;}
-  .key-box a:hover{background:#6d28d9;}
-  .locked{position:relative;}
-  .locked-note{position:absolute;right:0;top:0;color:#f59e0b;font-weight:600;font-size:0.8rem;}
-
-  .dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
-  @media (max-width:768px){.dashboard-grid{grid-template-columns:1fr;}}
-
-  .method-hint{font-size:0.75rem;color:#94a3b8;margin:-0.5rem 0 1rem;line-height:1.4;}
-  .method-hint code{color:#a78bfa;background:rgba(124,58,237,0.1);padding:0 4px;border-radius:3px;}
-  #vm-preset-wrap{display:none;margin-bottom:1rem;}
+  .tab-content { display: none; animation: fadeIn 0.3s ease; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #fff; }
+  
+  .script-item { padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 0.8rem; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+  .script-item:hover { border-color: var(--accent); background: rgba(124,58,237,0.1); }
 </style>
 </head>
 <body>
 <nav>
-  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
-    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
-    LuaHub
+  <a href="/" class="logo">
+    <svg class="logo-icon" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
+    LuaHub Admin
   </a>
   <div class="nav-links">
-    <a href="/">Hub</a>
-    <span id="user-name">User</span>
-    <span id="user-chips"></span>
-    <button onclick="localStorage.clear();location.href='/'" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
+    <a href="/">Back to Site</a>
+    <span id="user-name" style="color:#fff; font-weight:600;"></span>
+    <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;">Logout</button>
   </div>
 </nav>
 
-<section class="container" style="padding-top:3rem;">
-  <h1>Dashboard</h1>
-
-  <div class="key-box">
-    <h2>🔑 Master Key</h2>
-    <p style="color:#94a3b8;margin-bottom:1rem;">Generate one key per script execution. Single-use per script.</p>
-    <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener">Generate Key Now</a>
-    <div style="color:#f59e0b;font-size:0.85rem;margin-top:1rem;">⚠️ Keys are single-use. One key = one script run.</div>
+<div class="admin-layout">
+  <div class="sidebar">
+    <button class="tab-btn active" onclick="switchTab('editor', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+      Script Editor
+    </button>
+    <button class="tab-btn" onclick="switchTab('public', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      Public Scripts
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      Settings
+    </button>
   </div>
 
-  <div class="dashboard-grid">
-    <div class="panel">
-      <h2 style="margin-bottom:1.5rem;">📤 Deploy Script</h2>
+  <div class="main-content">
+    <div id="tab-editor" class="tab-content active">
+      <div class="panel">
+        <h2 style="margin-bottom: 1.5rem;">Create New Script</h2>
+        
+        <div class="form-group">
+          <label>Script Name</label>
+          <input id="s-name" placeholder="e.g. Quantum Onyx"/>
+        </div>
 
-      <input id="s-name" placeholder="Script Name" style="margin-bottom:1rem;"/>
+        <div class="form-group">
+          <label>Raw Lua Source</label>
+          <textarea id="s-code" placeholder="Paste your raw Lua script here..." style="height:150px;"></textarea>
+        </div>
 
-      <label style="display:block;margin-bottom:0.4rem;color:#94a3b8;font-size:0.85rem;">Obfuscation method</label>
-      <select id="obf-method" style="margin-bottom:0.5rem;" onchange="onMethodChange()">
-        <option value="loader">Loader — luac strip + rolling XOR</option>
-        <option value="bytecode">Bytecode — pre-compiled chunk, raw</option>
-        <option value="bootstrapper">Bootstrapper — stub fetches second stage</option>
-        <option value="integrated">Integrated — UI + hex payload in one</option>
-        <option value="vm">VM — external obf box (Prometheus / MoonSec)</option>
-      </select>
-      <div id="method-hint" class="method-hint">Fast, weakest. Beats casual reading only.</div>
+        <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+          <label style="display:flex; align-items:center; gap:10px; margin:0;">
+            <input type="checkbox" id="t-key" style="width:20px; height:20px; margin-bottom: 0;"/> Enable Key System
+          </label>
+        </div>
 
-      <div id="vm-preset-wrap">
-        <label style="display:block;margin-bottom:0.4rem;color:#94a3b8;font-size:0.85rem;">VM preset</label>
-        <select id="vm-preset" style="margin-bottom:1rem;">
-          <option value="Minify">Minify — fastest, weakest</option>
-          <option value="Weak">Weak</option>
-          <option value="Medium" selected>Medium — balance</option>
-          <option value="Strong">Strong — slowest, strongest</option>
-        </select>
-        <div class="method-hint">Sends source to your external obf box. Requires <code>VM_OBF_URL</code> + <code>VM_OBF_TOKEN</code> on the backend. Source is Lua 5.1 — Roblox/LuaU syntax will be rejected.</div>
+        <button class="action" id="save-btn" onclick="saveScript()" style="margin-top: 1rem;">Deploy Script</button>
       </div>
 
-      <textarea id="s-code" placeholder="Paste Lua source (vm) or encrypted .bin contents (loader/bytecode)" style="height:180px;margin-bottom:1rem;"></textarea>
-
-      <div id="key-toggle-wrap" class="locked" style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
-        <input type="checkbox" id="t-key" style="width:20px;height:20px;"/>
-        <label for="t-key" style="color:#94a3b8;cursor:pointer;">Require Key System</label>
-        <div class="locked-note" id="key-lock" style="display:none;">🔒 Developer role required</div>
+      <div class="panel" style="margin-top: 2rem;">
+        <h2 style="margin-bottom: 1.5rem;">Your Scripts</h2>
+        <div id="my-scripts-list">
+          <p class="text-muted">Loading scripts...</p>
+        </div>
       </div>
-
-      <button class="action" id="upload-btn" onclick="uploadScript()" style="width:100%;">Deploy Script</button>
-      <div id="upload-result" style="margin-top:1rem;"></div>
     </div>
 
-    <div class="panel">
-      <h2 style="margin-bottom:1.5rem;">📦 Your Scripts</h2>
-      <div id="my-scripts"><p style="color:#94a3b8;">Loading...</p></div>
+    <div id="tab-public" class="tab-content">
+      <div class="panel">
+        <h2 style="margin-bottom: 1.5rem;">Public Scripts</h2>
+        <div class="script-grid" id="public-scripts-grid">
+          <p class="text-muted">Loading scripts...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-settings" class="tab-content">
+      <div class="panel">
+        <h2 style="margin-bottom: 1.5rem;">Account Settings</h2>
+        <div class="form-group">
+          <label>Username</label>
+          <input id="set-username" readonly style="opacity: 0.7;"/>
+        </div>
+      </div>
     </div>
   </div>
-
-  <div class="panel" id="profile-panel" style="margin-top:2rem;display:none;">
-    <h2 style="margin-bottom:1rem;">👤 Profile</h2>
-    <input id="p-bio" placeholder="Bio" style="margin-bottom:1rem;"/>
-    <input id="p-avatar" placeholder="Avatar URL" style="margin-bottom:1rem;"/>
-    <button class="action" onclick="saveProfile()">Save Profile</button>
-  </div>
-</section>
+</div>
 
 <script>
-  const ROLE = localStorage.getItem('role') || 'user';
-  const VERIFIED = localStorage.getItem('verified') === 'true';
-  document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
-  document.getElementById('user-chips').innerHTML =
-    `<span class="role-chip ${ROLE === 'developer' ? 'role-dev' : 'role-user'}">${ROLE}</span>` +
-    (VERIFIED ? `<span class="role-chip verified-chip">verified</span>` : '');
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/';
+  
+  const username = localStorage.getItem('username');
+  document.getElementById('user-name').textContent = username;
+  document.getElementById('set-username').value = username;
 
-  if (ROLE !== 'developer') {
-    document.getElementById('key-lock').style.display = 'block';
-    document.getElementById('t-key').disabled = true;
-  }
-  if (VERIFIED) document.getElementById('profile-panel').style.display = 'block';
+  let allScripts = [];
 
-  const METHOD_HINTS = {
-    loader: 'Fast, weakest. luac strip + rolling XOR + base64. Beats casual reading only.',
-    bytecode: 'Pre-compiled chunk, raw delivery. No source leakage. Unluac defeats it.',
-    bootstrapper: 'Lua stub fetches second-stage obf. Two network hops, harder to dump whole.',
-    integrated: 'UI + key check + hex payload in one file. Match Luarmor-style flow.',
-    vm: 'External obf box (Prometheus / MoonSec). Real control-flow flattening. Lua 5.1 source only.'
-  };
-
-  function onMethodChange() {
-    const m = document.getElementById('obf-method').value;
-    document.getElementById('method-hint').textContent = METHOD_HINTS[m] || '';
-    document.getElementById('vm-preset-wrap').style.display = (m === 'vm') ? 'block' : 'none';
-    const ta = document.getElementById('s-code');
-    ta.placeholder = (m === 'vm')
-      ? 'Paste raw Lua 5.1 source. Obf box will process it.'
-      : (m === 'loader' || m === 'bytecode')
-        ? 'Paste encrypted .bin contents.'
-        : 'Paste payload.';
-  }
-  onMethodChange();
-
-  async function apiFetch(path, method='GET', body=null) {
-    const opts = {
-      method,
-      headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + localStorage.getItem('token')}
-    };
-    if (body) opts.body = JSON.stringify(body);
-    const r = await fetch(path, opts);
-    return r.json();
-  }
-
-  async function uploadScript() {
-    const btn = document.getElementById('upload-btn');
-    const name = document.getElementById('s-name').value.trim();
-    const content = document.getElementById('s-code').value.trim();
-    const obf_method = document.getElementById('obf-method').value;
-    const vm_preset = document.getElementById('vm-preset').value;
-    const requires_key = ROLE === 'developer' && document.getElementById('t-key').checked;
-
-    if (!name || !content) return alert('Name + payload required');
-    btn.disabled = true; btn.textContent = (obf_method === 'vm') ? 'Obfuscating...' : 'Deploying...';
-
-    const payload = { name, content, is_public: true, requires_key, obf_method };
-    if (obf_method === 'vm') payload.vm_preset = vm_preset;
-
-    const res = await apiFetch('/api/scripts', 'POST', payload);
-    const box = document.getElementById('upload-result');
-
-    if (res && res.slug) {
-      const url = `${location.origin}/api/loader/${res.slug}`;
-      let one = `loadstring(game:HttpGet("${url}"))()`;
-      if (requires_key) one = `script_key = "YOUR_KEY"\n` + one;
-      box.innerHTML = `<p style="color:#10b981;">✅ Deployed (${res.obf_method})</p>
-        <code style="display:block;margin-top:0.5rem;color:#10b981;white-space:pre-wrap;font-size:0.8rem;background:#0b1220;padding:0.5rem;border-radius:6px;">${one}</code>`;
-      ['s-name','s-code'].forEach(id => document.getElementById(id).value='');
-      document.getElementById('t-key').checked = false;
-      loadScripts();
-    } else {
-      box.innerHTML = `<p style="color:#ef4444;">Error: ${res?.error || 'unknown'}</p>`;
-    }
-    btn.disabled = false; btn.textContent = 'Deploy Script';
+  function switchTab(tabId, btnEl) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    btnEl.classList.add('active');
   }
 
   async function loadScripts() {
-    const box = document.getElementById('my-scripts');
-    const scripts = await apiFetch('/api/scripts', 'GET');
-    if (!Array.isArray(scripts) || !scripts.length) {
-      box.innerHTML = '<p style="color:#94a3b8;">No scripts deployed yet.</p>';
-      return;
-    }
-    box.innerHTML = scripts.map(s => `
-      <div style="padding:1rem;background:rgba(0,0,0,0.25);border-radius:8px;margin-bottom:1rem;border:1px solid #1e293b;">
-        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
-        <div style="font-size:0.75rem;color:#a78bfa;">${s.obf_method}</div>
-        <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.3rem;">
-          ${s.requires_key ? '<span style="color:#ef4444;">Key Required</span>' : '<span style="color:#10b981;">Free</span>'}
-          · ${s.hits || 0} runs
+    const res = await fetch('/api/scripts');
+    allScripts = await res.json();
+    
+    const devList = document.getElementById('my-scripts-list');
+    const myScripts = allScripts.filter(s => s.users && s.users.username === username);
+    
+    if (myScripts.length === 0) {
+      devList.innerHTML = '<p class="text-muted">No scripts deployed yet.</p>';
+    } else {
+      devList.innerHTML = myScripts.map(s => `
+        <div class="script-item">
+          <div style="font-weight: 600;">${s.name}</div>
+          <div style="font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem;">
+            ${s.requires_key ? 'Key System' : 'Free'} · ${s.hits || 0} runs
+          </div>
         </div>
-        <code style="display:block;margin-top:0.4rem;font-size:0.72rem;color:#94a3b8;">${s.slug}</code>
-      </div>`).join('');
-  }
+      `).join('');
+    }
 
-  async function saveProfile() {
-    const bio = document.getElementById('p-bio').value;
-    const avatar_url = document.getElementById('p-avatar').value;
-    const r = await apiFetch('/api/profile', 'PATCH', { bio, avatar_url });
-    alert(r.ok ? 'Saved' : ('Error: ' + r.error));
-  }
-
-  if (localStorage.getItem('token')) {
-    loadScripts();
-    if (VERIFIED) {
-      apiFetch('/api/profile').then(r => {
-        if (r.profile) {
-          document.getElementById('p-bio').value = r.profile.bio || '';
-          document.getElementById('p-avatar').value = r.profile.avatar_url || '';
-        }
-      });
+    const publicGrid = document.getElementById('public-scripts-grid');
+    if (allScripts.length === 0) {
+      publicGrid.innerHTML = '<p class="text-muted">No public scripts available.</p>';
+    } else {
+      publicGrid.innerHTML = allScripts.map(s => `
+        <div class="script-card">
+          <div class="script-header">
+            <div class="script-title">${s.name}</div>
+            <div class="script-author">${s.users ? s.users.username : 'Anonymous'}</div>
+          </div>
+          <div class="script-meta">
+            <span>${s.obf_method.toUpperCase()}</span>
+            <span>${s.hits || 0} runs</span>
+          </div>
+        </div>
+      `).join('');
     }
   }
+
+  async function saveScript() {
+    const btn = document.getElementById('save-btn');
+    const name = document.getElementById('s-name').value.trim();
+    const content = document.getElementById('s-code').value.trim();
+    const requires_key = document.getElementById('t-key').checked;
+
+    if (!name || !content) return alert('Name and content required');
+
+    btn.disabled = true; btn.textContent = 'Processing...';
+
+    const res = await fetch('/api/scripts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ name, content, requires_key, obf_method: 'integrated' })
+    });
+    
+    const data = await res.json();
+    if (data.slug) {
+      alert('Script deployed successfully.');
+      document.getElementById('s-name').value = '';
+      document.getElementById('s-code').value = '';
+      document.getElementById('t-key').checked = false;
+      loadScripts();
+    } else {
+      alert('Error: ' + data.error);
+    }
+    
+    btn.disabled = false; btn.textContent = 'Deploy Script';
+  }
+
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+
+  loadScripts();
 </script>
 </body>
 </html>

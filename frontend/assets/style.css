@@ -118,3 +118,8 @@ textarea { font-family: var(--mono); font-size: 0.85rem; resize: vertical; }
 
 .hidden { display: none !important; }
 code { font-family: var(--mono); }
+
+/* UTILS */
+.text-muted { color: var(--muted); }
+.mb-1 { margin-bottom: 1rem; }
+.mt-1 { margin-top: 1rem; }
