@@ -3,156 +3,228 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LuaHub — Premium Scripts</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=24"/>
+<title>LuaHub — Script Hosting & Generator</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css?v=18"/>
+<script src="/assets/app.js?v=18" defer></script>
 <style>
-  body { display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
-  
-  .cinematic-intro {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-    text-align: center; padding: 2rem; z-index: 10; position: relative;
+  .gen-panel {
+    max-width: 800px;
+    margin-bottom: 4rem;
   }
-  .cinematic-intro h1 {
-    font-size: clamp(3.5rem, 8vw, 6rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.05em;
+  .gen-panel h2 {
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .gen-panel .desc {
+    color: #94a3b8;
     margin-bottom: 1.5rem;
-    background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.4) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 60px rgba(124,58,237,0.3);
-    animation: fadeUp 1s ease-out;
+    font-size: 0.95rem;
   }
-  .cinematic-intro p {
-    color: var(--muted); font-size: 1.2rem; max-width: 580px; line-height: 1.6;
-    margin-bottom: 3rem; animation: fadeUp 1.2s ease-out;
+  .gen-result {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid #10b981;
+    border-radius: 8px;
   }
-  .btn-hero {
-    padding: 1.1rem 3rem; border-radius: 12px; font-weight: 700; font-size: 1.1rem;
-    background: var(--accent); color: #fff; border: none; cursor: pointer;
-    box-shadow: 0 0 40px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: fadeUp 1.4s ease-out;
+  .gen-result.active {
+    display: block;
   }
-  .btn-hero:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 0 60px rgba(124,58,237,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
-    background: #8b5cf6;
+  .gen-result .label {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
   }
-  @keyframes fadeUp {
-    0% { opacity: 0; transform: translateY(30px); }
-    100% { opacity: 1; transform: translateY(0); }
+  .gen-output {
+    width: 100%;
+    height: 90px;
+    background: #0b1220;
+    border: 1px solid #10b981;
+    border-radius: 6px;
+    padding: 0.75rem;
+    color: #10b981;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    resize: none;
+    cursor: pointer;
   }
-  .orb {
-    position: absolute; border-radius: 50%; filter: blur(100px); z-index: 0; pointer-events: none;
+  .gen-output:focus {
+    outline: none;
   }
-  .orb-1 { width: 400px; height: 400px; background: rgba(124,58,237,0.15); top: -10%; left: 10%; animation: float 10s infinite alternate; }
-  .orb-2 { width: 300px; height: 300px; background: rgba(16,185,129,0.1); bottom: 10%; right: 10%; animation: float 8s infinite alternate-reverse; }
-  @keyframes float {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(40px, -40px); }
+  .gen-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
   }
-  nav { background: transparent !important; border-bottom: none !important; justify-content: center !important; padding: 2rem !important; }
-
-  /* Consent Modal */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-    display: none; justify-content: center; align-items: center; z-index: 1000;
-    opacity: 0; transition: opacity 0.3s ease;
+  .auth-box.hidden-auth {
+    display: none;
   }
-  .modal-overlay.active { display: flex; opacity: 1; }
-  .modal-content {
-    background: var(--bg); border: 1px solid var(--glass-border); border-radius: 16px;
-    padding: 2.5rem; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    transform: translateY(20px); transition: transform 0.3s ease;
-    background-image: radial-gradient(circle at 50% 0%, rgba(124,58,237,0.15), transparent 70%);
-  }
-  .modal-overlay.active .modal-content { transform: translateY(0); }
-  .modal-icon { font-size: 2.5rem; margin-bottom: 1rem; color: #5865F2; }
-  .modal-content h3 { margin-bottom: 0.5rem; font-size: 1.25rem; }
-  .modal-content p { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem; }
-  .modal-btns { display: flex; gap: 1rem; justify-content: center; }
-  
-  /* Cookie Banner */
-  .cookie-banner {
-    position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.95); border: 1px solid var(--glass-border);
-    padding: 0.8rem 1.5rem; border-radius: 10px; backdrop-filter: blur(10px);
-    display: flex; align-items: center; gap: 1.5rem; z-index: 100; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-size: 0.85rem; color: var(--muted);
-  }
-  .cookie-btn {
-    background: var(--accent); color: #fff; border: none; padding: 0.4rem 1rem;
-    border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;
-  }
-  .cookie-btn:hover { background: #8b5cf6; }
 </style>
 </head>
 <body>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  
-  <nav>
-    <a href="/" class="logo" style="font-size: 1.8rem;">
-      <img src="/favicon.svg" width="32" height="32" style="border-radius:6px; margin-right:10px;"/>
-      LuaHub
-    </a>
-  </nav>
-
-  <div class="cinematic-intro">
-    <h1>The Next Generation<br/>of Script Execution.</h1>
-    <p>Secure, fast, and obfuscated. Access the premier repository for Roblox scripts with zero compromises on performance or safety.</p>
-    <button class="btn-hero" onclick="openModal()">Get Started</button>
+<nav>
+  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
+    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
+    LuaHub
+  </a>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <span id="user-name" style="color:#e2e8f0;font-weight:600"></span>
+    <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
   </div>
+</nav>
 
-  <footer style="text-align: center; padding: 1.5rem; border-top: 1px solid var(--glass-border); z-index: 10;">
-    <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 0.5rem;">
-      <a href="/how-it-works" style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">How it Works</a>
-      <a href="/terms" style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Terms of Service</a>
-      <a href="/privacy" style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Privacy Policy</a>
-    </div>
-    <p style="color: var(--muted); font-size: 0.75rem;">&copy; 2024 LuaHub. All rights reserved.</p>
-  </footer>
+<section class="container">
+  <h1>LuaHub</h1>
+  <p class="subtitle">Host, obfuscate, and deploy Roblox scripts. Loader URLs, key systems, role-gated distribution.</p>
 
-  <!-- Discord Consent Modal -->
-  <div class="modal-overlay" id="login-modal">
-    <div class="modal-content">
-      <div class="modal-icon">💬</div>
-      <h3>Sign in with Discord</h3>
-      <p>LuaHub uses Discord for authentication. We will only read your username and avatar to create your account.</p>
-      <div class="modal-btns">
-        <button class="btn-secondary" onclick="closeModal()" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Cancel</button>
-        <button class="btn-primary" onclick="loginDiscord()" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Authorize</button>
-      </div>
+  <!-- Generator panel -->
+  <div class="panel gen-panel">
+    <h2>⚡ Paste & Generate Loadstring</h2>
+    <p class="desc">Paste your Lua source below, give it a name, and get an instant loadstring to run in-game. No account needed.</p>
+
+    <input id="gen-name" placeholder="Script name (e.g. My Aimlock)" style="width:100%; margin-bottom:1rem;"/>
+    <textarea id="gen-code" placeholder="Paste your raw Lua script here..." style="width:100%; height:260px; margin-bottom:1rem; font-family:'JetBrains Mono',monospace; font-size:0.85rem;"></textarea>
+    <button class="action" id="gen-btn" onclick="generateScript()" style="width:100%;">Generate Loadstring</button>
+
+    <div class="gen-result" id="gen-result">
+      <span class="label">✅ Generated — click the box to copy</span>
+      <textarea class="gen-output" id="gen-output" readonly onclick="this.select(); document.execCommand('copy');"></textarea>
+      <div class="gen-hint">Click the box above to auto-select and copy. Paste into your executor.</div>
     </div>
   </div>
 
-  <!-- Cookie Banner -->
-  <div class="cookie-banner" id="cookie-banner" style="display: none;">
-    <span>We use essential cookies to keep you logged in securely.</span>
-    <button class="cookie-btn" onclick="acceptCookies()">Accept</button>
+  <!-- Auth box -->
+  <div id="auth-section" class="auth-box">
+    <h2>Sign In</h2>
+    <input id="a-email" placeholder="Email"/>
+    <input id="a-pass" type="password" placeholder="Password"/>
+    <button class="action btn-full" onclick="login()">Login</button>
+    <button class="action btn-full btn-secondary" onclick="register()">Register</button>
+    <div id="auth-result" style="margin-top:1rem;"></div>
   </div>
+
+  <h2 class="section-title">Public Scripts</h2>
+  <div id="scripts-grid" class="grid-cards">
+    <p style="color:#94a3b8;">Loading...</p>
+  </div>
+</section>
 
 <script>
-  if (!localStorage.getItem('cookie_consent')) {
-    document.getElementById('cookie-banner').style.display = 'flex';
-  }
-  function acceptCookies() {
-    localStorage.setItem('cookie_consent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
+  // ---- Generator ----
+  async function generateScript() {
+    const btn = document.getElementById('gen-btn');
+    const name = document.getElementById('gen-name').value.trim();
+    const content = document.getElementById('gen-code').value.trim();
+    const result = document.getElementById('gen-result');
+    const output = document.getElementById('gen-output');
+
+    if (!name || !content) {
+      return alert('Please enter both a name and the code.');
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    result.classList.remove('active');
+
+    try {
+      const res = await fetch('/api/paste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, content })
+      });
+      const data = await res.json();
+
+      if (data && data.loader_url) {
+        const url = `${location.origin}${data.loader_url}`;
+        const loadstringCode = `loadstring(game:HttpGet("${url}"))()`;
+        output.value = loadstringCode;
+        result.classList.add('active');
+        // Auto-copy
+        output.select();
+        try { document.execCommand('copy'); } catch (e) {}
+      } else {
+        alert('Error: ' + (data?.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Network error: ' + e.message);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Generate Loadstring';
   }
 
-  function openModal() {
-    document.getElementById('login-modal').classList.add('active');
-  }
-  function closeModal() {
-    document.getElementById('login-modal').classList.remove('active');
+  // ---- Auth ----
+  async function login() {
+    const email = document.getElementById('a-email').value.trim();
+    const password = document.getElementById('a-pass').value;
+    const r = await fetch('/api/auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'login', email, password })
+    });
+    const d = await r.json();
+    if (d.token) {
+      localStorage.setItem('token', d.token);
+      localStorage.setItem('username', d.username);
+      localStorage.setItem('role', d.role || 'user');
+      localStorage.setItem('verified', d.verified ? 'true' : 'false');
+      location.href = '/dashboard';
+    } else {
+      document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Login failed'}</span>`;
+    }
   }
 
-  function loginDiscord() {
-    const clientId = "1565187874767507468"; 
-    const redirectUri = encodeURIComponent(window.location.origin + '/api/auth');
-    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`;
+  async function register() {
+    const email = document.getElementById('a-email').value.trim();
+    const password = document.getElementById('a-pass').value;
+    const username = email.split('@')[0] + Math.floor(Math.random()*1000);
+    const r = await fetch('/api/auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'register', username, email, password })
+    });
+    const d = await r.json();
+    if (d.token) {
+      localStorage.setItem('token', d.token);
+      localStorage.setItem('username', d.username);
+      localStorage.setItem('role', d.role || 'user');
+      localStorage.setItem('verified', d.verified ? 'true' : 'false');
+      location.href = '/dashboard';
+    } else {
+      document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Register failed'}</span>`;
+    }
   }
+
+  function logout() {
+    localStorage.clear();
+    location.href = '/';
+  }
+
+  document.getElementById('user-name').textContent = localStorage.getItem('username') || '';
+  if (localStorage.getItem('token')) {
+    document.getElementById('auth-section').classList.add('hidden-auth');
+  }
+
+  // ---- Public script grid ----
+  fetch('/api/scripts').then(r => r.json()).then(list => {
+    const grid = document.getElementById('scripts-grid');
+    if (!Array.isArray(list) || !list.length) {
+      grid.innerHTML = '<p style="color:#94a3b8">No public scripts yet.</p>';
+      return;
+    }
+    grid.innerHTML = list.map(s => `
+      <div class="panel card">
+        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
+        <div style="font-size:0.75rem;color:#a78bfa;margin:0.35rem 0;">${s.obf_method}</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">${s.hits || 0} runs${s.requires_key ? ' · key required' : ''}</div>
+        <code style="display:block;margin-top:0.6rem;font-size:0.7rem;color:#94a3b8;">${s.slug}</code>
+      </div>`).join('');
+  }).catch(() => {});
 </script>
 </body>
 </html>

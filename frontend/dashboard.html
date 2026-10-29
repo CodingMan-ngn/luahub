@@ -4,402 +4,221 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dashboard — LuaHub</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=32"/>
+<link rel="stylesheet" href="/assets/style.css?v=17"/>
+<script src="/assets/app.js?v=17" defer></script>
 <style>
-  /* Layout */
-  .admin-layout { display: flex; min-height: calc(100vh - 70px); }
-  .sidebar { width: 260px; border-right: 1px solid var(--glass-border); padding: 2rem 1rem; }
-  .main-content { flex: 1; padding: 2rem 4rem; max-width: 1200px; }
-  
-  /* Sidebar Tabs */
-  .tab-btn {
-    display: flex; align-items: center; gap: 1rem; width: 100%;
-    padding: 1rem 1.5rem; background: transparent; border: none;
-    color: var(--muted); font-size: 1rem; font-weight: 600;
-    text-align: left; cursor: pointer; border-radius: 8px; transition: 0.2s;
-    margin-bottom: 0.5rem;
-  }
-  .tab-btn:hover { background: var(--surface); color: #fff; }
-  .tab-btn.active { background: rgba(124,58,237,0.15); color: var(--accent-soft); border-left: 3px solid var(--accent); }
-  .tab-btn svg { width: 20px; height: 20px; }
+  .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;margin-left:0.4rem;}
+  .role-dev{background:#7c3aed;color:#fff;}
+  .role-user{background:#334155;color:#cbd5e1;}
+  .verified-chip{background:#10b981;color:#052e1a;}
 
-  /* Content Sections */
-  .tab-content { display: none; animation: fadeIn 0.3s ease; }
-  .tab-content.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  
-  .panel { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
-  .panel h2 { font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; font-weight: 800; }
-  
-  /* Forms */
-  .form-group { margin-bottom: 1.5rem; }
-  .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #fff; }
-  .form-group p { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.8rem; }
-  
-  .url-box { display: flex; gap: 0.5rem; margin-top: 1rem; }
-  .url-box input { flex-grow: 1; background: #000; color: var(--accent-soft); font-family: var(--mono); border: 1px solid var(--glass-border); padding: 0.8rem; border-radius: 8px; }
-  .url-box button { background: var(--accent); color: #fff; border: none; padding: 0 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  .key-box{background:rgba(124,58,237,0.1);border:1px solid #7c3aed;border-radius:12px;padding:1.75rem;text-align:center;margin-bottom:2rem;}
+  .key-box a{display:inline-block;background:#7c3aed;color:#fff;padding:0.9rem 1.8rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:1rem;transition:0.15s;}
+  .key-box a:hover{background:#6d28d9;}
+  .locked{position:relative;}
+  .locked-note{position:absolute;right:0;top:0;color:#f59e0b;font-weight:600;font-size:0.8rem;}
 
-  /* Script List */
-  .script-item { padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 0.8rem; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
-  .script-item:hover { border-color: var(--accent); background: rgba(124,58,237,0.1); }
-  .script-item.active { border-color: var(--accent); background: rgba(124,58,237,0.15); }
-  .script-title { font-weight: 600; color: #fff; display: block; margin-bottom: 0.2rem; }
-  .script-meta { font-size: 0.8rem; color: var(--muted); }
+  .dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+  @media (max-width:768px){.dashboard-grid{grid-template-columns:1fr;}}
 
-  /* Public Grid */
-  .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+  .method-hint{font-size:0.75rem;color:#94a3b8;margin:-0.5rem 0 1rem;line-height:1.4;}
+  .method-hint code{color:#a78bfa;background:rgba(124,58,237,0.1);padding:0 4px;border-radius:3px;}
+  #vm-preset-wrap{display:none;margin-bottom:1rem;}
 </style>
 </head>
 <body>
 <nav>
-  <a href="/" class="logo">
-    <img src="/favicon.svg" width="24" height="24" style="border-radius:6px; margin-right:6px;"/> LuaHub Admin
+  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
+    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
+    LuaHub
   </a>
   <div class="nav-links">
-    <a href="/">Back to Site</a>
-    <span id="user-name" style="color:#fff; font-weight:600;"></span>
-    <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;">Logout</button>
+    <a href="/">Hub</a>
+    <span id="user-name">User</span>
+    <span id="user-chips"></span>
+    <button onclick="localStorage.clear();location.href='/'" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
   </div>
 </nav>
 
-<div class="admin-layout">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <button class="tab-btn active" onclick="switchTab('editor', this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-      Script Editor
-    </button>
-    <button class="tab-btn" onclick="switchTab('keys', this)" id="tab-btn-keys" style="display:none;">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-      Key System
-    </button>
-    <button class="tab-btn" onclick="switchTab('public', this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      Public Scripts
-    </button>
-    <button class="tab-btn" onclick="switchTab('settings', this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-      Settings
-    </button>
+<section class="container" style="padding-top:3rem;">
+  <h1>Dashboard</h1>
+
+  <div class="key-box">
+    <h2>🔑 Master Key</h2>
+    <p style="color:#94a3b8;margin-bottom:1rem;">Generate one key per script execution. Single-use per script.</p>
+    <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener">Generate Key Now</a>
+    <div style="color:#f59e0b;font-size:0.85rem;margin-top:1rem;">⚠️ Keys are single-use. One key = one script run.</div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    
-    <!-- SCRIPT EDITOR TAB -->
-    <div id="tab-editor" class="tab-content active">
-      <div class="panel">
-        <h2 id="form-title">Create New Script</h2>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          <div class="form-group">
-            <label>Script Name</label>
-            <input id="s-name" placeholder="e.g. Quantum Onyx" style="width:100%;"/>
-          </div>
-          <div class="form-group">
-            <label>Runtime Duration (Seconds)</label>
-            <input id="t-duration" type="number" value="600" style="width:100%;"/>
-          </div>
-        </div>
+  <div class="dashboard-grid">
+    <div class="panel">
+      <h2 style="margin-bottom:1.5rem;">📤 Deploy Script</h2>
 
-        <div class="form-group">
-          <label>Raw Lua Source</label>
-          <textarea id="s-code" placeholder="Paste your raw Lua script here..." style="width:100%; height:150px;"></textarea>
-        </div>
+      <input id="s-name" placeholder="Script Name" style="margin-bottom:1rem;"/>
 
-        <div class="form-group">
-          <label>BoostyLink Gateway URL</label>
-          <p>Paste the URL generated from BoostyLink for this script.</p>
-          <input id="t-boosty" placeholder="https://boostylink.com/..." style="width:100%;"/>
-        </div>
+      <label style="display:block;margin-bottom:0.4rem;color:#94a3b8;font-size:0.85rem;">Obfuscation method</label>
+      <select id="obf-method" style="margin-bottom:0.5rem;" onchange="onMethodChange()">
+        <option value="loader">Loader — luac strip + rolling XOR</option>
+        <option value="bytecode">Bytecode — pre-compiled chunk, raw</option>
+        <option value="bootstrapper">Bootstrapper — stub fetches second stage</option>
+        <option value="integrated">Integrated — UI + hex payload in one</option>
+        <option value="vm">VM — external obf box (Prometheus / MoonSec)</option>
+      </select>
+      <div id="method-hint" class="method-hint">Fast, weakest. Beats casual reading only.</div>
 
-        <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
-          <label style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input type="checkbox" id="t-key" style="width:20px; height:20px;"/>
-            Enable Key System (Requires BoostyLink)
-          </label>
-          <p style="margin-top: 0.5rem; margin-bottom: 0;">If enabled, users must complete BoostyLink and verify a key before the script runs.</p>
-        </div>
-
-        <button class="btn-primary" id="save-btn" onclick="saveScript()" style="padding: 0.8rem 2rem; margin-top: 1rem;">Save & Generate Loader</button>
-        <button class="btn-secondary" onclick="resetForm()" style="padding: 0.8rem 2rem; margin-left: 1rem;">Cancel</button>
+      <div id="vm-preset-wrap">
+        <label style="display:block;margin-bottom:0.4rem;color:#94a3b8;font-size:0.85rem;">VM preset</label>
+        <select id="vm-preset" style="margin-bottom:1rem;">
+          <option value="Minify">Minify — fastest, weakest</option>
+          <option value="Weak">Weak</option>
+          <option value="Medium" selected>Medium — balance</option>
+          <option value="Strong">Strong — slowest, strongest</option>
+        </select>
+        <div class="method-hint">Sends source to your external obf box. Requires <code>VM_OBF_URL</code> + <code>VM_OBF_TOKEN</code> on the backend. Source is Lua 5.1 — Roblox/LuaU syntax will be rejected.</div>
       </div>
 
-      <div id="url-panel" class="panel" style="display: none; border: 1px solid var(--accent);">
-        <h2>Key System URLs</h2>
-        <p style="color:var(--muted); font-size:0.9rem; margin-bottom: 1.5rem;">Configure these URLs in your BoostyLink dashboard and use the Share URL for your users.</p>
-        
-        <div class="form-group">
-          <label>Return URL (Paste into BoostyLink's Destination URL)</label>
-          <div class="url-box">
-            <input id="out-return" readonly/>
-            <button onclick="copyVal('out-return')">Copy</button>
-          </div>
-        </div>
+      <textarea id="s-code" placeholder="Paste Lua source (vm) or encrypted .bin contents (loader/bytecode)" style="height:180px;margin-bottom:1rem;"></textarea>
 
-        <div class="form-group">
-          <label>Share URL (Paste into YouTube/Discord)</label>
-          <div class="url-box">
-            <input id="out-share" readonly/>
-            <button onclick="copyVal('out-share')">Copy</button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Generated Loadstring (Give this to users)</label>
-          <textarea id="out-loader" readonly style="width:100%; height:120px; background:#000; color:var(--success); font-family:var(--mono); font-size:0.8rem; padding:0.5rem; border-radius:8px;" onclick="this.select()"></textarea>
-        </div>
+      <div id="key-toggle-wrap" class="locked" style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <input type="checkbox" id="t-key" style="width:20px;height:20px;"/>
+        <label for="t-key" style="color:#94a3b8;cursor:pointer;">Require Key System</label>
+        <div class="locked-note" id="key-lock" style="display:none;">🔒 Developer role required</div>
       </div>
 
-      <div class="panel">
-        <h2>Your Scripts</h2>
-        <div id="my-scripts-list">
-          <p style="color:var(--muted);">Loading scripts...</p>
-        </div>
-      </div>
+      <button class="action" id="upload-btn" onclick="uploadScript()" style="width:100%;">Deploy Script</button>
+      <div id="upload-result" style="margin-top:1rem;"></div>
     </div>
 
-    <!-- KEY SYSTEM EDITOR TAB -->
-    <div id="tab-keys" class="tab-content">
-      <div class="panel">
-        <h2>Key System Configuration</h2>
-        <p style="color:var(--muted); margin-bottom: 1.5rem;">Select a script to view its keys and configure the redirect URL.</p>
-        
-        <div id="key-system-list">
-          <p style="color:var(--muted);">No scripts with key system found.</p>
-        </div>
-      </div>
+    <div class="panel">
+      <h2 style="margin-bottom:1.5rem;">📦 Your Scripts</h2>
+      <div id="my-scripts"><p style="color:#94a3b8;">Loading...</p></div>
     </div>
-
-    <!-- PUBLIC SCRIPTS TAB -->
-    <div id="tab-public" class="tab-content">
-      <div class="panel">
-        <h2>Public Scripts</h2>
-        <div class="grid-layout" id="public-scripts-grid">
-          <p style="color:var(--muted);">Loading scripts...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETTINGS TAB -->
-    <div id="tab-settings" class="tab-content">
-      <div class="panel">
-        <h2>Account Settings</h2>
-        <div class="form-group">
-          <label>Username</label>
-          <input id="set-username" readonly style="width:100%; opacity: 0.7;"/>
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <input id="set-role" readonly style="width:100%; opacity: 0.7;"/>
-        </div>
-      </div>
-      
-      <div class="panel" style="border-color: var(--danger);">
-        <h2 style="color: var(--danger);">Danger Zone</h2>
-        <p style="color:var(--muted); margin-bottom: 1rem;">Once you delete your account, there is no going back. Please be certain.</p>
-        <button class="btn-primary" style="background: var(--danger);" onclick="deleteAccount()">Delete Account</button>
-      </div>
-    </div>
-
   </div>
-</div>
+
+  <div class="panel" id="profile-panel" style="margin-top:2rem;display:none;">
+    <h2 style="margin-bottom:1rem;">👤 Profile</h2>
+    <input id="p-bio" placeholder="Bio" style="margin-bottom:1rem;"/>
+    <input id="p-avatar" placeholder="Avatar URL" style="margin-bottom:1rem;"/>
+    <button class="action" onclick="saveProfile()">Save Profile</button>
+  </div>
+</section>
 
 <script>
-  const token = localStorage.getItem('token');
-  if (!token) window.location.href = '/';
-  
-  let payload = null;
-  try {
-    payload = JSON.parse(atob(token.split('.')[1]));
-    document.getElementById('user-name').textContent = payload.name;
-    document.getElementById('set-username').value = payload.name;
-    document.getElementById('set-role').value = payload.is_dev ? 'Developer' : 'User';
-  } catch(e) { window.location.href = '/'; }
+  const ROLE = localStorage.getItem('role') || 'user';
+  const VERIFIED = localStorage.getItem('verified') === 'true';
+  document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
+  document.getElementById('user-chips').innerHTML =
+    `<span class="role-chip ${ROLE === 'developer' ? 'role-dev' : 'role-user'}">${ROLE}</span>` +
+    (VERIFIED ? `<span class="role-chip verified-chip">verified</span>` : '');
 
-  if (payload?.is_dev) {
-    document.getElementById('tab-btn-keys').style.display = 'flex';
+  if (ROLE !== 'developer') {
+    document.getElementById('key-lock').style.display = 'block';
+    document.getElementById('t-key').disabled = true;
+  }
+  if (VERIFIED) document.getElementById('profile-panel').style.display = 'block';
+
+  const METHOD_HINTS = {
+    loader: 'Fast, weakest. luac strip + rolling XOR + base64. Beats casual reading only.',
+    bytecode: 'Pre-compiled chunk, raw delivery. No source leakage. Unluac defeats it.',
+    bootstrapper: 'Lua stub fetches second-stage obf. Two network hops, harder to dump whole.',
+    integrated: 'UI + key check + hex payload in one file. Match Luarmor-style flow.',
+    vm: 'External obf box (Prometheus / MoonSec). Real control-flow flattening. Lua 5.1 source only.'
+  };
+
+  function onMethodChange() {
+    const m = document.getElementById('obf-method').value;
+    document.getElementById('method-hint').textContent = METHOD_HINTS[m] || '';
+    document.getElementById('vm-preset-wrap').style.display = (m === 'vm') ? 'block' : 'none';
+    const ta = document.getElementById('s-code');
+    ta.placeholder = (m === 'vm')
+      ? 'Paste raw Lua 5.1 source. Obf box will process it.'
+      : (m === 'loader' || m === 'bytecode')
+        ? 'Paste encrypted .bin contents.'
+        : 'Paste payload.';
+  }
+  onMethodChange();
+
+  async function apiFetch(path, method='GET', body=null) {
+    const opts = {
+      method,
+      headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + localStorage.getItem('token')}
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    return r.json();
   }
 
-  let allScripts = [];
+  async function uploadScript() {
+    const btn = document.getElementById('upload-btn');
+    const name = document.getElementById('s-name').value.trim();
+    const content = document.getElementById('s-code').value.trim();
+    const obf_method = document.getElementById('obf-method').value;
+    const vm_preset = document.getElementById('vm-preset').value;
+    const requires_key = ROLE === 'developer' && document.getElementById('t-key').checked;
 
-  function switchTab(tabId, btnEl) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    
-    document.getElementById(`tab-${tabId}`).classList.add('active');
-    btnEl.classList.add('active');
+    if (!name || !content) return alert('Name + payload required');
+    btn.disabled = true; btn.textContent = (obf_method === 'vm') ? 'Obfuscating...' : 'Deploying...';
+
+    const payload = { name, content, is_public: true, requires_key, obf_method };
+    if (obf_method === 'vm') payload.vm_preset = vm_preset;
+
+    const res = await apiFetch('/api/scripts', 'POST', payload);
+    const box = document.getElementById('upload-result');
+
+    if (res && res.slug) {
+      const url = `${location.origin}/api/loader/${res.slug}`;
+      let one = `loadstring(game:HttpGet("${url}"))()`;
+      if (requires_key) one = `script_key = "YOUR_KEY"\n` + one;
+      box.innerHTML = `<p style="color:#10b981;">✅ Deployed (${res.obf_method})</p>
+        <code style="display:block;margin-top:0.5rem;color:#10b981;white-space:pre-wrap;font-size:0.8rem;background:#0b1220;padding:0.5rem;border-radius:6px;">${one}</code>`;
+      ['s-name','s-code'].forEach(id => document.getElementById(id).value='');
+      document.getElementById('t-key').checked = false;
+      loadScripts();
+    } else {
+      box.innerHTML = `<p style="color:#ef4444;">Error: ${res?.error || 'unknown'}</p>`;
+    }
+    btn.disabled = false; btn.textContent = 'Deploy Script';
   }
 
   async function loadScripts() {
-    const res = await fetch('/api/scripts');
-    allScripts = await res.json();
-    
-    // Render Dev List
-    const devList = document.getElementById('my-scripts-list');
-    const myScripts = allScripts.filter(s => s.owner_name === payload.name);
-    if (myScripts.length === 0) {
-      devList.innerHTML = '<p style="color:var(--muted);">No scripts deployed yet.</p>';
-    } else {
-      devList.innerHTML = myScripts.map(s => `
-        <div class="script-item" onclick="loadScript('${s.slug}')">
-          <span class="script-title">${s.name}</span>
-          <div class="script-meta">
-            ${s.requires_key ? '<span style="color:var(--accent-soft);">Key System</span>' : 'Free'} · ${s.hits || 0} runs
-          </div>
+    const box = document.getElementById('my-scripts');
+    const scripts = await apiFetch('/api/scripts', 'GET');
+    if (!Array.isArray(scripts) || !scripts.length) {
+      box.innerHTML = '<p style="color:#94a3b8;">No scripts deployed yet.</p>';
+      return;
+    }
+    box.innerHTML = scripts.map(s => `
+      <div style="padding:1rem;background:rgba(0,0,0,0.25);border-radius:8px;margin-bottom:1rem;border:1px solid #1e293b;">
+        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
+        <div style="font-size:0.75rem;color:#a78bfa;">${s.obf_method}</div>
+        <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.3rem;">
+          ${s.requires_key ? '<span style="color:#ef4444;">Key Required</span>' : '<span style="color:#10b981;">Free</span>'}
+          · ${s.hits || 0} runs
         </div>
-      `).join('');
-    }
-
-    // Render Key System List (Only scripts with keys)
-    const keyList = document.getElementById('key-system-list');
-    const keyScripts = myScripts.filter(s => s.requires_key);
-    if (keyScripts.length === 0) {
-      keyList.innerHTML = '<p style="color:var(--muted);">No scripts with key system found.</p>';
-    } else {
-      keyList.innerHTML = keyScripts.map(s => `
-        <div class="script-item">
-          <span class="script-title">${s.name}</span>
-          <div class="script-meta">BoostyLink: ${s.boosty_url || 'Not set'}</div>
-          <div class="url-box" style="margin-top: 1rem;">
-            <input value="${s.return_url || ''}" readonly/>
-            <button onclick="copyValFromEl(this)">Copy Return</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Render Public Grid
-    const publicGrid = document.getElementById('public-scripts-grid');
-    if (allScripts.length === 0) {
-      publicGrid.innerHTML = '<p style="color:var(--muted);">No public scripts available.</p>';
-    } else {
-      publicGrid.innerHTML = allScripts.map(s => `
-        <div class="script-item">
-          <span class="script-title">${s.name}</span>
-          <div class="script-meta">by ${s.owner_name}</div>
-          <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--muted);">
-            ${s.requires_key ? '🔑 Key System' : '🟢 Free'} · 👁 ${s.hits || 0} runs
-          </div>
-        </div>
-      `).join('');
-    }
+        <code style="display:block;margin-top:0.4rem;font-size:0.72rem;color:#94a3b8;">${s.slug}</code>
+      </div>`).join('');
   }
 
-  function copyValFromEl(btn) {
-    const input = btn.previousElementSibling;
-    input.select();
-    navigator.clipboard.writeText(input.value);
-    alert('Copied!');
+  async function saveProfile() {
+    const bio = document.getElementById('p-bio').value;
+    const avatar_url = document.getElementById('p-avatar').value;
+    const r = await apiFetch('/api/profile', 'PATCH', { bio, avatar_url });
+    alert(r.ok ? 'Saved' : ('Error: ' + r.error));
   }
 
-  function resetForm() {
-    document.getElementById('form-title').textContent = 'Create New Script';
-    document.getElementById('s-name').value = '';
-    document.getElementById('s-code').value = '';
-    document.getElementById('t-boosty').value = '';
-    document.getElementById('t-duration').value = '600';
-    document.getElementById('t-key').checked = false;
-    document.getElementById('url-panel').style.display = 'none';
-    document.getElementById('save-btn').textContent = 'Save & Generate Loader';
-    document.getElementById('save-btn').onclick = () => saveScript();
-  }
-
-  function loadScript(slug) {
-    const script = allScripts.find(s => s.slug === slug);
-    if (!script) return;
-
-    document.getElementById('form-title').textContent = 'Edit Script: ' + script.name;
-    document.getElementById('s-name').value = script.name;
-    document.getElementById('s-code').value = ''; // Leave blank for security
-    document.getElementById('s-code').placeholder = 'Leave blank to keep existing payload';
-    document.getElementById('t-boosty').value = script.boosty_url || '';
-    document.getElementById('t-duration').value = script.key_duration || 600;
-    document.getElementById('t-key').checked = script.requires_key;
-    
-    if (script.return_url) {
-      document.getElementById('url-panel').style.display = 'block';
-      document.getElementById('out-return').value = script.return_url;
-      document.getElementById('out-share').value = script.share_url;
-    }
-
-    document.getElementById('save-btn').textContent = 'Update Script';
-    document.getElementById('save-btn').onclick = () => saveScript(slug);
-  }
-
-  async function saveScript(slugToUpdate = null) {
-    const btn = document.getElementById('save-btn');
-    const name = document.getElementById('s-name').value.trim();
-    const content = document.getElementById('s-code').value.trim();
-    const requires_key = document.getElementById('t-key').checked;
-    const boosty_url = document.getElementById('t-boosty').value.trim();
-    const key_duration = parseInt(document.getElementById('t-duration').value) || 600;
-
-    if (!name) return alert('Name required');
-    if (!slugToUpdate && !content) return alert('Content required for new scripts');
-    if (requires_key && !boosty_url) return alert('BoostyLink URL required');
-
-    btn.disabled = true; btn.textContent = 'Processing...';
-
-    const bodyData = { name, requires_key, boosty_url, key_duration, obf_method: 'loader' };
-    if (content) bodyData.content = content;
-
-    const res = await fetch('/api/scripts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify(bodyData)
-    });
-    
-    const data = await res.json();
-    if (data.slug) {
-      if (data.loader) {
-        document.getElementById('url-panel').style.display = 'block';
-        document.getElementById('out-loader').value = data.loader;
-      }
-      alert('Script saved successfully.');
-      loadScripts();
-    } else {
-      alert('Error: ' + data.error);
-    }
-    
-    btn.disabled = false; btn.textContent = 'Save & Generate Loader';
-  }
-
-  function copyVal(id) {
-    const el = document.getElementById(id);
-    el.select();
-    navigator.clipboard.writeText(el.value);
-    alert('Copied!');
-  }
-
-  async function deleteAccount() {
-    if (!confirm('Are you absolutely sure you want to delete your account? This cannot be undone.')) return;
-    
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'DELETE',
-        headers: { Authorization: 'Bearer ' + token }
+  if (localStorage.getItem('token')) {
+    loadScripts();
+    if (VERIFIED) {
+      apiFetch('/api/profile').then(r => {
+        if (r.profile) {
+          document.getElementById('p-bio').value = r.profile.bio || '';
+          document.getElementById('p-avatar').value = r.profile.avatar_url || '';
+        }
       });
-      if (res.ok) {
-        localStorage.clear();
-        window.location.href = '/';
-      } else {
-        alert('Failed to delete account.');
-      }
-    } catch(e) {
-      alert('Error deleting account.');
     }
   }
-
-  function logout() {
-    localStorage.clear();
-    window.location.href = '/';
-  }
-
-  loadScripts();
 </script>
 </body>
 </html>
