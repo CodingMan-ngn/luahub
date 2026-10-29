@@ -6,14 +6,23 @@
 <title>Key System — LuaHub</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  body { background: #050505; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); }
-  .box { background: rgba(15, 15, 15, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 3rem; border-radius: 16px; text-align: center; max-width: 500px; width: 100%; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+  :root { --bg: #050505; --panel: rgba(15, 15, 15, 0.8); --primary: #7c3aed; --success: #10b981; }
+  body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); }
+  .box { background: var(--panel); border: 1px solid rgba(255,255,255,0.1); padding: 3rem; border-radius: 16px; text-align: center; max-width: 500px; width: 100%; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: popIn 0.4s ease-out; }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   h1 { margin: 0 0 0.5rem 0; font-size: 1.8rem; }
-  p { color: #888; margin-bottom: 2rem; }
-  .btn { background: #10b981; color: #000; font-weight: 800; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.2s; }
-  .btn:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
-  .key-display { background: #000; border: 1px solid #222; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 1.2rem; color: #10b981; margin-bottom: 2rem; letter-spacing: 1px; word-break: break-all; }
-  .hidden { display: none; }
+  p { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+  .btn { background: var(--primary); color: #fff; font-weight: 800; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.2s; width: 100%; box-sizing: border-box; }
+  .btn:hover { background: #8b5cf6; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3); }
+  .btn-green { background: var(--success); color: #000; }
+  .btn-green:hover { background: #059669; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+  .key-display { background: #000; border: 1px solid #222; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 1.2rem; color: var(--success); margin-bottom: 2rem; letter-spacing: 1px; word-break: break-all; font-weight: bold; }
+  .hidden { display: none !important; }
+  .link-box { background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.85rem; color: #a78bfa; word-break: break-all; }
+  .loader { border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem auto; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .checkbox-wrap { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; cursor: pointer; color: #aaa; }
+  .checkbox-wrap input { width: 20px; height: 20px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -22,68 +31,119 @@
   <!-- SCREEN 1: The Gateway Start -->
   <div id="screen-start">
     <h1>🔑 LuaHub Key System</h1>
-    <p>You must complete the gateway to receive your key.</p>
-    <button class="btn" onclick="startGateway()">START</button>
+    <p>Complete the gateway steps to generate your HWID key.</p>
+    <button class="btn" onclick="startGateway()">Start Gateway</button>
   </div>
 
-  <!-- SCREEN 2: The Loading/Ad (Simulated Gateway) -->
-  <div id="screen-loading" class="hidden">
-    <h1>Gateway Progress</h1>
-    <p>Please wait while we verify your session...</p>
-    <div style="background:#222; border-radius:8px; height:10px; overflow:hidden; margin-top:2rem;">
-      <div id="progress-bar" style="background:#7c3aed; height:100%; width:0%; transition: width 3s linear;"></div>
+  <!-- SCREEN 2: The Checkbox / Anti-Bot -->
+  <div id="screen-check" class="hidden">
+    <h1>Security Check</h1>
+    <p>Please verify you are human to continue.</p>
+    <div class="link-box" id="gateway-link-display"></div>
+    <div class="checkbox-wrap">
+      <input type="checkbox" id="human-check" onchange="toggleTimer()">
+      <label for="human-check">I am not a robot</label>
     </div>
-    <p style="margin-top:1rem; font-size:0.8rem;">(In a real setup, this redirects to Lootlabs)</p>
+    <button class="btn btn-green" id="claim-btn" onclick="claimKey()" disabled style="opacity:0.5;">Waiting...</button>
   </div>
 
-  <!-- SCREEN 3: The Success / Key -->
+  <!-- SCREEN 3: The Loading -->
+  <div id="screen-loading" class="hidden">
+    <h1>Processing...</h1>
+    <div class="loader"></div>
+    <p>Verifying your session with the server. Do not close this tab.</p>
+  </div>
+
+  <!-- SCREEN 4: The Success / Key -->
   <div id="screen-success" class="hidden">
     <h1>✅ Success!</h1>
-    <p>Here is your key. Paste it in your executor.</p>
+    <p>Here is your key. Paste it in your executor UI.</p>
     <div class="key-display" id="key-text">Loading...</div>
-    <button class="btn" onclick="copyKey()">Copy Key</button>
+    <button class="btn btn-green" onclick="copyKey()">Copy Key</button>
   </div>
 </div>
 
 <script>
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
+  const slug = urlParams.get('slug') || 'universal';
 
-  // If the URL has a ?token=, we show the key immediately
+  // If URL has token, they just came from the gateway
   if (token) {
     document.getElementById('screen-start').classList.add('hidden');
-    document.getElementById('screen-loading').classList.add('hidden');
     document.getElementById('screen-success').classList.remove('hidden');
+    document.getElementById('key-text').textContent = "Claiming...";
     claimKey(token);
   }
 
+  // Start the flow
   async function startGateway() {
     document.getElementById('screen-start').classList.add('hidden');
-    document.getElementById('screen-loading').classList.remove('hidden');
+    document.getElementById('screen-check').classList.remove('hidden');
     
-    // Visual progress bar
-    setTimeout(() => { document.getElementById('progress-bar').style.width = '100%'; }, 100);
-
+    // Show them the link they will need to paste if they came from in-game
+    const currentUrl = window.location.origin + "/keys.html?slug=" + slug;
+    document.getElementById('gateway-link-display').textContent = currentUrl;
+    
+    // Anti-bypass: Create the token on the server immediately, hold it in memory
     try {
-      // 1. Tell the API we are starting
       const res = await fetch('/api/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', slug: 'universal' }) // Universal fallback, or pass from URL
+        body: JSON.stringify({ action: 'start', slug: slug })
       });
       const data = await res.json();
-      
-      // 2. Wait for the "Ad" (Simulated 3 seconds)
-      setTimeout(() => {
-        // 3. Redirect to the success URL with the token
-        window.location.href = `/keys.html?token=${data.token}`;
-      }, 3000);
-      
+      if (data.token) {
+        // Store token in browser session so they can't just guess it
+        sessionStorage.setItem('pending_gateway_token', data.token);
+      }
     } catch (e) {
-      alert('Gateway failed.');
+      alert('Failed to start gateway.');
     }
   }
 
+  // Handle checkbox ticking
+  let waitTime = 0;
+  function toggleTimer() {
+    const isChecked = document.getElementById('human-check').checked;
+    const btn = document.getElementById('claim-btn');
+    
+    if (isChecked) {
+      waitTime = 3 + Math.floor(Math.random() * 3); // 3 to 5 seconds wait
+      btn.disabled = true;
+      btn.style.opacity = '1';
+      
+      const interval = setInterval(() => {
+        waitTime--;
+        btn.textContent = `Verifying in ${waitTime}s...`;
+        if (waitTime <= 0) {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.textContent = 'Get My Key';
+        }
+      }, 1000);
+    } else {
+      btn.disabled = true;
+      btn.textContent = 'Waiting...';
+      btn.style.opacity = '0.5';
+    }
+  }
+
+  // User clicks the final button
+  function claimKey() {
+    const pendingToken = sessionStorage.getItem('pending_gateway_token');
+    if (!pendingToken) return alert('Session expired. Please restart.');
+
+    document.getElementById('screen-check').classList.add('hidden');
+    document.getElementById('screen-loading').classList.remove('hidden');
+
+    // Redirect to the token URL (this mimics the redirect from Lootlabs)
+    setTimeout(() => {
+      window.location.href = `/keys.html?token=${pendingToken}`;
+    }, 1500); // Short delay to show the loading spinner
+  }
+
+  // Final function to grab the key from the API
   async function claimKey(token) {
     try {
       const res = await fetch('/api/gateway', {
@@ -95,18 +155,23 @@
       
       if (data.key) {
         document.getElementById('key-text').textContent = data.key;
+        // Clear token so they can't refresh
+        sessionStorage.removeItem('pending_gateway_token');
       } else {
-        document.getElementById('key-text').textContent = 'Error: ' + data.error;
+        document.getElementById('key-text').textContent = '❌ ' + (data.error || 'Invalid Token');
+        document.getElementById('key-text').style.color = '#ef4444';
       }
     } catch (e) {
       document.getElementById('key-text').textContent = 'Network Error';
+      document.getElementById('key-text').style.color = '#ef4444';
     }
   }
 
+  // Copy Button
   function copyKey() {
     const key = document.getElementById('key-text').textContent;
     navigator.clipboard.writeText(key);
-    alert('Key copied to clipboard!');
+    alert('Key copied to clipboard! Go back to your executor and paste it.');
   }
 </script>
 </body>
