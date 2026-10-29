@@ -2,6 +2,7 @@
 const { supabase } = require('./_supabase');
 const { obfuscateLua } = require('../lib/obfuscator');
 const jwt = require('jsonwebtoken');
+
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 
 function authUser(req) {
@@ -11,6 +12,7 @@ function authUser(req) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -19,12 +21,21 @@ module.exports = async (req, res) => {
       const { name, description, content, place_id, requires_key, obfuscate } = req.body;
       const user = authUser(req);
       
-      if (!name || !content) return res.status(400).json({ error: 'Name and content required.' });
+      if (!name || !content) {
+        return res.status(400).json({ error: 'Name and content are required.' });
+      }
 
       let finalContent = content;
-      if (obfuscate) finalContent = obfuscateLua(content);
+      if (obfuscate) {
+        try {
+          finalContent = obfuscateLua(content);
+        } catch (obfErr) {
+          return res.status(500).json({ error: 'Obfuscation failed.' });
+        }
+      }
 
       const newSlug = Math.random().toString(36).substring(2, 10);
+      
       const { data, error } = await supabase
         .from('scripts')
         .insert({
@@ -42,7 +53,11 @@ module.exports = async (req, res) => {
         .single();
 
       if (error) return res.status(500).json({ error: error.message });
-      return res.status(200).json({ slug: data.slug });
+      
+      return res.status(200).json({ 
+        slug: data.slug, 
+        loader_url: `/api/loader?placeId=${place_id}` 
+      });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
