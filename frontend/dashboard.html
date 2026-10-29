@@ -3,159 +3,234 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard — LuaHub</title>
+<title>Admin Studio — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=28"/>
+<link rel="stylesheet" href="/assets/style.css?v=31"/>
 <style>
-  .source-viewer {
-    background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
-    padding: 1rem; font-family: var(--mono); font-size: 0.8rem; color: #cbd5e1;
-    white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin-top: 1rem;
-  }
-  .members-bar {
-    display: flex; justify-content: center; align-items: center; gap: 1.5rem;
-    background: var(--surface); padding: 1rem 2rem; border-radius: 20px;
-    border: 1px solid var(--glass-border); backdrop-filter: blur(16px);
-    max-width: 650px; margin: 1.5rem auto 0; flex-wrap: wrap;
-  }
-  .member-item { display: flex; align-items: center; gap: 0.5rem; }
-  .member-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--glass-border); }
-  .member-dev { color: var(--accent-soft); font-weight: 700; font-size: 0.7rem; background: rgba(124,58,237,0.2); padding: 2px 6px; border-radius: 4px; margin-left: 4px;}
+  .admin-layout { display: flex; gap: 2rem; max-width: 1400px; margin: 2rem auto; padding: 0 2rem; }
+  .sidebar { width: 300px; flex-shrink: 0; }
+  .main-panel { flex-grow: 1; }
   
-  .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-left:0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);}
-  .role-dev{background:var(--accent); color:#fff; border:none;}
-  .role-verified{background:var(--success); color:#fff; border:none;}
+  .panel { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+  .panel h2 { font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; }
   
-  .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem;}
-  .locked-panel { opacity: 0.4; pointer-events: none; position: relative; border: 1px dashed #ef4444; }
-  .locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #ef4444; background: rgba(0,0,0,0.5); border-radius: var(--radius);}
-  .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top: 2rem;}
-  @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #fff; }
+  .form-group p { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.8rem; }
+  
+  .url-box { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  .url-box input { flex-grow: 1; background: #000; color: var(--accent-soft); font-family: var(--mono); border: 1px solid var(--glass-border); padding: 0.8rem; border-radius: 8px; }
+  .url-box button { background: var(--accent); color: #fff; border: none; padding: 0 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  
+  .script-item { padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 0.8rem; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+  .script-item:hover { border-color: var(--accent); background: rgba(124,58,237,0.1); }
+  .script-item.active { border-color: var(--accent); background: rgba(124,58,237,0.15); }
+  .script-title { font-weight: 600; color: #fff; display: block; margin-bottom: 0.2rem; }
+  .script-meta { font-size: 0.8rem; color: var(--muted); }
 </style>
 </head>
 <body>
 <nav>
   <a href="/" class="logo">
-    <img src="/favicon.svg" width="24" height="24" style="border-radius:6px; margin-right:6px;"/> LuaHub
+    <img src="/favicon.svg" width="24" height="24" style="border-radius:6px; margin-right:6px;"/> LuaHub Admin
   </a>
   <div class="nav-links">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <img id="user-avatar" src="" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--accent);" />
-      <span id="user-name" style="font-weight:600;color:#fff;">Loading...</span>
-      <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;font-family:inherit; margin-left: 10px;">Logout</button>
-    </div>
+    <a href="/">Back to Site</a>
+    <span id="user-name" style="color:#fff; font-weight:600;"></span>
+    <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600;">Logout</button>
   </div>
 </nav>
 
-<div class="container">
-  <div class="hero" style="padding: 2rem 0;">
-    <h1 style="font-size: clamp(2.5rem, 5vw, 4rem);">Script Hub.</h1>
-    <p style="margin-bottom: 2rem;">Access premium, obfuscated scripts.</p>
-    
-    <div class="stats-bar">
-      <div class="stat-item"><h3 id="stat-scripts">0</h3><p>Scripts</p></div>
-      <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
-      <div class="stat-item"><h3>99.9%</h3><p>Uptime</p></div>
-    </div>
-    
-    <div class="members-bar" id="members-bar" style="display:none;">
-      <span style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-right:1rem;">Latest Users</span>
-      <div id="members-list" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;"></div>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="panel">
+      <h2>Your Scripts</h2>
+      <button class="btn-primary" style="width:100%; margin-bottom: 1.5rem;" onclick="resetForm()">+ New Script</button>
+      <div id="script-list">
+        <p style="color:var(--muted); font-size:0.9rem;">Loading...</p>
+      </div>
     </div>
   </div>
 
-  <div class="ticker-wrap" style="margin-bottom: 3rem;">
-    <div class="ticker" id="ticker">
-      <div class="ticker-item">Loading live scripts...</div>
-    </div>
-  </div>
-
-  <div class="dashboard-grid">
-    <div>
-      <h2 style="margin-bottom:1.5rem; font-size: 1.5rem;">📦 Public Scripts</h2>
-      <div class="script-grid" id="script-grid" style="grid-template-columns: 1fr;">
-        <p style="color:var(--muted);">Loading scripts...</p>
-      </div>
-    </div>
-
-    <div>
-      <!-- DEVELOPER ONLY SECTION -->
-      <div id="dev-panel" class="panel locked-panel" style="margin-bottom: 2rem;">
-        <div class="locked-overlay" id="dev-lock-msg">🔒 Developer Role Required</div>
-        <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
-        <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
-        
-        <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Raw Lua Source</label>
-        <textarea id="s-code" placeholder="Paste your raw Lua script here..." style="height:150px;"></textarea>
-        
-        <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Obfuscation Method</label>
-        <select id="obf-method">
-          <option value="loader">Loader (Standard String Split)</option>
-          <option value="bootstrapper">Bootstrapper (Environment Guard)</option>
-        </select>
-
-        <label style="display:block;margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem; font-weight: 500; margin-top: 1rem;">Public Source Code (Optional)</label>
-        <textarea id="s-source" placeholder="If you want users to view the source, paste it here..." style="height:60px;"></textarea>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
-          <input type="checkbox" id="t-source" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
-          <label for="t-source" style="color:var(--muted);cursor:pointer; font-size: 0.85rem;">Make source code public</label>
+  <div class="main-panel">
+    <div class="panel">
+      <h2 id="form-title">Create New Script</h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="form-group">
+          <label>Script Name</label>
+          <input id="s-name" placeholder="e.g. Quantum Onyx" style="width:100%;"/>
         </div>
-
-        <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
-          <input type="checkbox" id="t-key" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
-          <label for="t-key" style="color:var(--muted);cursor:pointer; font-size: 0.85rem;">Require Key System</label>
+        <div class="form-group">
+          <label>Runtime Duration (Seconds)</label>
+          <input id="t-duration" type="number" value="600" style="width:100%;"/>
         </div>
-
-        <button class="btn-primary btn-full" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
-        <div id="upload-result" style="margin-top:1rem;"></div>
       </div>
 
-      <!-- VERIFIED ONLY SECTION -->
-      <div id="verified-panel" class="panel locked-panel">
-        <div class="locked-overlay" id="verified-lock-msg">🔒 Verified Role Required</div>
-        <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📦 Your Scripts</h2>
-        <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
+      <div class="form-group">
+        <label>Raw Lua Source</label>
+        <textarea id="s-code" placeholder="Paste your raw Lua script here..." style="width:100%; height:150px;"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>BoostyLink Gateway URL</label>
+        <p>Paste the URL generated from BoostyLink for this script.</p>
+        <input id="t-boosty" placeholder="https://boostylink.com/..." style="width:100%;"/>
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="t-key" style="width:20px; height:20px;"/>
+          Enable Key System (Requires BoostyLink)
+        </label>
+      </div>
+
+      <button class="btn-primary" id="save-btn" onclick="saveScript()" style="padding: 0.8rem 2rem;">Save & Generate Loader</button>
+      <button class="btn-secondary" onclick="resetForm()" style="padding: 0.8rem 2rem; margin-left: 1rem;">Cancel</button>
+    </div>
+
+    <div id="url-panel" class="panel" style="display: none; border: 1px solid var(--accent);">
+      <h2>Key System URLs</h2>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom: 1.5rem;">Configure these URLs in your BoostyLink dashboard and use the Share URL for your users.</p>
+      
+      <div class="form-group">
+        <label>Return URL (Paste into BoostyLink's Destination URL)</label>
+        <div class="url-box">
+          <input id="out-return" readonly/>
+          <button onclick="copyVal('out-return')">Copy</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Share URL (Paste into YouTube/Discord)</label>
+        <div class="url-box">
+          <input id="out-share" readonly/>
+          <button onclick="copyVal('out-share')">Copy</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Generated Loadstring (Give this to users)</label>
+        <textarea id="out-loader" readonly style="width:100%; height:120px; background:#000; color:var(--success); font-family:var(--mono); font-size:0.8rem; padding:0.5rem; border-radius:8px;" onclick="this.select()"></textarea>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  const urlParams = new URLSearchParams(window.location.search);
-  const queryToken = urlParams.get('token');
-  if (queryToken) {
-    localStorage.setItem('token', queryToken);
-    window.history.replaceState({}, document.title, "/dashboard");
-  }
-
   const token = localStorage.getItem('token');
-  let payload = null;
-
-  if (!token) {
-    window.location.href = '/';
-  } else {
-    try {
-      payload = JSON.parse(atob(token.split('.')[1]));
-    } catch(e) {
-      localStorage.clear(); window.location.href = '/';
-    }
-  }
-
-  document.getElementById('user-name').textContent = payload?.name || 'User';
-  if (payload?.avatar) document.getElementById('user-avatar').src = payload.avatar;
+  if (!token) window.location.href = '/';
   
-  if (payload?.is_dev) {
-    document.getElementById('user-name').innerHTML += ` <span class="role-chip role-dev">DEV</span>`;
-    document.getElementById('dev-panel').classList.remove('locked-panel');
-    document.getElementById('dev-lock-msg').style.display = 'none';
-  } else if (payload?.verified) {
-    document.getElementById('user-name').innerHTML += ` <span class="role-chip role-verified">VERIFIED</span>`;
+  let payload = null;
+  try {
+    payload = JSON.parse(atob(token.split('.')[1]));
+    document.getElementById('user-name').textContent = payload.name;
+  } catch(e) { window.location.href = '/'; }
+
+  if (!payload?.is_dev) {
+    window.location.href = '/';
   }
 
-  if (payload?.verified || payload?.is_dev) {
-    document.getElementById('verified-panel').classList.remove('locked-panel');
-    document.getElementById('verified-lock-msg').style.display = 'none';
+  let allScripts = [];
+
+  async function loadScripts() {
+    const res = await fetch('/api/scripts');
+    allScripts = await res.json();
+    
+    const list = document.getElementById('script-list');
+    list.innerHTML = allScripts.map(s => `
+      <div class="script-item" id="item-${s.slug}" onclick="loadScript('${s.slug}')">
+        <span class="script-title">${s.name}</span>
+        <div class="script-meta">
+          ${s.requires_key ? '<span style="color:var(--accent-soft);">Key System</span>' : 'Free'} · ${s.hits || 0} runs
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function resetForm() {
+    document.getElementById('form-title').textContent = 'Create New Script';
+    document.getElementById('s-name').value = '';
+    document.getElementById('s-code').value = '';
+    document.getElementById('t-boosty').value = '';
+    document.getElementById('t-duration').value = '600';
+    document.getElementById('t-key').checked = false;
+    document.getElementById('url-panel').style.display = 'none';
+    document.getElementById('save-btn').textContent = 'Save & Generate Loader';
+    
+    document.querySelectorAll('.script-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('save-btn').onclick = () => saveScript();
+  }
+
+  function loadScript(slug) {
+    const script = allScripts.find(s => s.slug === slug);
+    if (!script) return;
+
+    document.querySelectorAll('.script-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('item-' + slug).classList.add('active');
+
+    document.getElementById('form-title').textContent = 'Edit Script: ' + script.name;
+    document.getElementById('s-name').value = script.name;
+    document.getElementById('s-code').value = ''; // Leave blank for security
+    document.getElementById('s-code').placeholder = 'Leave blank to keep existing payload';
+    document.getElementById('t-boosty').value = script.boosty_url || '';
+    document.getElementById('t-duration').value = script.key_duration || 600;
+    document.getElementById('t-key').checked = script.requires_key;
+    
+    if (script.return_url) {
+      document.getElementById('url-panel').style.display = 'block';
+      document.getElementById('out-return').value = script.return_url;
+      document.getElementById('out-share').value = script.share_url;
+    }
+
+    document.getElementById('save-btn').textContent = 'Update Script';
+    document.getElementById('save-btn').onclick = () => saveScript(slug);
+  }
+
+  async function saveScript(slugToUpdate = null) {
+    const btn = document.getElementById('save-btn');
+    const name = document.getElementById('s-name').value.trim();
+    const content = document.getElementById('s-code').value.trim();
+    const requires_key = document.getElementById('t-key').checked;
+    const boosty_url = document.getElementById('t-boosty').value.trim();
+    const key_duration = parseInt(document.getElementById('t-duration').value) || 600;
+
+    if (!name) return alert('Name required');
+    if (!slugToUpdate && !content) return alert('Content required for new scripts');
+    if (requires_key && !boosty_url) return alert('BoostyLink URL required');
+
+    btn.disabled = true; btn.textContent = 'Processing...';
+
+    const bodyData = { name, requires_key, boosty_url, key_duration, obf_method: 'loader' };
+    if (content) bodyData.content = content;
+
+    const res = await fetch('/api/scripts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(bodyData)
+    });
+    
+    const data = await res.json();
+    if (data.slug) {
+      if (data.loader) {
+        document.getElementById('url-panel').style.display = 'block';
+        document.getElementById('out-loader').value = data.loader;
+      }
+      alert('Script saved successfully. Loader generated.');
+      loadScripts();
+    } else {
+      alert('Error: ' + data.error);
+    }
+    
+    btn.disabled = false; btn.textContent = 'Save & Generate Loader';
+  }
+
+  function copyVal(id) {
+    const el = document.getElementById(id);
+    el.select();
+    navigator.clipboard.writeText(el.value);
+    alert('Copied!');
   }
 
   function logout() {
@@ -163,164 +238,7 @@
     window.location.href = '/';
   }
 
-  async function init() {
-    const grid = document.getElementById('script-grid');
-    try {
-      const res = await fetch('/api/scripts');
-      const allScripts = await res.json();
-      
-      document.getElementById('stat-scripts').textContent = allScripts.length;
-      let totalHits = allScripts.reduce((sum, s) => sum + (s.hits || 0), 0);
-      document.getElementById('stat-hits').textContent = totalHits;
-
-      if (!allScripts.length) { 
-        grid.innerHTML = '<p style="color:var(--muted);">No scripts available yet.</p>'; 
-      } else {
-        renderGrid(allScripts);
-        renderTicker(allScripts);
-      }
-    } catch (e) {
-      grid.innerHTML = '<p style="color:#ef4444;">Failed to load scripts.</p>';
-    }
-
-    try {
-      const memRes = await fetch('/api/members');
-      const members = await memRes.json();
-      if (members.length > 0) {
-        document.getElementById('members-bar').style.display = 'flex';
-        document.getElementById('members-list').innerHTML = members.map(m => `
-          <div class="member-item" title="${m.discord_name}">
-            <img src="${m.discord_avatar}" class="member-avatar" alt="${m.discord_name}">
-            ${m.is_dev ? '<span class="member-dev">DEV</span>' : ''}
-          </div>
-        `).join('');
-      }
-    } catch(e) {}
-  }
-
-  function renderTicker(scripts) {
-    const ticker = document.getElementById('ticker');
-    const itemsHtml = scripts.map(s => `<div class="ticker-item"><span>${s.owner_name}</span> loaded ${s.name}</div>`).join('');
-    ticker.innerHTML = itemsHtml + itemsHtml + itemsHtml;
-  }
-
-  function getLoaderString(slug, requiresKey, obfMethod) {
-    const url = `${window.location.origin}/api/loader/${slug}`;
-    
-    if (obfMethod === 'loader') {
-      let str = `--[[\n  NOTE: Before you deobfuscate this code, ensure you have pure intentions.\n  This code is protected by LuaHub.\n]]\n`;
-      str += `script_key = "${requiresKey ? 'YOUR_KEY_HERE' : 'nil'}"; -- A key might be required, if not, delete this line.\n`;
-      str += `loadstring(game:HttpGet("${url}"))()`;
-      return str;
-    } else {
-      return `loadstring(game:HttpGet("${url}"))()`;
-    }
-  }
-
-  function renderGrid(scripts) {
-    const grid = document.getElementById('script-grid');
-    grid.innerHTML = scripts.map(s => `
-      <div class="script-card" style="padding: 1.2rem;">
-        <div class="script-header">
-          <div class="script-title" style="font-size:1.1rem;">${s.name}</div>
-          <div class="script-author">by ${s.owner_name}</div>
-        </div>
-        <div class="script-meta" style="margin-bottom: 1rem; padding-bottom: 0.5rem;">
-          <span>👁 ${s.hits || 0} Runs</span>
-          <span style="color:var(--accent-soft);">⚙️ ${s.obf_method || 'loader'}</span>
-          ${s.requires_key ? '<span style="color:#ef4444;">🔑 Key Req</span>' : ''}
-        </div>
-        ${s.is_public_source ? `
-          <div style="margin-bottom: 1rem;">
-            <button class="btn-secondary" style="width:100%; padding:0.4rem; font-size:0.8rem;" onclick="toggleSource('${s.id}')">View Source</button>
-            <div class="source-viewer hidden" id="src-${s.id}">${s.source_code || 'No source provided.'}</div>
-          </div>
-        ` : ''}
-        
-        ${s.requires_key ? `
-          <div style="margin-bottom: 1rem;">
-            <a href="/key-system?slug=${s.slug}" target="_blank" class="btn-secondary" style="display:block; width:100%; padding:0.4rem; font-size:0.8rem; text-align:center; text-decoration:none; margin-bottom:0.5rem;">Get Key for this Script</a>
-          </div>
-        ` : ''}
-
-        <button class="btn-primary" style="width:100%; padding: 0.5rem; font-size: 0.85rem;" onclick="copyLoader('${s.slug}', ${s.requires_key}, '${s.obf_method}')">
-          Copy Loadstring
-        </button>
-      </div>
-    `).join('');
-  }
-
-  function toggleSource(id) {
-    document.getElementById(`src-${id}`).classList.toggle('hidden');
-  }
-
-  function copyLoader(slug, requiresKey, obfMethod) {
-    const loader = getLoaderString(slug, requiresKey, obfMethod);
-    navigator.clipboard.writeText(loader);
-    alert('Loader copied to clipboard!');
-  }
-
-  async function uploadScript() {
-    const btn = document.getElementById('upload-btn');
-    const name = document.getElementById('s-name').value.trim();
-    const content = document.getElementById('s-code').value.trim();
-    const source = document.getElementById('s-source').value.trim();
-    const is_public_source = document.getElementById('t-source').checked;
-    const requires_key = document.getElementById('t-key').checked;
-    const obf_method = document.getElementById('obf-method').value;
-
-    if (!name || !content) return alert('Name + raw source required');
-    btn.disabled = true; btn.textContent = 'Obfuscating...';
-
-    const res = await fetch('/api/scripts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ name, content, source_code: source, is_public_source, requires_key, obf_method })
-    });
-    const data = await res.json();
-
-    const box = document.getElementById('upload-result');
-    if (data.slug) {
-      const loaderStr = getLoaderString(data.slug, requires_key, obf_method);
-      box.innerHTML = `<p style="color:var(--success);font-weight:600;">✅ Deployed Successfully</p>
-        <code style="display:block;margin-top:0.8rem;color:var(--success);white-space:pre-wrap;font-size:0.8rem;background:#000;padding:1rem;border-radius:8px;border:1px solid rgba(16,185,129,0.2);">${loaderStr}</code>`;
-      ['s-name','s-code','s-source'].forEach(id => document.getElementById(id).value='');
-      document.getElementById('t-key').checked = false;
-      loadScripts();
-    } else {
-      box.innerHTML = `<p style="color:#ef4444;">Error: ${data?.error || 'unknown'}</p>`;
-    }
-    btn.disabled = false; btn.textContent = 'Deploy Script';
-  }
-
-  async function loadScripts() {
-    if (!payload?.verified && !payload?.is_dev) return;
-    const box = document.getElementById('my-scripts');
-    const res = await fetch('/api/scripts');
-    const scripts = await res.json();
-    const myScripts = scripts.filter(s => s.owner_name === payload.name);
-
-    if (!myScripts.length) {
-      box.innerHTML = '<p style="color:var(--muted);">No scripts deployed yet.</p>';
-      return;
-    }
-    
-    box.innerHTML = myScripts.map(s => {
-      const loaderStr = getLoaderString(s.slug, s.requires_key, s.obf_method || 'loader');
-      return `
-      <div style="padding:1rem;background:var(--surface);border-radius:12px;margin-bottom:0.8rem;border:1px solid var(--glass-border);">
-        <strong style="display:block;font-size:1rem;color:#fff; margin-bottom:0.3rem;">${s.name}</strong>
-        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.8rem;">
-          ${s.requires_key ? '<span style="color:#ef4444;font-weight:600;">Key Required</span>' : '<span style="color:var(--success);font-weight:600;">Free Access</span>'}
-          · ${s.obf_method || 'loader'} · ${s.hits || 0} runs
-        </div>
-        <textarea readonly style="width:100%; height:60px; background:#000; color:var(--success); font-family:var(--mono); font-size:0.75rem; padding:0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.2); resize:none;" onclick="this.select()">${loaderStr}</textarea>
-      </div>`
-    }).join('');
-  }
-
-  init();
-  if (payload?.verified || payload?.is_dev) loadScripts();
+  loadScripts();
 </script>
 </body>
 </html>
