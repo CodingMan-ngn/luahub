@@ -1,4 +1,6 @@
-// ── API helper ────────────────────────────────────────────────────
+// frontend/assets/app.js
+const SUPABASE_URL = 'https://cnwpjepbipnqirgdrque.supabase.co'
+
 async function apiFetch(path, method = 'GET', body = null) {
   const opts = {
     method,
@@ -8,84 +10,85 @@ async function apiFetch(path, method = 'GET', body = null) {
     }
   }
   if (body) opts.body = JSON.stringify(body)
-  try {
-    const res = await fetch(path, opts)
-    return res.json()
-  } catch (e) {
-    return { error: e.message }
-  }
+  const res = await fetch(path, opts)
+  return res.json()
 }
 
-// ── Auth modal ────────────────────────────────────────────────────
-let authMode = 'login'
-
-function openAuthModal() {
-  const m = document.getElementById('auth-modal')
-  if (m) m.classList.remove('hidden')
-}
-
-function closeModal() {
-  const m = document.getElementById('auth-modal')
-  if (m) m.classList.add('hidden')
-}
-
-function toggleModal() {
-  authMode = authMode === 'login' ? 'register' : 'login'
-  const title  = document.getElementById('modal-title')
-  const uField = document.getElementById('auth-username')
-  const toggle = document.getElementById('modal-toggle')
-  if (title)  title.textContent  = authMode === 'login' ? 'Login' : 'Register'
-  if (uField) uField.style.display = authMode === 'register' ? 'block' : 'none'
-  if (toggle) toggle.innerHTML = authMode === 'login'
-    ? 'No account? <a href="#" onclick="toggleModal()">Register</a>'
-    : 'Have an account? <a href="#" onclick="toggleModal()">Login</a>'
-}
-
-async function submitAuth() {
-  const email    = document.getElementById('auth-email').value.trim()
-  const password = document.getElementById('auth-pass').value
-  const uEl      = document.getElementById('auth-username')
-  const username = uEl ? uEl.value.trim() : ''
-  const errEl    = document.getElementById('modal-error')
-
-  const payload = authMode === 'login'
-    ? { action: 'login', email, password }
-    : { action: 'register', email, password, username }
-
-  const res = await apiFetch('/api/auth', 'POST', payload)
-
-  if (res.token) {
-    localStorage.setItem('token',    res.token)
-    localStorage.setItem('username', res.username)
-    localStorage.setItem('api_key',  res.api_key)
-    closeModal()
-    syncNav()
-    location.href = '/dashboard'
-  } else {
-    if (errEl) errEl.textContent = '❌ ' + (res.error || 'unknown error')
-  }
+function loginDiscord() {
+  const redirectUrl = window.location.origin + '/dashboard'
+  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=discord&redirect_to=${encodeURIComponent(redirectUrl)}`
 }
 
 function logout() {
   localStorage.clear()
-  location.href = '/'
+  window.location.href = '/'
 }
 
-// ── Nav state ─────────────────────────────────────────────────────
-function syncNav() {
-  const token = localStorage.getItem('token')
-  const show  = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v }
+function openModal() { document.getElementById('auth-modal')?.classList.remove('hidden') }
+function closeModal() { document.getElementById('auth-modal')?.classList.add('hidden') }
+
+// Capture Supabase OAuth redirect tokens from URL hash on dashboard load
+function captureOAuthTokens() {
+  if (!window.location.hash) return false
+  const params = new URLSearchParams(window.location.hash.substring(1))
+  const token = params.get('access_token')
   if (token) {
-    show('nav-dash',   'inline')
-    show('nav-login',  'none')
-    show('nav-logout', 'inline')
-    const u = document.getElementById('nav-user')
-    if (u) u.textContent = '👤 ' + (localStorage.getItem('username') || '')
-  } else {
-    show('nav-dash',   'none')
-    show('nav-login',  'inline')
-    show('nav-logout', 'none')
+    localStorage.setItem('token', token)
+    // Decode JWT to pull user metadata (sub, user_metadata.username)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const username = payload?.user_metadata?.full_name || payload?.user_metadata?.name || 'user'
+      localStorage.setItem('username', username)
+      localStorage.setItem('user_id', payload.sub)
+    } catch {}
+    history.replaceState(null, '', window.location.pathname)
+    return true
   }
+  return false
 }
 
-window.addEventListener('DOMContentLoaded', syncNav)
+// 3D tilt
+function attachTilt() {
+  document.querySelectorAll('.feat').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      const cx = rect.width / 2
+      const cy = rect.height / 2
+      const rx = ((y - cy) / cy) * -10
+      const ry = ((x - cx) / cx) * 10
+      card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02,1.02,1.02)`
+    })
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1,1,1)`
+    })
+  })
+}
+
+// Preloader
+function runPreloader() {
+  const pre = document.getElementById('preloader')
+  if (!pre) return
+  window.addEventListener('load', () => {
+    setTimeout(() => pre.classList.add('done'), 1000)
+  })
+}
+
+// Global nav state
+window.addEventListener('DOMContentLoaded', () => {
+  runPreloader()
+  attachTilt()
+
+  const loginLink = document.getElementById('nav-login')
+  const dashLink = document.getElementById('nav-dash')
+  const logoutLink = document.getElementById('nav-logout')
+
+  if (loginLink) loginLink.onclick = (e) => { e.preventDefault(); openModal() }
+
+  if (localStorage.getItem('token')) {
+    if (dashLink) dashLink.style.display = 'inline'
+    if (loginLink) loginLink.style.display = 'none'
+    if (logoutLink) { logoutLink.style.display = 'inline'; logoutLink.onclick = (e) => { e.preventDefault(); logout() } }
+  }
+})
