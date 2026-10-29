@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=26"/>
+<link rel="stylesheet" href="/assets/style.css?v=27"/>
 <style>
   .source-viewer {
     background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
@@ -29,7 +29,7 @@
   
   .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem;}
   .locked-panel { opacity: 0.4; pointer-events: none; position: relative; border: 1px dashed #ef4444; }
-  .locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #ef4444; background: rgba(0,0,0,0.5); border-radius: var(--radius);}
+  .locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #ef4444; background: rgba(0,0,0,0.5); border-radius: var(--radius); z-index: 10;}
   .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top: 2rem;}
   @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 </style>
@@ -213,6 +213,16 @@
     ticker.innerHTML = itemsHtml + itemsHtml + itemsHtml;
   }
 
+  function getLoaderString(slug, requiresKey, obfMethod) {
+    const url = `${window.location.origin}/api/loader/${slug}`;
+    
+    if (obfMethod === 'loader') {
+      return `script_key = "${requiresKey ? 'YOUR_KEY_HERE' : 'nil'}"; -- A key might be required, if not, delete this line.\nloadstring(game:HttpGet("${url}"))()`;
+    } else {
+      return `loadstring(game:HttpGet("${url}"))()`;
+    }
+  }
+
   function renderGrid(scripts) {
     const grid = document.getElementById('script-grid');
     grid.innerHTML = scripts.map(s => `
@@ -232,7 +242,7 @@
             <div class="source-viewer hidden" id="src-${s.id}">${s.source_code || 'No source provided.'}</div>
           </div>
         ` : ''}
-        <button class="btn-primary" style="width:100%; padding: 0.5rem; font-size: 0.85rem;" onclick="copyLoader('${s.slug}')">
+        <button class="btn-primary" style="width:100%; padding: 0.5rem; font-size: 0.85rem;" onclick="copyLoader('${s.slug}', ${s.requires_key}, '${s.obf_method}')">
           Copy Loadstring
         </button>
       </div>
@@ -243,8 +253,8 @@
     document.getElementById(`src-${id}`).classList.toggle('hidden');
   }
 
-  function copyLoader(slug) {
-    const loader = `loadstring(game:HttpGet("${window.location.origin}/api/loader/${slug}"))()`;
+  function copyLoader(slug, requiresKey, obfMethod) {
+    const loader = getLoaderString(slug, requiresKey, obfMethod);
     navigator.clipboard.writeText(loader);
     alert('Loader copied to clipboard!');
   }
@@ -270,11 +280,9 @@
 
     const box = document.getElementById('upload-result');
     if (data.slug) {
-      const url = `${location.origin}/api/loader/${data.slug}`;
-      let one = `loadstring(game:HttpGet("${url}"))()`;
-      if (requires_key) one = `script_key = "YOUR_KEY"\n` + one;
+      const loaderStr = getLoaderString(data.slug, requires_key, obf_method);
       box.innerHTML = `<p style="color:var(--success);font-weight:600;">✅ Deployed Successfully</p>
-        <code style="display:block;margin-top:0.8rem;color:var(--success);white-space:pre-wrap;font-size:0.8rem;background:#000;padding:1rem;border-radius:8px;border:1px solid rgba(16,185,129,0.2);">${one}</code>`;
+        <code style="display:block;margin-top:0.8rem;color:var(--success);white-space:pre-wrap;font-size:0.8rem;background:#000;padding:1rem;border-radius:8px;border:1px solid rgba(16,185,129,0.2);">${loaderStr}</code>`;
       ['s-name','s-code','s-source'].forEach(id => document.getElementById(id).value='');
       document.getElementById('t-key').checked = false;
       loadScripts();
@@ -296,15 +304,18 @@
       return;
     }
     
-    box.innerHTML = myScripts.map(s => `
+    box.innerHTML = myScripts.map(s => {
+      const loaderStr = getLoaderString(s.slug, s.requires_key, s.obf_method || 'loader');
+      return `
       <div style="padding:1rem;background:var(--surface);border-radius:12px;margin-bottom:0.8rem;border:1px solid var(--glass-border);">
-        <strong style="display:block;font-size:1rem;color:#fff;">${s.name}</strong>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;">
+        <strong style="display:block;font-size:1rem;color:#fff; margin-bottom:0.3rem;">${s.name}</strong>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.8rem;">
           ${s.requires_key ? '<span style="color:#ef4444;font-weight:600;">Key Required</span>' : '<span style="color:var(--success);font-weight:600;">Free Access</span>'}
           · ${s.obf_method || 'loader'} · ${s.hits || 0} runs
         </div>
-        <code style="display:block;margin-top:0.5rem;font-size:0.75rem;color:var(--muted); font-family: var(--mono);">${s.slug}</code>
-      </div>`).join('');
+        <textarea readonly style="width:100%; height:60px; background:#000; color:var(--success); font-family:var(--mono); font-size:0.75rem; padding:0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.2); resize:none;" onclick="this.select()">${loaderStr}</textarea>
+      </div>`
+    }).join('');
   }
 
   init();
