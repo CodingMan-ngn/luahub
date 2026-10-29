@@ -1,4 +1,4 @@
--- loader.lua
+-- loader.lua - paste into executor
 local BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 local function decode_base64(data)
@@ -27,36 +27,18 @@ local function decrypt_payload(encoded_str)
     return table.concat(decrypted)
 end
 
--- GENERATED URL (This is inserted by the dashboard automatically)
-local URL = "https://lua-axon.vercel.app/api/loader/YOUR_SLUG_HERE"
+local SLUG = "your-script-slug"
+local URL = "https://your-app.vercel.app/api/loader/" .. SLUG
+if script_key then URL = URL .. "?key=" .. script_key end
 
--- Check for user provided key
-local user_key = nil
-if script_key then
-    user_key = script_key
-end
-
-local target_url = URL
-if user_key then
-    target_url = URL .. "?key=" .. user_key
-end
-
-local success, encoded_data = pcall(function()
-    return game:HttpGet(target_url, true)
+local ok, encoded_data = pcall(function()
+    return game:HttpGet(URL, true)
 end)
 
-if not success or string.find(encoded_data, "Key required") then
-    warn("[LuaHub] Invalid or missing key. Please generate one.")
-    return
-elseif string.find(encoded_data, "Updating") then
-    warn("[LuaHub] This script is currently updating. Join the Discord for updates.")
-    return
-end
+if not ok then warn("[LuaHub] Failed to fetch payload.") return end
+if encoded_data:sub(1,2) == "--" then warn("[LuaHub] " .. encoded_data) return end
 
 local decrypted_bytecode = decrypt_payload(encoded_data)
 local func, err = loadstring(decrypted_bytecode)
-if not func then
-    warn("[LuaHub] Bytecode execution failed.")
-    return
-end
+if not func then warn("[LuaHub] Bytecode execution failed: " .. tostring(err)) return end
 func()

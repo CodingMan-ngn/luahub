@@ -1,135 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard — LuaHub</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=13"/>
-  <script src="/assets/app.js?v=13" defer></script>
-  <style>
-    .key-box { background: rgba(124,58,237,0.1); border: 1px solid #7c3aed; border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 2rem; }
-    .key-box a { display: inline-block; background: #7c3aed; color: white; padding: 1rem 2rem; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 1rem; }
-    .key-warning { color: #f59e0b; font-size: 0.85rem; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — LuaHub</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css?v=15"/>
+<script src="/assets/app.js?v=15" defer></script>
+<style>
+  .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;margin-left:0.4rem;}
+  .role-dev{background:#7c3aed;color:#fff;}
+  .role-user{background:#334155;color:#cbd5e1;}
+  .verified-chip{background:#10b981;color:#052e1a;}
+  .key-box{background:rgba(124,58,237,0.1);border:1px solid #7c3aed;border-radius:12px;padding:1.75rem;text-align:center;margin-bottom:2rem;}
+  .key-box a{display:inline-block;background:#7c3aed;color:#fff;padding:0.9rem 1.8rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:1rem;}
+  .locked{position:relative;}
+  .locked-note{position:absolute;right:0;top:0;color:#f59e0b;font-weight:600;font-size:0.8rem;}
+  .obf-select{width:100%;padding:0.75rem;border-radius:8px;background:#0b1220;color:#e2e8f0;border:1px solid #1e293b;margin-bottom:1rem;}
+</style>
 </head>
 <body>
-  <nav>
-    <a href="/" class="logo"><svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub</a>
-    <div class="nav-links">
-      <a href="/">Hub</a>
-      <span id="user-name" style="color: white; font-weight: 600;">User</span>
-      <button onclick="localStorage.clear(); window.location.href='/'" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:600;">Logout</button>
-    </div>
-  </nav>
+<nav>
+  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
+    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
+    LuaHub
+  </a>
+  <div class="nav-links">
+    <a href="/">Hub</a>
+    <span id="user-name">User</span>
+    <span id="user-chips"></span>
+    <button onclick="localStorage.clear();location.href='/'" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
+  </div>
+</nav>
 
-  <section style="padding-top: 4rem; max-width: 1200px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
-    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800;">Dashboard</h1>
-    
-    <!-- MASTER KEY SYSTEM -->
-    <div class="key-box">
-      <h2 style="margin-bottom: 0.5rem;">🔑 Get Your Master Key</h2>
-      <p style="color: var(--muted); margin-bottom: 1.5rem;">You need a key to run ANY script on LuaHub. Generate one key and use it for everything.</p>
-      <!-- REPLACED URL HERE -->
-      <a href="https://boostylink.com/H9kYR2AQ" target="_blank">Generate Key Now</a>
-      <div class="key-warning">
-        <span>⚠️</span>
-        <span>Keys are <strong>single-use</strong> to prevent bot bypass. One key = one script execution.</span>
+<section style="padding:3rem 2rem;max-width:1200px;margin:0 auto;">
+  <h1 style="font-size:2.5rem;font-weight:800;margin-bottom:1.5rem;">Dashboard</h1>
+
+  <div class="key-box">
+    <h2>🔑 Master Key</h2>
+    <p style="color:#94a3b8;margin-bottom:1rem;">Generate one key per script execution. Single-use per script.</p>
+    <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener">Generate Key Now</a>
+    <div style="color:#f59e0b;font-size:0.85rem;margin-top:1rem;">⚠️ Keys are single-use. One key = one script run.</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+    <div class="panel">
+      <h2 style="margin-bottom:1.5rem;">📤 Deploy Script</h2>
+
+      <input id="s-name" placeholder="Script Name" style="width:100%;margin-bottom:1rem;"/>
+
+      <label style="display:block;margin-bottom:0.4rem;color:#94a3b8;font-size:0.85rem;">Obfuscation method</label>
+      <select id="obf-method" class="obf-select">
+        <option value="loader">Loader</option>
+        <option value="bootstrapper">Bootstrapper</option>
+        <option value="bytecode">Bytecode</option>
+      </select>
+
+      <textarea id="s-code" placeholder="Paste encrypted .bin contents" style="width:100%;height:180px;margin-bottom:1rem;"></textarea>
+
+      <div id="key-toggle-wrap" class="locked" style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <input type="checkbox" id="t-key" style="width:20px;height:20px;"/>
+        <label for="t-key" style="color:#94a3b8;cursor:pointer;">Require Key System</label>
+        <div class="locked-note" id="key-lock" style="display:none;">🔒 Developer role required</div>
       </div>
+
+      <button class="action" id="upload-btn" onclick="uploadScript()" style="width:100%;">Deploy Script</button>
+      <div id="upload-result" style="margin-top:1rem;"></div>
     </div>
 
-    <div class="dashboard-grid">
-      <div class="panel">
-        <h2 style="margin-bottom: 1.5rem;">📤 Deploy New Script</h2>
-        <input id="s-name" placeholder="Script Name (e.g., Universal ESP)" />
-        <textarea id="s-code" placeholder="Paste your encrypted .bin contents here..."></textarea>
-        
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom: 1.5rem;">
-          <input type="checkbox" id="t-key" style="width:20px; height:20px; cursor:pointer;">
-          <label for="t-key" style="color:var(--muted); cursor:pointer;">Require Key System</label>
-        </div>
-
-        <button class="action" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
-        <div id="upload-result" class="result-box hidden"></div>
-      </div>
-
-      <div class="panel">
-        <h2 style="margin-bottom: 1.5rem;">📦 Your Scripts</h2>
-        <div id="my-scripts"><p style="color: var(--muted);">Loading...</p></div>
-      </div>
+    <div class="panel">
+      <h2 style="margin-bottom:1.5rem;">📦 Your Scripts</h2>
+      <div id="my-scripts"><p style="color:#94a3b8;">Loading...</p></div>
     </div>
-  </section>
+  </div>
 
-  <script>
-    document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
-    
-    async function apiFetch(path, method = 'GET', body = null) {
-      const opts = {
-        method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
-      }
-      if (body) opts.body = JSON.stringify(body)
-      const res = await fetch(path, opts)
-      return res.json()
-    }
+  <div class="panel" id="profile-panel" style="margin-top:2rem;display:none;">
+    <h2 style="margin-bottom:1rem;">👤 Profile</h2>
+    <input id="p-bio" placeholder="Bio" style="width:100%;margin-bottom:1rem;"/>
+    <input id="p-avatar" placeholder="Avatar URL" style="width:100%;margin-bottom:1rem;"/>
+    <button class="action" onclick="saveProfile()">Save Profile</button>
+  </div>
+</section>
 
-    async function uploadScript() {
-      const btn = document.getElementById('upload-btn')
-      const name = document.getElementById('s-name').value.trim()
-      const content = document.getElementById('s-code').value.trim()
-      const requiresKey = document.getElementById('t-key').checked
-      
-      if (!name || !content) return alert('Name and payload required')
+<script>
+  const ROLE = localStorage.getItem('role') || 'user';
+  const VERIFIED = localStorage.getItem('verified') === 'true';
+  document.getElementById('user-name').textContent = localStorage.getItem('username') || 'User';
+  document.getElementById('user-chips').innerHTML =
+    `<span class="role-chip ${ROLE === 'developer' ? 'role-dev' : 'role-user'}">${ROLE}</span>` +
+    (VERIFIED ? `<span class="role-chip verified-chip">verified</span>` : '');
 
-      btn.disabled = true; btn.textContent = 'Deploying...'
-      try {
-        const res = await apiFetch('/api/scripts', 'POST', { name, content, is_public: true, requires_key: requiresKey })
-        const box = document.getElementById('upload-result')
-        box.classList.remove('hidden')
-        
-        if (res && res.slug) {
-          const url = `${window.location.origin}/api/loader/${res.slug}`
-          let loaderStr = `loadstring(game:HttpGet("${url}"))()`
-          if (requiresKey) {
-             loaderStr = `script_key = "YOUR_KEY_HERE";\nloadstring(game:HttpGet("${url}"))()`
-          }
-          
-          box.innerHTML = `<p>✅ Deployed!</p><code style="display:block; margin-top:0.5rem; color:#10b981">${loaderStr}</code>`
-          document.getElementById('s-name').value = ''
-          document.getElementById('s-code').value = ''
-          document.getElementById('t-key').checked = false
-          loadScripts()
-        } else {
-          box.innerHTML = `<p style="color:#ef4444">Error: ${res?.error}</p>`
-        }
-      } catch (e) { alert(e.message) }
-      btn.disabled = false; btn.textContent = 'Deploy Script'
-    }
+  if (ROLE !== 'developer') {
+    document.getElementById('key-lock').style.display = 'block';
+    document.getElementById('t-key').disabled = true;
+  }
+  if (VERIFIED) document.getElementById('profile-panel').style.display = 'block';
 
-    async function loadScripts() {
-      const box = document.getElementById('my-scripts')
-      try {
-        const scripts = await apiFetch('/api/scripts', 'GET')
-        if (!Array.isArray(scripts) || !scripts.length) {
-          box.innerHTML = '<p style="color: var(--muted)">No scripts deployed yet.</p>'
-          return
-        }
-        box.innerHTML = scripts.map(s => `
-          <div style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--glass-border);">
-            <strong style="font-size:1.1rem; display:block; margin-bottom:0.5rem;">${s.name}</strong> 
-            ${s.requires_key ? '<span style="color:#ef4444; font-size:0.8rem;">Key Required</span>' : '<span style="color:#10b981; font-size:0.8rem;">Free Access</span>'}
-            <code style="display:block; margin-top:0.5rem; font-size:0.75rem; color:#a78bfa;">Slug: ${s.slug}</code>
-          </div>
-        `).join('')
-      } catch (e) {
-        box.innerHTML = `<p style="color: #ef4444">Error loading scripts.</p>`
-      }
-    }
+  async function apiFetch(path, method='GET', body=null) {
+    const opts = {
+      method,
+      headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + localStorage.getItem('token')}
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    return r.json();
+  }
 
-    if (localStorage.getItem('token')) {
+  async function uploadScript() {
+    const btn = document.getElementById('upload-btn');
+    const name = document.getElementById('s-name').value.trim();
+    const content = document.getElementById('s-code').value.trim();
+    const obf_method = document.getElementById('obf-method').value;
+    const requires_key = ROLE === 'developer' && document.getElementById('t-key').checked;
+
+    if (!name || !content) return alert('Name + payload required');
+    btn.disabled = true; btn.textContent = 'Deploying...';
+
+    const res = await apiFetch('/api/scripts', 'POST', { name, content, is_public: true, requires_key, obf_method });
+    const box = document.getElementById('upload-result');
+
+    if (res && res.slug) {
+      const url = `${location.origin}/api/loader/${res.slug}`;
+      let one = `loadstring(game:HttpGet("${url}"))()`;
+      if (requires_key) one = `script_key = "YOUR_KEY"\n` + one;
+      box.innerHTML = `<p style="color:#10b981;">✅ Deployed (${res.obf_method})</p>
+        <code style="display:block;margin-top:0.5rem;color:#10b981;white-space:pre-wrap;font-size:0.8rem;">${one}</code>`;
+      ['s-name','s-code'].forEach(id => document.getElementById(id).value='');
+      document.getElementById('t-key').checked = false;
       loadScripts();
+    } else {
+      box.innerHTML = `<p style="color:#ef4444;">Error: ${res?.error || 'unknown'}</p>`;
     }
-  </script>
+    btn.disabled = false; btn.textContent = 'Deploy Script';
+  }
+
+  async function loadScripts() {
+    const box = document.getElementById('my-scripts');
+    const scripts = await apiFetch('/api/scripts', 'GET');
+    if (!Array.isArray(scripts) || !scripts.length) {
+      box.innerHTML = '<p style="color:#94a3b8;">No scripts deployed yet.</p>';
+      return;
+    }
+    box.innerHTML = scripts.map(s => `
+      <div style="padding:1rem;background:rgba(0,0,0,0.25);border-radius:8px;margin-bottom:1rem;border:1px solid #1e293b;">
+        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
+        <div style="font-size:0.75rem;color:#a78bfa;">${s.obf_method}</div>
+        <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.3rem;">
+          ${s.requires_key ? '<span style="color:#ef4444;">Key Required</span>' : '<span style="color:#10b981;">Free</span>'}
+          · ${s.hits || 0} runs
+        </div>
+        <code style="display:block;margin-top:0.4rem;font-size:0.72rem;color:#94a3b8;">${s.slug}</code>
+      </div>`).join('');
+  }
+
+  async function saveProfile() {
+    const bio = document.getElementById('p-bio').value;
+    const avatar_url = document.getElementById('p-avatar').value;
+    const r = await apiFetch('/api/profile', 'PATCH', { bio, avatar_url });
+    alert(r.ok ? 'Saved' : ('Error: ' + r.error));
+  }
+
+  if (localStorage.getItem('token')) {
+    loadScripts();
+    if (VERIFIED) {
+      apiFetch('/api/profile').then(r => {
+        if (r.profile) {
+          document.getElementById('p-bio').value = r.profile.bio || '';
+          document.getElementById('p-avatar').value = r.profile.avatar_url || '';
+        }
+      });
+    }
+  }
+</script>
 </body>
 </html>

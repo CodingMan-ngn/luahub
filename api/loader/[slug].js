@@ -1,48 +1,44 @@
 const { supabase } = require('../_supabase');
+const crypto = require('crypto');
+
+const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');
 
 module.exports = async (req, res) => {
-  const { slug, key } = req.query; 
-  const { data } = await supabase.from('scripts').select('*').eq('slug', slug).single();
+  const { slug } = req.query;
+  const key = req.query.key || req.headers['x-script-key'];
 
-  if (!data) return res.status(404).send('-- Script not found');
-  if (data.is_updating) return res.status(503).send('-- Updating');
-  
-  if (data.requires_key) {
+  const { data: script, error } = await supabase
+    .from('scripts').select('*').eq('slug', slug).eq('is_public', true).single();
+  if (error || !script) return res.status(404).send('-- Script not found');
+  if (script.is_updating) return res.status(503).send('-- Updating');
+
+  if (script.requires_key) {
     if (!key) return res.status(403).send('-- Key required');
-    
-    try {
-      // 1. Check if the key is valid with BoostyLink
-      const bslRes = await fetch(`https://boostylink.com/api/v1/completions/${key}`, {
-        headers: { 
-          'Authorization': `Bearer ${process.env.BOOSTYLINK_API_KEY}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!bslRes.ok) {
-        return res.status(403).send('-- Invalid or expired key');
-      }
-      
-      // 2. ANTI-BYPASS: Consume the key so it cannot be reused
-      const consumeRes = await fetch(`https://boostylink.com/api/v1/completions/${key}/consume`, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${process.env.BOOSTYLINK_API_KEY}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!consumeRes.ok) {
-        // If consumption fails, it might have already been used.
-        return res.status(403).send('-- Key has already been used.');
-      }
+    const kh = hashKey(key);
 
-    } catch (e) {
+    const { data: existing } = await supabase
+      .from('key_consumptions').select('id')
+      .eq('key_hash', kh).eq('script_id', script.id).maybeSingle();
+    if (existing) return res.status(403).send('-- Key already used for this script');
+
+    try {
+      const v = await fetch(`https://boostylink.com/api/v1/completions/${key}`, {
+        headers: { Authorization: `Bearer ${process.env.BOOSTYLINK_API_KEY}`, Accept: 'application/json' }
+      });
+      if (!v.ok) return res.status(403).send('-- Invalid or expired key');
+    } catch {
       return res.status(500).send('-- Gateway verification error');
     }
+
+    const { error: insErr } = await supabase
+      .from('key_consumptions').insert({ key_hash: kh, script_id: script.id });
+    if (insErr) return res.status(403).send('-- Key already used for this script');
   }
 
-  await supabase.from('scripts').update({ hits: data.hits + 1 }).eq('slug', slug);
+  supabase.from('scripts').update({ hits: (script.hits || 0) + 1 }).eq('id', script.id)
+    .then(() => {}).catch(() => {});
+
   res.setHeader('Content-Type', 'text/plain');
-  return res.send(data.content_enc);
+  res.setHeader('Cache-Control', 'no-cache');
+  return res.status(200).send(script.content_enc);
 };

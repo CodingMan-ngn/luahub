@@ -1,129 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LuaHub — Premium Scripts</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=10"/>
-  <script src="/assets/app.js?v=10" defer></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LuaHub — Script Hosting</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css?v=15"/>
+<script src="/assets/app.js?v=15" defer></script>
 </head>
 <body>
-  <nav>
-    <a href="/" class="logo">
-      <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub
-    </a>
-    <div class="nav-links">
-      <a href="#scripts">Scripts</a>
-      <a href="#features">Features</a>
-      <a href="/dashboard" id="nav-dash" style="display:none; color:var(--accent); font-weight:700;">Dashboard</a>
-      <a href="/api/auth?action=login" id="login-btn" class="btn-primary" style="padding: 0.5rem 1rem; font-size:0.9rem;">Get Started</a>
-    </div>
-  </nav>
+<nav>
+  <a href="/" class="logo" style="display:inline-flex;align-items:center;gap:0.5rem;">
+    <img src="/favicon.svg" alt="" width="22" height="22" style="border-radius:5px;"/>
+    LuaHub
+  </a>
+  <div class="nav-links">
+    <a href="/dashboard.html">Dashboard</a>
+    <span id="user-name" style="color:#e2e8f0;font-weight:600"></span>
+    <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:600">Logout</button>
+  </div>
+</nav>
 
-  <section class="hero">
-    <h1>The #1 Script Hub.<br/><span>Secure & Fast.</span></h1>
-    <p>Access premium, obfuscated Roblox scripts. Join the community today.</p>
-    <div class="hero-btns">
-      <a href="/api/auth?action=login" class="btn-primary">Get Started</a>
-      <a href="https://discord.gg/P4P5jZGt3m" target="_blank" class="btn-secondary">Join Discord</a>
-    </div>
-    
-    <div class="stats-bar">
-      <div class="stat-item"><h3 id="stat-scripts">0</h3><p>Scripts</p></div>
-      <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
-      <div class="stat-item"><h3>100%</h3><p>Uptime</p></div>
-    </div>
-  </section>
+<section style="padding:4rem 2rem;max-width:1200px;margin:0 auto;">
+  <h1 style="font-size:3rem;font-weight:800;margin-bottom:0.5rem;">LuaHub</h1>
+  <p style="color:#94a3b8;margin-bottom:2.5rem;">Host, obfuscate, and deploy Roblox scripts. Loader URLs, key systems, role-gated distribution.</p>
 
-  <!-- TICKER SLIDESHOW -->
-  <div class="ticker-wrap">
-    <div class="ticker" id="ticker">
-      <div class="ticker-item">Loading live scripts...</div>
-    </div>
+  <div id="auth-section" style="max-width:400px;">
+    <h2 style="margin-bottom:1rem;">Sign In</h2>
+    <input id="a-email" placeholder="Email" style="width:100%;margin-bottom:1rem"/>
+    <input id="a-pass" type="password" placeholder="Password" style="width:100%;margin-bottom:1rem"/>
+    <button class="action" onclick="login()" style="width:100%;margin-bottom:1rem;">Login</button>
+    <button class="action" onclick="register()" style="width:100%;background:#334155;">Register</button>
+    <div id="auth-result" style="margin-top:1rem;"></div>
   </div>
 
-  <section id="scripts">
-    <h2 style="font-size: 2rem; margin-bottom: 2rem;">Public Scripts</h2>
-    <div class="script-grid" id="script-grid">
-      <p style="color:var(--muted); text-align:center; grid-column: 1/-1;">Loading scripts...</p>
-    </div>
-  </section>
+  <h2 style="margin-top:4rem;margin-bottom:1.5rem;">Public Scripts</h2>
+  <div id="scripts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+    <p style="color:#94a3b8;">Loading...</p>
+  </div>
+</section>
 
-  <script>
-    let allScripts = [];
-    let isLoggedIn = false;
-
-    async function init() {
-      // Check Login Status
-      try {
-        const authRes = await fetch('/api/auth?action=check');
-        const authData = await authRes.json();
-        isLoggedIn = authData.loggedIn;
-      } catch(e) {}
-
-      // Load Scripts
-      const grid = document.getElementById('script-grid');
-      try {
-        const res = await fetch('/api/scripts');
-        allScripts = await res.json();
-        
-        document.getElementById('stat-scripts').textContent = allScripts.length;
-        let totalHits = allScripts.reduce((sum, s) => sum + (s.hits || 0), 0);
-        document.getElementById('stat-hits').textContent = totalHits;
-
-        if (!allScripts.length) { 
-          grid.innerHTML = '<p style="color:var(--muted); grid-column:1/-1; text-align:center;">No scripts available yet.</p>'; 
-          return; 
-        }
-        
-        renderGrid(allScripts);
-        renderTicker(allScripts);
-      } catch (e) {
-        grid.innerHTML = '<p style="color:#ef4444; grid-column:1/-1; text-align:center;">No scripts found.</p>';
-        document.getElementById('ticker').innerHTML = '<div class="ticker-item">No scripts available.</div>';
-      }
+<script>
+  async function login() {
+    const email = document.getElementById('a-email').value.trim();
+    const password = document.getElementById('a-pass').value;
+    const r = await fetch('/api/auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'login', email, password })
+    });
+    const d = await r.json();
+    if (d.token) {
+      localStorage.setItem('token', d.token);
+      localStorage.setItem('username', d.username);
+      localStorage.setItem('role', d.role || 'user');
+      localStorage.setItem('verified', d.verified ? 'true' : 'false');
+      location.href = '/dashboard.html';
+    } else {
+      document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Login failed'}</span>`;
     }
+  }
 
-    function renderTicker(scripts) {
-      const ticker = document.getElementById('ticker');
-      // Duplicate the items to create a seamless infinite scroll
-      const itemsHtml = scripts.map(s => `<div class="ticker-item"><span>${s.owner_name}</span> loaded ${s.name}</div>`).join('');
-      ticker.innerHTML = itemsHtml + itemsHtml + itemsHtml;
+  async function register() {
+    const email = document.getElementById('a-email').value.trim();
+    const password = document.getElementById('a-pass').value;
+    const username = email.split('@')[0] + Math.floor(Math.random()*1000);
+    const r = await fetch('/api/auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'register', username, email, password })
+    });
+    const d = await r.json();
+    if (d.token) {
+      localStorage.setItem('token', d.token);
+      localStorage.setItem('username', d.username);
+      localStorage.setItem('role', d.role || 'user');
+      localStorage.setItem('verified', d.verified ? 'true' : 'false');
+      location.href = '/dashboard.html';
+    } else {
+      document.getElementById('auth-result').innerHTML = `<span style="color:#ef4444">${d.error || 'Register failed'}</span>`;
     }
+  }
 
-    function renderGrid(scripts) {
-      const grid = document.getElementById('script-grid');
-      grid.innerHTML = scripts.map(s => `
-        <div class="script-card">
-          <div class="script-header">
-            <div class="script-title">${s.name}</div>
-            <div class="script-author">by ${s.owner_name}</div>
-          </div>
-          <div class="script-meta">
-            <span>👁 ${s.hits || 0} Executions</span>
-            ${s.requires_key ? '<span style="color:#ef4444;">🔑 Key Req</span>' : ''}
-            ${s.is_updating ? '<span style="color:#f59e0b;">⚠️ Updating</span>' : ''}
-          </div>
-          <button class="btn-primary" style="width:100%; margin-top:auto;" onclick="copyLoader('${s.slug}')">
-            ${isLoggedIn ? 'Copy Loadstring' : 'Login to Copy'}
-          </button>
-        </div>
-      `).join('');
+  function logout() {
+    localStorage.clear();
+    location.href = '/';
+  }
+
+  document.getElementById('user-name').textContent = localStorage.getItem('username') || '';
+  if (localStorage.getItem('token')) {
+    document.getElementById('auth-section').style.display = 'none';
+  }
+
+  fetch('/api/scripts').then(r => r.json()).then(list => {
+    const grid = document.getElementById('scripts-grid');
+    if (!Array.isArray(list) || !list.length) {
+      grid.innerHTML = '<p style="color:#94a3b8">No public scripts yet.</p>';
+      return;
     }
-
-    function copyLoader(slug) {
-      if (!isLoggedIn) {
-        window.location.href = '/api/auth?action=login';
-        return;
-      }
-      const loader = `loadstring(game:HttpGet("https://lua-axon.vercel.app/api/loader/${slug}"))()`;
-      navigator.clipboard.writeText(loader);
-      alert('Loader copied to clipboard!');
-    }
-
-    init();
-  </script>
+    grid.innerHTML = list.map(s => `
+      <div class="panel" style="padding:1.25rem;">
+        <strong style="display:block;font-size:1.05rem;">${s.name}</strong>
+        <div style="font-size:0.75rem;color:#a78bfa;margin:0.35rem 0;">${s.obf_method}</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">${s.hits || 0} runs${s.requires_key ? ' · key required' : ''}</div>
+        <code style="display:block;margin-top:0.6rem;font-size:0.7rem;color:#94a3b8;">${s.slug}</code>
+      </div>`).join('');
+  }).catch(() => {});
+</script>
 </body>
 </html>
