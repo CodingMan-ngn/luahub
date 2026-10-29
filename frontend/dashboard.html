@@ -6,7 +6,7 @@
 <title>Dashboard — LuaHub</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=24"/>
+<link rel="stylesheet" href="/assets/style.css?v=25"/>
 <style>
   .source-viewer {
     background: #000; border: 1px solid var(--glass-border); border-radius: 8px;
@@ -25,9 +25,11 @@
   
   .role-chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-left:0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);}
   .role-dev{background:var(--accent); color:#fff; border:none;}
+  .role-verified{background:var(--success); color:#fff; border:none;}
+  
   .key-box{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:2rem;}
-  .locked{position:relative; padding: 0.5rem; border: 1px dashed var(--glass-border); border-radius: 8px;}
-  .locked-note{color:#f59e0b;font-weight:600;font-size:0.85rem;}
+  .locked-panel { opacity: 0.4; pointer-events: none; position: relative; border: 1px dashed #ef4444; }
+  .locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #ef4444; background: rgba(0,0,0,0.5); border-radius: var(--radius);}
   .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top: 2rem;}
   @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 </style>
@@ -78,13 +80,9 @@
     </div>
 
     <div>
-      <div class="key-box">
-        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">🔑 Master Key</h2>
-        <p style="color:var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generate a key for script execution. Single-use.</p>
-        <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Generate Key Now</a>
-      </div>
-
-      <div class="panel" style="margin-bottom: 2rem;">
+      <!-- DEVELOPER ONLY SECTION -->
+      <div id="dev-panel" class="panel locked-panel" style="margin-bottom: 2rem;">
+        <div class="locked-overlay" id="dev-lock-msg">🔒 Developer Role Required</div>
         <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📤 Deploy Script</h2>
         <input id="s-name" placeholder="Script Name (e.g. Universal ESP)"/>
         <textarea id="s-code" placeholder="Paste encrypted .bin contents here..." style="height:100px;"></textarea>
@@ -99,16 +97,24 @@
         <div id="key-toggle-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;">
           <input type="checkbox" id="t-key" style="width:18px;height:18px; margin:0; cursor:pointer; accent-color: var(--accent);"/>
           <label for="t-key" style="color:var(--muted);cursor:pointer; font-size: 0.85rem;">Require Key System</label>
-          <div class="locked-note" id="key-lock" style="display:none; margin-left: auto;">🔒 Developer role required</div>
         </div>
 
         <button class="btn-primary btn-full" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
         <div id="upload-result" style="margin-top:1rem;"></div>
       </div>
 
-      <div class="panel">
+      <!-- VERIFIED ONLY SECTION -->
+      <div id="verified-panel" class="panel locked-panel">
+        <div class="locked-overlay" id="verified-lock-msg">🔒 Verified Role Required</div>
         <h2 style="margin-bottom:1.5rem; font-size: 1.25rem;">📦 Your Scripts</h2>
         <div id="my-scripts"><p style="color:var(--muted);">Loading...</p></div>
+      </div>
+      
+      <div id="key-box-panel" class="key-box locked-panel" style="margin-top: 2rem;">
+        <div class="locked-overlay">🔒 Developer Role Required</div>
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">🔑 Master Key System</h2>
+        <p style="color:var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generate a key for script execution. Single-use.</p>
+        <a href="https://boostylink.com/H9kYR2AQ" target="_blank" rel="noopener" class="btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Generate Key Now</a>
       </div>
     </div>
   </div>
@@ -119,7 +125,6 @@
   const queryToken = urlParams.get('token');
   if (queryToken) {
     localStorage.setItem('token', queryToken);
-    // Strip token and .html from the URL bar
     window.history.replaceState({}, document.title, "/dashboard");
   }
 
@@ -139,11 +144,20 @@
   document.getElementById('user-name').textContent = payload?.name || 'User';
   if (payload?.avatar) document.getElementById('user-avatar').src = payload.avatar;
   
+  // Apply Role Gating
   if (payload?.is_dev) {
     document.getElementById('user-name').innerHTML += ` <span class="role-chip role-dev">DEV</span>`;
-  } else {
-    document.getElementById('key-lock').style.display = 'block';
-    document.getElementById('t-key').disabled = true;
+    document.getElementById('dev-panel').classList.remove('locked-panel');
+    document.getElementById('dev-lock-msg').style.display = 'none';
+    document.getElementById('key-box-panel').classList.remove('locked-panel');
+    document.getElementById('key-box-panel').querySelector('.locked-overlay').style.display = 'none';
+  } else if (payload?.verified) {
+    document.getElementById('user-name').innerHTML += ` <span class="role-chip role-verified">VERIFIED</span>`;
+  }
+
+  if (payload?.verified || payload?.is_dev) {
+    document.getElementById('verified-panel').classList.remove('locked-panel');
+    document.getElementById('verified-lock-msg').style.display = 'none';
   }
 
   function logout() {
@@ -233,7 +247,7 @@
     const content = document.getElementById('s-code').value.trim();
     const source = document.getElementById('s-source').value.trim();
     const is_public_source = document.getElementById('t-source').checked;
-    const requires_key = payload?.is_dev && document.getElementById('t-key').checked;
+    const requires_key = document.getElementById('t-key').checked;
 
     if (!name || !content) return alert('Name + payload required');
     btn.disabled = true; btn.textContent = 'Deploying...';
@@ -262,6 +276,7 @@
   }
 
   async function loadScripts() {
+    if (!payload?.verified && !payload?.is_dev) return;
     const box = document.getElementById('my-scripts');
     const res = await fetch('/api/scripts');
     const scripts = await res.json();
@@ -284,7 +299,7 @@
   }
 
   init();
-  loadScripts();
+  if (payload?.verified || payload?.is_dev) loadScripts();
 </script>
 </body>
 </html>
