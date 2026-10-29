@@ -15,8 +15,13 @@ module.exports = async (req, res) => {
   };
 
   if (req.method === 'GET') {
-    const { data } = await supabase.from('scripts').select('id, owner_name, name, slug, hits, created_at, requires_key, is_public_source, source_code, is_updating').order('created_at', { ascending: false });
-    return res.status(200).json(data || []);
+    try {
+      const { data, error } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return res.status(200).json(data || []);
+    } catch (err) {
+      return res.status(200).json([]); // Return empty array on error so site doesn't break
+    }
   }
 
   if (req.method === 'POST') {
@@ -26,7 +31,7 @@ module.exports = async (req, res) => {
     const { name, content, source_code, is_public_source, requires_key, is_updating } = req.body;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30) + '-' + Math.random().toString(36).slice(2, 6);
     
-    await supabase.from('scripts').insert({
+    const { error } = await supabase.from('scripts').insert({
       owner_name: session.discord_name,
       name, slug, content_enc: content,
       source_code: is_public_source ? source_code : null,
@@ -35,6 +40,7 @@ module.exports = async (req, res) => {
       is_updating: !!is_updating
     });
 
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ slug });
   }
 };

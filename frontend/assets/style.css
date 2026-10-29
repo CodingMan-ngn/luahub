@@ -101,3 +101,37 @@ section { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
 }
 .script-code:hover { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
 .hidden { display: none !important; }
+/* SLIDESHOW TICKER */
+.ticker-wrap {
+  width: 100%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 1rem 0;
+  margin-top: 2rem;
+}
+.ticker {
+  display: flex;
+  white-space: nowrap;
+  gap: 3rem;
+  animation: ticker 25s linear infinite;
+}
+.ticker:hover { animation-play-state: paused; }
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+.ticker-item span {
+  color: var(--accent-soft);
+  font-weight: bold;
+}
+
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
