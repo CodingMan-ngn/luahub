@@ -1,3 +1,4 @@
+-- loader.lua
 local BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 local function decode_base64(data)
@@ -26,79 +27,36 @@ local function decrypt_payload(encoded_str)
     return table.concat(decrypted)
 end
 
-local URL_BASE = "https://lua-axon.vercel.app/api/loader/YOUR_SLUG_HERE"
+-- GENERATED URL (This is inserted by the dashboard automatically)
+local URL = "https://lua-axon.vercel.app/api/loader/YOUR_SLUG_HERE"
 
-local function show_update_gui()
-    local ScreenGui = Instance.new("ScreenGui")
-    local Frame = Instance.new("Frame")
-    local Title = Instance.new("TextLabel")
-    local Desc = Instance.new("TextLabel")
-    local Button = Instance.new("TextButton")
-    
-    ScreenGui.Parent = game:GetService("CoreGui")
-    ScreenGui.Name = "LuaHubUpdating"
-    
-    Frame.Parent = ScreenGui
-    Frame.Size = UDim2.new(0, 350, 0, 200)
-    Frame.Position = UDim2.new(0.5, -175, 0.5, -100)
-    Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-    Frame.BackgroundTransparency = 0.1
-    Frame.BorderSizePixel = 0
-    Frame.Active = true
-    Frame.Draggable = true
-    
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 12)
-    UICorner.Parent = Frame
-
-    Title.Parent = Frame
-    Title.Size = UDim2.new(1, 0, 0, 50)
-    Title.BackgroundTransparency = 1
-    Title.Text = "⚠️ Script Updating"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 20
-    
-    Desc.Parent = Frame
-    Desc.Size = UDim2.new(0.9, 0, 0, 60)
-    Desc.Position = UDim2.new(0.05, 0, 0.25, 0)
-    Desc.BackgroundTransparency = 1
-    Desc.Text = "This script is currently being updated. Please join the Discord server for the latest version."
-    Desc.TextColor3 = Color3.fromRGB(148, 163, 184)
-    Desc.Font = Enum.Font.Gotham
-    Desc.TextSize = 14
-    Desc.TextWrapped = true
-    
-    Button.Parent = Frame
-    Button.Size = UDim2.new(0.9, 0, 0, 40)
-    Button.Position = UDim2.new(0.05, 0, 0.7, 0)
-    Button.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
-    Button.Text = "Join Discord Server"
-    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Button.Font = Enum.Font.GothamBold
-    Button.TextSize = 15
-    
-    local UICorner2 = Instance.new("UICorner")
-    UICorner2.CornerRadius = UDim.new(0, 8)
-    UICorner2.Parent = Button
-    
-    Button.MouseButton1Click:Connect(function()
-        pcall(function()
-            game:GetService("GuiService"):OpenBrowserWindow("https://discord.gg/P4P5jZGt3m")
-        end)
-    end)
+-- Check for user provided key
+local user_key = nil
+if script_key then
+    user_key = script_key
 end
 
-local success, response = pcall(function()
-    return game:HttpGet(URL_BASE, true)
+local target_url = URL
+if user_key then
+    target_url = URL .. "?key=" .. user_key
+end
+
+local success, encoded_data = pcall(function()
+    return game:HttpGet(target_url, true)
 end)
 
-if success and string.find(response, "Updating") then
-    show_update_gui()
-elseif success and string.find(response, "Key required") then
-    -- (Keep your existing Key System UI logic here)
-elseif success and not string.find(response, "error") then
-    local bytecode = decrypt_payload(response)
-    local func, err = loadstring(bytecode)
-    if func then func() end
+if not success or string.find(encoded_data, "Key required") then
+    warn("[LuaHub] Invalid or missing key. Please generate one.")
+    return
+elseif string.find(encoded_data, "Updating") then
+    warn("[LuaHub] This script is currently updating. Join the Discord for updates.")
+    return
 end
+
+local decrypted_bytecode = decrypt_payload(encoded_data)
+local func, err = loadstring(decrypted_bytecode)
+if not func then
+    warn("[LuaHub] Bytecode execution failed.")
+    return
+end
+func()

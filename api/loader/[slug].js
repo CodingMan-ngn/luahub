@@ -5,20 +5,16 @@ module.exports = async (req, res) => {
   const { data } = await supabase.from('scripts').select('*').eq('slug', slug).single();
 
   if (!data) return res.status(404).send('-- Script not found');
-
-  // Check Updating Status
-  if (data.is_updating) {
-    return res.status(503).send('-- Updating'); 
-  }
-
-  if (data.requires_key && !key) {
-    return res.status(403).send('-- Key required'); 
-  }
-
-  if (data.requires_key && key) {
+  if (data.is_updating) return res.status(503).send('-- Updating');
+  
+  if (data.requires_key) {
+    if (!key) return res.status(403).send('-- Key required');
+    
+    // Verify with BoostyLink
     const bslRes = await fetch(`https://boostylink.com/api/v1/verify?key=${key}`, {
       headers: { 'Authorization': `Bearer ${process.env.BOOSTYLINK_API_KEY}` }
     });
+    
     if (!bslRes.ok) return res.status(403).send('-- Invalid or expired key');
   }
 
