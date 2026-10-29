@@ -1,32 +1,24 @@
 const { supabase } = require('../_supabase');
 
 module.exports = async (req, res) => {
-  const { slug } = req.query;
-  const { key } = req.query; 
+  const { slug, key } = req.query;
+  const { data } = await supabase.from('scripts').select('*').eq('slug', slug).single();
 
-  const { data, error } = await supabase
-    .from('scripts')
-    .select('content_enc, hits, requires_key')
-    .eq('slug', slug)
-    .eq('is_public', true)
-    .single();
+  if (!data) return res.status(404).send('-- Script not found');
 
-  if (error || !data) return res.status(404).send('-- script not found');
-
-  // BoostyLink Key Check
-  if (data.requires_key) {
-    if (!key) {
-      return res.status(403).send('-- Key required. Please generate one via BoostyLink.'); 
-    }
-    if (key.length < 8) {
-      return res.status(403).send('-- error: Invalid key format.');
-    }
+  if (data.requires_key && !key) {
+    return res.status(403).send('-- Key required'); 
   }
 
-  // Increment Hits
-  await supabase.from('scripts').update({ hits: data.hits + 1 }).eq('slug', slug);
+  if (data.requires_key && key) {
+    // Verify key with BoostyLink
+    const bslRes = await fetch(`https://boostylink.com/api/v1/verify?key=${key}`, {
+      headers: { 'Authorization': `Bearer ${process.env.BOOSTYLINK_API_KEY}` }
+    });
+    if (!bslRes.ok) return res.status(403).send('-- Invalid or expired key');
+  }
 
+  await supabase.from('scripts').update({ hits: data.hits + 1 }).eq('slug', slug);
   res.setHeader('Content-Type', 'text/plain');
-  res.setHeader('Cache-Control', 'no-cache');
-  return res.status(200).send(data.content_enc);
+  return res.send(data.content_enc);
 };

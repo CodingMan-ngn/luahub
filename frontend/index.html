@@ -3,108 +3,84 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LuaHub — Premium Script Hub</title>
+  <title>LuaHub — Premium Scripts</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=6"/>
+  <link rel="stylesheet" href="/assets/style.css?v=7"/>
+  <script src="/assets/app.js?v=7" defer></script>
 </head>
 <body>
   <nav>
     <a href="/" class="logo">
-      <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> 
-      LuaHub
+      <svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub
     </a>
     <div class="nav-links">
       <a href="#scripts">Scripts</a>
-      <a href="#keysystem">Key System</a>
+      <a href="#features">Features</a>
       <a href="/dashboard" id="nav-dash" style="display:none; color:var(--accent); font-weight:700;">Dashboard</a>
-      <div id="nav-profile" style="display:none; align-items:center;"></div>
-      <a href="/api/auth?action=login" id="login-btn" style="background:var(--accent); color:white; padding: 0.5rem 1rem; border-radius:8px; font-weight:600; text-decoration:none;">Login with Discord</a>
+      <a href="/api/auth?action=login" id="login-btn" class="btn-primary" style="padding: 0.5rem 1rem;">Get Started</a>
     </div>
   </nav>
 
   <section class="hero">
-    <h1>Welcome to LuaHub.<br/><span>The fastest script hub.</span></h1>
-    <p>Secure, obfuscated, and lightning fast script delivery.</p>
-    
-    <div class="stats-bar">
-      <div class="stat-item"><h3 id="stat-scripts">0</h3><p>Scripts</p></div>
-      <div class="stat-item"><h3 id="stat-hits">0</h3><p>Executions</p></div>
-      <div class="stat-item"><h3>100%</h3><p>Uptime</p></div>
+    <h1>The #1 Script Hub.<br/><span>Secure & Fast.</span></h1>
+    <p>Access premium, obfuscated Roblox scripts. Join the community today.</p>
+    <div style="display:flex; gap:1rem; justify-content:center;">
+      <a href="/api/auth?action=login" class="btn-primary" style="padding: 1rem 3rem; font-size:1.1rem;">Get Started</a>
+      <a href="https://discord.gg/P4P5jZGt3m" target="_blank" class="btn-secondary" style="padding: 1rem 3rem; font-size:1.1rem;">Join Discord</a>
     </div>
   </section>
 
-  <section id="scripts" style="padding-top: 2rem;">
-    <div class="search-bar">
-      <input type="text" id="search-input" placeholder="Search scripts..." onkeyup="filterScripts()">
-    </div>
+  <section id="scripts" style="max-width:1200px; margin:0 auto; padding: 4rem 2rem;">
+    <h2 style="font-size: 2rem; margin-bottom: 2rem;">Public Scripts</h2>
     <div class="script-grid" id="script-grid">
-      <p style="color: var(--muted); text-align: center; grid-column: 1/-1;">Loading scripts...</p>
+      <p style="color:var(--muted);">Loading scripts...</p>
     </div>
   </section>
 
-  <section id="keysystem" style="margin-bottom: 4rem;">
-    <div class="feat-card" style="max-width: 800px; margin: 0 auto; text-align: center;">
-      <h2 style="font-size: 2rem; margin-bottom: 1rem;">🔑 Get your Key</h2>
-      <p style="color: var(--muted); margin-bottom: 2rem;">Generate a key to access premium scripts.</p>
-      <a href="https://boostylink.com/links" target="_blank" class="btn-primary" style="display:block; width: 100%; text-decoration:none;">Generate Key via BoostyLink</a>
+  <!-- Popup Modal -->
+  <div id="error-modal" class="modal hidden">
+    <div class="modal-box">
+      <h2>Access Denied</h2>
+      <p id="error-msg" style="color:var(--muted); margin-bottom:2rem;">You need to join our Discord server to access the hub.</p>
+      <a href="https://discord.gg/P4P5jZGt3m" target="_blank" class="btn-primary" style="display:block; margin-bottom:1rem; text-decoration:none;">Join Discord Server</a>
+      <button onclick="document.getElementById('error-modal').classList.add('hidden')" class="btn-secondary" style="width:100%;">Close</button>
     </div>
-  </section>
+  </div>
 
-  <script src="/assets/app.js?v=6"></script>
   <script>
-    let allScripts = [];
-    
-    async function loadScripts() {
-      const grid = document.getElementById('script-grid');
-      try {
-        const res = await fetch('/api/scripts');
-        allScripts = await res.json();
-        
-        document.getElementById('stat-scripts').textContent = allScripts.length;
-        let totalHits = allScripts.reduce((sum, s) => sum + (s.hits || 0), 0);
-        document.getElementById('stat-hits').textContent = totalHits;
-
-        if (!allScripts.length) {
-          grid.innerHTML = '<p style="color: var(--muted); grid-column: 1/-1; text-align: center;">No scripts uploaded yet.</p>';
-          return;
-        }
-        renderGrid(allScripts);
-      } catch (e) {
-        grid.innerHTML = '<p style="color: #ef4444; grid-column: 1/-1; text-align: center;">Failed to load scripts.</p>';
-      }
+    // Check URL for error flags from auth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error')) {
+      document.getElementById('error-modal').classList.remove('hidden');
+      window.history.replaceState({}, document.title, "/");
     }
 
-    function renderGrid(scripts) {
+    async function loadPublicScripts() {
       const grid = document.getElementById('script-grid');
-      grid.innerHTML = scripts.map(s => {
-        const url = `${window.location.origin}/api/loader/${s.slug}`;
-        const loader = `loadstring(game:HttpGet("${url}"))()`;
-        return `
-          <div class="script-card">
-            <div class="script-header">
-              <div class="script-title">${s.name}</div>
-              <div class="script-author">${s.requires_key ? '<span style="color:#ef4444">KEY</span>' : 'FREE'}</div>
-            </div>
-            <div class="script-meta">
-              <span>👁 ${s.hits || 0} Executions</span>
-              <span>📅 ${new Date(s.created_at).toLocaleDateString()}</span>
-            </div>
-            <div class="script-code" onclick="navigator.clipboard.writeText('${loader.replace(/'/g, "\\'")}'); alert('Loader copied!')" title="Click to copy" style="cursor:pointer;">
-              ${loader}
-            </div>
+      const res = await fetch('/api/scripts');
+      const scripts = await res.json();
+      
+      if (!scripts.length) { grid.innerHTML = '<p style="color:var(--muted)">No scripts available yet.</p>'; return; }
+      
+      grid.innerHTML = scripts.map(s => `
+        <div class="script-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="font-size:1.2rem;">${s.name}</h3>
+            <span style="font-size:0.8rem; color:var(--accent);">by ${s.owner_name}</span>
           </div>
-        `;
-      }).join('');
+          <div style="font-size:0.9rem; color:var(--muted); margin-bottom:1rem;">
+            👁 ${s.hits} Executions ${s.requires_key ? '| 🔑 Key Required' : ''}
+          </div>
+          ${s.is_public_source ? `<div style="background:#000; padding:1rem; border-radius:8px; margin-bottom:1rem; font-family:var(--mono); font-size:0.8rem; color:#10b981; overflow-x:auto; max-height:150px;">${escapeHtml(s.source_code)}</div>` : ''}
+          <button class="btn-primary" style="width:100%;" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\'https://lua-axon.vercel.app/api/loader/${s.slug}\'))()'); alert('Loader copied!')">Copy Loadstring</button>
+        </div>
+      `).join('');
     }
 
-    function filterScripts() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      const filtered = allScripts.filter(s => s.name.toLowerCase().includes(query));
-      renderGrid(filtered);
-    }
-
-    loadScripts();
+    function escapeHtml(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    
+    loadPublicScripts();
   </script>
 </body>
 </html>

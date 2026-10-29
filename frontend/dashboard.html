@@ -6,14 +6,14 @@
   <title>Dashboard — LuaHub</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=6"/>
+  <link rel="stylesheet" href="/assets/style.css?v=7"/>
+  <script src="/assets/app.js?v=7" defer></script>
 </head>
 <body>
   <nav>
     <a href="/" class="logo"><svg width="24" height="24" fill="currentColor" class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg> LuaHub</a>
     <div class="nav-links">
       <a href="/">Hub</a>
-      <span style="color: var(--muted);">|</span>
       <div id="nav-profile" style="display:flex; align-items:center;"></div>
       <a href="/api/auth?action=logout" style="color:#ef4444; text-decoration:none; font-weight:600;">Logout</a>
     </div>
@@ -21,113 +21,90 @@
 
   <section style="padding-top: 4rem; max-width: 1200px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
     <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800;">Dashboard</h1>
-    <p style="color: var(--muted); margin-bottom: 3rem;" id="welcome-msg">Verifying Developer Access...</p>
+    <p style="color: var(--muted); margin-bottom: 3rem;" id="welcome-msg">Loading...</p>
 
+    <!-- Developer Panel -->
     <div class="dashboard-grid" id="dev-panel" style="display:none;">
       <div class="panel">
-        <h2 style="margin-bottom: 1.5rem;">📤 Deploy New Script</h2>
-        <input id="s-name" placeholder="Script Name (e.g., Universal ESP)" />
-        <textarea id="s-code" placeholder="Paste your encrypted .bin contents here..."></textarea>
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom: 1.5rem;">
-          <input type="checkbox" id="s-key-toggle" style="width:20px; height:20px; cursor:pointer;">
-          <label for="s-key-toggle" style="color:var(--muted); cursor:pointer;">Require Key System (BoostyLink)</label>
+        <h2 style="margin-bottom: 1.5rem;">📤 Deploy Script</h2>
+        <input id="s-name" placeholder="Script Name" style="width:100%; padding:1rem; margin-bottom:1rem; background:#000; border:1px solid var(--glass-border); color:white; border-radius:8px;"/>
+        <textarea id="s-source" placeholder="Public Source Code (Optional)" style="width:100%; padding:1rem; margin-bottom:1rem; background:#000; border:1px solid var(--glass-border); color:white; border-radius:8px; font-family:var(--mono); height:100px;"></textarea>
+        <textarea id="s-code" placeholder="Encrypted .bin Payload" style="width:100%; padding:1rem; margin-bottom:1rem; background:#000; border:1px solid var(--glass-border); color:white; border-radius:8px; font-family:var(--mono); height:100px;"></textarea>
+        
+        <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+          <label><input type="checkbox" id="s-public-source"> Make Source Public</label>
+          <label><input type="checkbox" id="s-key-toggle"> Require Key</label>
         </div>
-        <button class="action" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
-        <div id="upload-result" class="result-box hidden"></div>
+
+        <button class="btn-primary" style="width:100%;" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
+        <div id="upload-result" class="hidden" style="margin-top:1rem;"></div>
       </div>
 
       <div class="panel">
-        <h2 style="margin-bottom: 1.5rem;">📦 Your Deployed Scripts</h2>
+        <h2 style="margin-bottom: 1.5rem;">📦 Manage Scripts</h2>
         <div id="my-scripts"><p style="color: var(--muted);">Loading...</p></div>
       </div>
     </div>
 
-    <div id="non-dev-panel" class="panel hidden" style="text-align: center; padding: 4rem 2rem;">
-      <h2 style="font-size: 1.5rem; color: #ef4444; margin-bottom: 1rem;">Developer Access Required</h2>
-      <p style="color: var(--muted);">You need the <strong>Developer</strong> role in our Discord server to upload scripts.</p>
-      <a href="/" class="btn-primary" style="display: inline-block; margin-top: 2rem; text-decoration: none;">Back to Hub</a>
+    <!-- Verified User Fallback -->
+    <div id="user-panel" class="hidden" style="text-align:center; padding:4rem;">
+      <h2 style="font-size:2rem; margin-bottom:1rem;">Welcome to LuaHub</h2>
+      <p style="color:var(--muted); margin-bottom:2rem;">You are verified. Head back to the home page to browse and copy scripts.</p>
+      <a href="/" class="btn-primary" style="text-decoration:none; padding:1rem 2rem;">Browse Scripts</a>
     </div>
   </section>
 
-  <script src="/assets/app.js?v=6"></script>
   <script>
-    // Wait for app.js to fetch session
-    window.addEventListener('load', () => {
-      if (!globalSession.loggedIn) {
-        window.location.href = '/api/auth?action=login';
-        return;
-      }
-
-      if (globalSession.isDev) {
-        document.getElementById('welcome-msg').textContent = "Welcome, Developer. Manage your payloads below.";
+    window.addEventListener('load', async () => {
+      const session = await checkSession();
+      if (!session.loggedIn) return window.location.href = '/';
+      
+      document.getElementById('nav-profile').innerHTML = `<img src="${session.avatar}" style="width:24px;height:24px;border-radius:50%;margin-right:8px;"> ${session.name}`;
+      
+      if (session.isDev) {
         document.getElementById('dev-panel').style.display = 'grid';
-        loadScripts();
+        document.getElementById('welcome-msg').textContent = "Developer Panel";
+        loadDevScripts();
       } else {
-        document.getElementById('welcome-msg').textContent = "Welcome to your profile.";
-        document.getElementById('non-dev-panel').classList.remove('hidden');
+        document.getElementById('user-panel').classList.remove('hidden');
+        document.getElementById('welcome-msg').textContent = "User Dashboard";
       }
     });
 
     async function uploadScript() {
-      const btn = document.getElementById('upload-btn')
-      const name = document.getElementById('s-name').value.trim()
-      const content = document.getElementById('s-code').value.trim()
-      const requiresKey = document.getElementById('s-key-toggle').checked
+      const name = document.getElementById('s-name').value;
+      const content = document.getElementById('s-code').value;
+      const source = document.getElementById('s-source').value;
+      const isPublicSource = document.getElementById('s-public-source').checked;
+      const requiresKey = document.getElementById('s-key-toggle').checked;
       
-      if (!name || !content) return alert('Name and payload required')
-
-      btn.disabled = true; btn.textContent = 'Deploying...'
-      try {
-        const res = await fetch('/api/scripts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, content, is_public: true, requires_key: requiresKey })
-        })
-        const data = await res.json()
-        const box = document.getElementById('upload-result')
-        box.classList.remove('hidden')
-        
-        if (res.ok && data.slug) {
-          const loaderScript = `loadstring(game:HttpGet("https://lua-axon.vercel.app/lib/loader.lua"))()`
-          box.innerHTML = `
-            <p>✅ Deployed successfully.</p>
-            <p style="font-size:0.85rem; margin-top:1rem; color:var(--muted);">Paste this into your executor:</p>
-            <code style="display:block;margin-top:0.5rem;color:#10b981;cursor:pointer; padding: 1rem; background: rgba(0,0,0,0.5); border-radius: 8px;" onclick="navigator.clipboard.writeText('${loaderScript}')">
-              ${loaderScript} <br><span style="font-size:0.7rem; color:var(--muted); margin-top:0.5rem; display:block;">(Click to copy)</span>
-            </code>
-            <p style="font-size:0.8rem; color:var(--muted); margin-top:1rem;">Target Slug: ${data.slug}</p>
-          `
-          document.getElementById('s-name').value = ''
-          document.getElementById('s-code').value = ''
-          document.getElementById('s-key-toggle').checked = false
-          loadScripts()
-        } else {
-          box.innerHTML = `<p style="color:#ef4444">Error: ${data.error || 'Unknown error'}</p>`
-        }
-      } catch (e) { alert(e.message) }
-      btn.disabled = false; btn.textContent = 'Deploy Script'
+      const btn = document.getElementById('upload-btn'); btn.textContent = 'Deploying...';
+      
+      const res = await fetch('/api/scripts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, content, source_code: source, is_public_source: isPublicSource, requires_key: requiresKey })
+      });
+      
+      const data = await res.json();
+      const box = document.getElementById('upload-result');
+      box.classList.remove('hidden');
+      box.innerHTML = data.slug ? `<p style="color:#10b981;">✅ Deployed Successfully!</p>` : `<p style="color:#ef4444;">Error: ${data.error}</p>`;
+      
+      btn.textContent = 'Deploy Script';
+      loadDevScripts();
     }
 
-    async function loadScripts() {
-      const box = document.getElementById('my-scripts')
-      try {
-        const res = await fetch('/api/scripts')
-        const scripts = await res.json()
-        if (!Array.isArray(scripts) || !scripts.length) {
-          box.innerHTML = '<p style="color: var(--muted)">No scripts deployed yet.</p>'
-          return
-        }
-        box.innerHTML = scripts.map(s => `
-          <div class="script-card" style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--glass-border);">
-            <strong style="font-size:1.1rem; display:block; margin-bottom:0.5rem;">${s.name}</strong> 
-            ${s.requires_key ? '<span style="color:#ef4444; font-size:0.8rem; background: rgba(239,68,68,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">Key Required</span>' : '<span style="color:#10b981; font-size:0.8rem; background: rgba(16,185,129,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">Free Access</span>'}
-            <span style="font-size:0.8rem;color:var(--muted);display:block;margin-top:0.5rem;">👁 ${s.hits || 0} executions</span>
-            <code style="display:block; margin-top:0.5rem; font-size:0.75rem; color:#a78bfa;">Slug: ${s.slug}</code>
-          </div>
-        `).join('')
-      } catch (e) {
-        box.innerHTML = `<p style="color: #ef4444">Error loading scripts.</p>`
-      }
+    async function loadDevScripts() {
+      const box = document.getElementById('my-scripts');
+      const res = await fetch('/api/scripts');
+      const scripts = await res.json();
+      box.innerHTML = scripts.map(s => `
+        <div style="padding:1rem; border-bottom:1px solid var(--glass-border); display:flex; justify-content:space-between;">
+          <span>${s.name}</span>
+          <span style="color:var(--muted); font-size:0.9rem;">👁 ${s.hits}</span>
+        </div>
+      `).join('');
     }
   </script>
 </body>

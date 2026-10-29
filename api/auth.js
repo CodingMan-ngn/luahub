@@ -5,11 +5,9 @@ module.exports = async (req, res) => {
   const { code, action } = req.query;
 
   if (action === 'login' && !code) {
-    const clientId = process.env.DISCORD_CLIENT_ID;
     const redirectUri = `https://lua-axon.vercel.app/api/auth?action=callback`;
     const scope = 'identify guilds guilds.members.read';
-    
-    return res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}`);
+    return res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}`);
   }
 
   if (action === 'callback' && code) {
@@ -37,14 +35,21 @@ module.exports = async (req, res) => {
         headers: { Authorization: `Bearer ${tokenData.access_token}` }
       });
       
-      let roles = [];
-      if (guildRes.ok) {
-        const guildData = await guildRes.json();
-        roles = guildData.roles || [];
+      if (!guildRes.ok) {
+        // NOT IN SERVER
+        return res.redirect('/?error=not_in_server');
       }
 
+      const guildData = await guildRes.json();
+      const roles = guildData.roles || [];
+
       const isDev = process.env.DISCORD_DEV_ROLE_ID ? roles.includes(process.env.DISCORD_DEV_ROLE_ID) : false;
+      
+      // Must have verified role OR dev role
       const isVerified = process.env.DISCORD_ROLE_ID ? roles.includes(process.env.DISCORD_ROLE_ID) : false;
+      if (!isVerified && !isDev) {
+        return res.redirect('/?error=missing_role');
+      }
 
       const sessionId = crypto.randomBytes(32).toString('hex');
       
@@ -52,42 +57,29 @@ module.exports = async (req, res) => {
         user_id: sessionId,
         discord_name: user.username,
         discord_avatar: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
-        is_dev: isDev,
-        is_verified: isVerified
+        is_dev: isDev
       });
 
       res.setHeader('Set-Cookie', `luahub_session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`);
       return res.redirect('/dashboard');
 
     } catch (err) {
-      console.error(err);
       return res.redirect('/?error=auth_failed');
     }
   }
 
   if (action === 'check') {
-    const cookieHeader = req.headers.cookie || '';
-    const match = cookieHeader.match(/luahub_session=([^;]+)/);
-    const sessionId = match ? match[1] : null;
-    
-    if (!sessionId) return res.status(200).json({ loggedIn: false });
+    const match = (req.headers.cookie || '').match(/luahub_session=([^;]+)/);
+    if (!match) return res.status(200).json({ loggedIn: false });
 
-    const { data } = await supabase.from('sessions').select('*').eq('user_id', sessionId).single();
+    const { data } = await supabase.from('sessions').select('*').eq('user_id', match[1]).single();
     if (!data) return res.status(200).json({ loggedIn: false });
 
-    return res.status(200).json({ 
-      loggedIn: true, 
-      name: data.discord_name, 
-      avatar: data.discord_avatar,
-      isDev: data.is_dev,
-      isVerified: data.is_verified
-    });
+    return res.status(200).json({ loggedIn: true, name: data.discord_name, avatar: data.discord_avatar, isDev: data.is_dev });
   }
 
   if (action === 'logout') {
     res.setHeader('Set-Cookie', `luahub_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
     return res.redirect('/');
   }
-
-  return res.status(400).send('Invalid request');
 };
