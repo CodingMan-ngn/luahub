@@ -3,69 +3,47 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LuaHub — Free Roblox Script Hosting</title>
+  <title>LuaHub — Script Hosting</title>
   <link rel="stylesheet" href="/assets/style.css"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
-<nav>
-  <a href="/" class="logo">🌙 LuaHub</a>
-  <div class="nav-links">
-    <a href="/scripts">Browse</a>
-    <a href="/dashboard" id="nav-dash" style="display:none">Dashboard</a>
-    <span id="nav-user" style="color:var(--muted);font-size:.9rem"></span>
-    <a href="#" id="nav-login" onclick="openAuthModal()">Login</a>
-    <a href="#" id="nav-logout" style="display:none" onclick="logout()">Logout</a>
+  <!-- LOADER OVERLAY -->
+  <div id="preloader">
+    <div class="loader-logo">LuaHub</div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
   </div>
-</nav>
 
-<section class="hero">
-  <h1>Host your Roblox scripts.<br/><span>Free. Fast. Obfuscated.</span></h1>
-  <p>Upload scripts, get a loader URL, share with anyone — no cost ever.</p>
-  <div class="hero-btns">
-    <a href="/dashboard" class="btn-primary">🚀 Get Started</a>
-    <a href="/scripts" class="btn-secondary">Browse Scripts</a>
-  </div>
-  <div class="hero-code">
-    <pre>loadstring(game:HttpGet("https://yourdomain.vercel.app/api/loader/your-script-slug"))()</pre>
-  </div>
-</section>
+  <nav>
+    <a href="/" class="logo">
+      <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 3.8l6.9 13.8H5.1L12 5.8z"/></svg>
+      <div class="logo-text">Lua<span>Hub</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="/scripts.html">Browse</a>
+      <a href="#" id="nav-login">Login</a>
+      <a href="/dashboard.html" id="nav-dash" style="display:none">Dashboard</a>
+      <a href="#" id="nav-logout" style="display:none">Logout</a>
+    </div>
+  </nav>
 
-<section class="features">
-  <div class="feat">
-    <h3>🔒 XOR Obfuscation</h3>
-    <p>Scripts are encoded before serving — no one reads your raw Lua.</p>
-  </div>
-  <div class="feat">
-    <h3>📊 Hit Counter</h3>
-    <p>See exactly how many times your script has been executed.</p>
-  </div>
-  <div class="feat">
-    <h3>⚡ Instant Loader</h3>
-    <p>One-line loadstring URL generated the second you upload.</p>
-  </div>
-  <div class="feat">
-    <h3>🆓 Forever Free</h3>
-    <p>Vercel + Supabase free tiers — zero dollars, zero limits for normal use.</p>
-  </div>
-</section>
+  <section class="hero">
+    <h1>Host your Roblox scripts.<br/><span>Free. Fast. Obfuscated.</span></h1>
+    <p>Upload scripts, get a loader URL, share with anyone — no cost ever.</p>
+    <div class="hero-btns">
+      <a href="/dashboard.html" class="btn-primary">🚀 Get Started</a>
+      <a href="/scripts.html" class="btn-secondary">Browse Scripts</a>
+    </div>
+  </section>
 
-<!-- Auth Modal -->
-<div id="auth-modal" class="modal hidden">
-  <div class="modal-box">
-    <span class="close" onclick="closeModal()">✕</span>
-    <h2 id="modal-title">Login</h2>
-    <input id="auth-email"    type="email"    placeholder="Email"/>
-    <input id="auth-username" type="text"     placeholder="Username" style="display:none"/>
-    <input id="auth-pass"     type="password" placeholder="Password"/>
-    <button onclick="submitAuth()" style="width:100%">Submit</button>
-    <div class="modal-error" id="modal-error"></div>
-    <p id="modal-toggle">No account? <a href="#" onclick="toggleModal()">Register</a></p>
-  </div>
-</div>
-
-<script src="/assets/app.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>
+    // Preloader Logic
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('preloader').classList.add('done');
+      }, 1200); // Shows the loading bar for 1.2s
+    });
+  </script>
 </body>
 </html>
