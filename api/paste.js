@@ -9,24 +9,23 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     try {
-      const { name, content } = req.body;
+      const { name, content, requires_key } = req.body;
       
       if (!name || !content) {
         return res.status(400).json({ error: 'Name and content are required.' });
       }
 
-      // Generate a safe 8-character slug
       const slug = Math.random().toString(36).substring(2, 10);
 
       const { data, error } = await supabase
         .from('scripts')
         .insert({
-          owner_id: null, // Anonymous
+          owner_id: null,
           name: name,
           slug: slug,
           content_enc: content,
           is_public: true,
-          requires_key: false,
+          requires_key: !!requires_key, // Converts true/false
           obf_method: 'integrated'
         })
         .select('slug')
