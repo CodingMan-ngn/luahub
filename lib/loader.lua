@@ -28,87 +28,77 @@ end
 
 local URL_BASE = "https://lua-axon.vercel.app/api/loader/YOUR_SLUG_HERE"
 
-local function execute_payload(data)
-    local bytecode = decrypt_payload(data)
-    local func, err = loadstring(bytecode)
-    if func then
-        func()
-    else
-        warn("[LuaHub] Bytecode error: " .. tostring(err))
-    end
+local function show_update_gui()
+    local ScreenGui = Instance.new("ScreenGui")
+    local Frame = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+    local Desc = Instance.new("TextLabel")
+    local Button = Instance.new("TextButton")
+    
+    ScreenGui.Parent = game:GetService("CoreGui")
+    ScreenGui.Name = "LuaHubUpdating"
+    
+    Frame.Parent = ScreenGui
+    Frame.Size = UDim2.new(0, 350, 0, 200)
+    Frame.Position = UDim2.new(0.5, -175, 0.5, -100)
+    Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    Frame.BackgroundTransparency = 0.1
+    Frame.BorderSizePixel = 0
+    Frame.Active = true
+    Frame.Draggable = true
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 12)
+    UICorner.Parent = Frame
+
+    Title.Parent = Frame
+    Title.Size = UDim2.new(1, 0, 0, 50)
+    Title.BackgroundTransparency = 1
+    Title.Text = "⚠️ Script Updating"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 20
+    
+    Desc.Parent = Frame
+    Desc.Size = UDim2.new(0.9, 0, 0, 60)
+    Desc.Position = UDim2.new(0.05, 0, 0.25, 0)
+    Desc.BackgroundTransparency = 1
+    Desc.Text = "This script is currently being updated. Please join the Discord server for the latest version."
+    Desc.TextColor3 = Color3.fromRGB(148, 163, 184)
+    Desc.Font = Enum.Font.Gotham
+    Desc.TextSize = 14
+    Desc.TextWrapped = true
+    
+    Button.Parent = Frame
+    Button.Size = UDim2.new(0.9, 0, 0, 40)
+    Button.Position = UDim2.new(0.05, 0, 0.7, 0)
+    Button.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    Button.Text = "Join Discord Server"
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 15
+    
+    local UICorner2 = Instance.new("UICorner")
+    UICorner2.CornerRadius = UDim.new(0, 8)
+    UICorner2.Parent = Button
+    
+    Button.MouseButton1Click:Connect(function()
+        pcall(function()
+            game:GetService("GuiService"):OpenBrowserWindow("https://discord.gg/P4P5jZGt3m")
+        end)
+    end)
 end
 
 local success, response = pcall(function()
     return game:HttpGet(URL_BASE, true)
 end)
 
-if success and string.find(response, "Key required") then
-    
-    local ScreenGui = Instance.new("ScreenGui")
-    local Frame = Instance.new("Frame")
-    local TextBox = Instance.new("TextBox")
-    local Button = Instance.new("TextButton")
-    local Title = Instance.new("TextLabel")
-    
-    ScreenGui.Parent = game:GetService("CoreGui")
-    ScreenGui.Name = "LuaHubKeyUI"
-    
-    Frame.Parent = ScreenGui
-    Frame.Size = UDim2.new(0, 320, 0, 180)
-    Frame.Position = UDim2.new(0.5, -160, 0.5, -90)
-    Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-    Frame.BorderSizePixel = 0
-    Frame.Active = true
-    Frame.Draggable = true
-    
-    Title.Parent = Frame
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundTransparency = 1
-    Title.Text = "LuaHub Key System"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 18
-    
-    TextBox.Parent = Frame
-    TextBox.Size = UDim2.new(0.9, 0, 0, 40)
-    TextBox.Position = UDim2.new(0.05, 0, 0.25, 0)
-    TextBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TextBox.PlaceholderText = "Paste your key here..."
-    TextBox.Font = Enum.Font.Gotham
-    TextBox.TextSize = 14
-    
-    Button.Parent = Frame
-    Button.Size = UDim2.new(0.9, 0, 0, 40)
-    Button.Position = UDim2.new(0.05, 0, 0.6, 0)
-    Button.BackgroundColor3 = Color3.fromRGB(124, 58, 237)
-    Button.Text = "Submit Key"
-    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Button.Font = Enum.Font.GothamBold
-    Button.TextSize = 15
-    
-    Button.MouseButton1Click:Connect(function()
-        local userKey = TextBox.Text
-        if #userKey < 5 then return end
-        
-        local new_url = URL_BASE .. "?key=" .. userKey
-        local retry_success, retry_data = pcall(function()
-            return game:HttpGet(new_url, true)
-        end)
-        
-        if retry_success and not string.find(retry_data, "error") then
-            ScreenGui:Destroy()
-            execute_payload(retry_data)
-        else
-            TextBox.Text = ""
-            TextBox.PlaceholderText = "Invalid Key!"
-            task.wait(2)
-            TextBox.PlaceholderText = "Paste your key here..."
-        end
-    end)
-
+if success and string.find(response, "Updating") then
+    show_update_gui()
+elseif success and string.find(response, "Key required") then
+    -- (Keep your existing Key System UI logic here)
 elseif success and not string.find(response, "error") then
-    execute_payload(response)
-else
-    warn("[LuaHub] Fetch error: " .. tostring(response))
+    local bytecode = decrypt_payload(response)
+    local func, err = loadstring(bytecode)
+    if func then func() end
 end

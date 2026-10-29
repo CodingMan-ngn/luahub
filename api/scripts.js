@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   };
 
   if (req.method === 'GET') {
-    const { data } = await supabase.from('scripts').select('id, owner_name, name, slug, hits, created_at, requires_key, is_public_source, source_code').order('created_at', { ascending: false });
+    const { data } = await supabase.from('scripts').select('id, owner_name, name, slug, hits, created_at, requires_key, is_public_source, source_code, is_updating').order('created_at', { ascending: false });
     return res.status(200).json(data || []);
   }
 
@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
     const session = await getSession();
     if (!session || !session.is_dev) return res.status(403).json({ error: 'Dev access required' });
 
-    const { name, content, source_code, is_public_source, requires_key } = req.body;
+    const { name, content, source_code, is_public_source, requires_key, is_updating } = req.body;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30) + '-' + Math.random().toString(36).slice(2, 6);
     
     await supabase.from('scripts').insert({
@@ -31,7 +31,8 @@ module.exports = async (req, res) => {
       name, slug, content_enc: content,
       source_code: is_public_source ? source_code : null,
       is_public_source: !!is_public_source,
-      requires_key: !!requires_key
+      requires_key: !!requires_key,
+      is_updating: !!is_updating
     });
 
     return res.status(200).json({ slug });

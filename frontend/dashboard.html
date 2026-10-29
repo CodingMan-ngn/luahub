@@ -6,8 +6,8 @@
   <title>Dashboard — LuaHub</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/style.css?v=7"/>
-  <script src="/assets/app.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/style.css?v=8"/>
+  <script src="/assets/app.js?v=8" defer></script>
 </head>
 <body>
   <nav>
@@ -23,7 +23,6 @@
     <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800;">Dashboard</h1>
     <p style="color: var(--muted); margin-bottom: 3rem;" id="welcome-msg">Loading...</p>
 
-    <!-- Developer Panel -->
     <div class="dashboard-grid" id="dev-panel" style="display:none;">
       <div class="panel">
         <h2 style="margin-bottom: 1.5rem;">📤 Deploy Script</h2>
@@ -31,9 +30,10 @@
         <textarea id="s-source" placeholder="Public Source Code (Optional)" style="width:100%; padding:1rem; margin-bottom:1rem; background:#000; border:1px solid var(--glass-border); color:white; border-radius:8px; font-family:var(--mono); height:100px;"></textarea>
         <textarea id="s-code" placeholder="Encrypted .bin Payload" style="width:100%; padding:1rem; margin-bottom:1rem; background:#000; border:1px solid var(--glass-border); color:white; border-radius:8px; font-family:var(--mono); height:100px;"></textarea>
         
-        <div style="display:flex; gap:1rem; margin-bottom:1rem;">
-          <label><input type="checkbox" id="s-public-source"> Make Source Public</label>
-          <label><input type="checkbox" id="s-key-toggle"> Require Key</label>
+        <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;">
+          <label style="color:var(--muted); cursor:pointer;"><input type="checkbox" id="s-public-source" style="margin-right:8px;"> Make Source Public</label>
+          <label style="color:var(--muted); cursor:pointer;"><input type="checkbox" id="s-key-toggle" style="margin-right:8px;"> Require Key (BoostyLink)</label>
+          <label style="color:var(--muted); cursor:pointer;"><input type="checkbox" id="s-updating-toggle" style="margin-right:8px;"> Mark as Updating (Disables loader)</label>
         </div>
 
         <button class="btn-primary" style="width:100%;" id="upload-btn" onclick="uploadScript()">Deploy Script</button>
@@ -46,7 +46,6 @@
       </div>
     </div>
 
-    <!-- Verified User Fallback -->
     <div id="user-panel" class="hidden" style="text-align:center; padding:4rem;">
       <h2 style="font-size:2rem; margin-bottom:1rem;">Welcome to LuaHub</h2>
       <p style="color:var(--muted); margin-bottom:2rem;">You are verified. Head back to the home page to browse and copy scripts.</p>
@@ -77,13 +76,14 @@
       const source = document.getElementById('s-source').value;
       const isPublicSource = document.getElementById('s-public-source').checked;
       const requiresKey = document.getElementById('s-key-toggle').checked;
+      const isUpdating = document.getElementById('s-updating-toggle').checked;
       
       const btn = document.getElementById('upload-btn'); btn.textContent = 'Deploying...';
       
       const res = await fetch('/api/scripts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, content, source_code: source, is_public_source: isPublicSource, requires_key: requiresKey })
+        body: JSON.stringify({ name, content, source_code: source, is_public_source: isPublicSource, requires_key: requiresKey, is_updating: isUpdating })
       });
       
       const data = await res.json();
@@ -101,7 +101,10 @@
       const scripts = await res.json();
       box.innerHTML = scripts.map(s => `
         <div style="padding:1rem; border-bottom:1px solid var(--glass-border); display:flex; justify-content:space-between;">
-          <span>${s.name}</span>
+          <div>
+            <span style="display:block;">${s.name}</span>
+            ${s.is_updating ? '<span style="color:#ef4444; font-size:0.8rem;">Updating</span>' : ''}
+          </div>
           <span style="color:var(--muted); font-size:0.9rem;">👁 ${s.hits}</span>
         </div>
       `).join('');
