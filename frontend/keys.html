@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Key System — LuaHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { background: #050505; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); }
+  .box { background: rgba(15, 15, 15, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 3rem; border-radius: 16px; text-align: center; max-width: 500px; width: 100%; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+  h1 { margin: 0 0 0.5rem 0; font-size: 1.8rem; }
+  p { color: #888; margin-bottom: 2rem; }
+  .btn { background: #10b981; color: #000; font-weight: 800; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.2s; }
+  .btn:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+  .key-display { background: #000; border: 1px solid #222; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 1.2rem; color: #10b981; margin-bottom: 2rem; letter-spacing: 1px; word-break: break-all; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <!-- SCREEN 1: The Gateway Start -->
+  <div id="screen-start">
+    <h1>🔑 LuaHub Key System</h1>
+    <p>You must complete the gateway to receive your key.</p>
+    <button class="btn" onclick="startGateway()">START</button>
+  </div>
+
+  <!-- SCREEN 2: The Loading/Ad (Simulated Gateway) -->
+  <div id="screen-loading" class="hidden">
+    <h1>Gateway Progress</h1>
+    <p>Please wait while we verify your session...</p>
+    <div style="background:#222; border-radius:8px; height:10px; overflow:hidden; margin-top:2rem;">
+      <div id="progress-bar" style="background:#7c3aed; height:100%; width:0%; transition: width 3s linear;"></div>
+    </div>
+    <p style="margin-top:1rem; font-size:0.8rem;">(In a real setup, this redirects to Lootlabs)</p>
+  </div>
+
+  <!-- SCREEN 3: The Success / Key -->
+  <div id="screen-success" class="hidden">
+    <h1>✅ Success!</h1>
+    <p>Here is your key. Paste it in your executor.</p>
+    <div class="key-display" id="key-text">Loading...</div>
+    <button class="btn" onclick="copyKey()">Copy Key</button>
+  </div>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+
+  // If the URL has a ?token=, we show the key immediately
+  if (token) {
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('screen-loading').classList.add('hidden');
+    document.getElementById('screen-success').classList.remove('hidden');
+    claimKey(token);
+  }
+
+  async function startGateway() {
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('screen-loading').classList.remove('hidden');
+    
+    // Visual progress bar
+    setTimeout(() => { document.getElementById('progress-bar').style.width = '100%'; }, 100);
+
+    try {
+      // 1. Tell the API we are starting
+      const res = await fetch('/api/gateway', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', slug: 'universal' }) // Universal fallback, or pass from URL
+      });
+      const data = await res.json();
+      
+      // 2. Wait for the "Ad" (Simulated 3 seconds)
+      setTimeout(() => {
+        // 3. Redirect to the success URL with the token
+        window.location.href = `/keys.html?token=${data.token}`;
+      }, 3000);
+      
+    } catch (e) {
+      alert('Gateway failed.');
+    }
+  }
+
+  async function claimKey(token) {
+    try {
+      const res = await fetch('/api/gateway', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'claim', token: token })
+      });
+      const data = await res.json();
+      
+      if (data.key) {
+        document.getElementById('key-text').textContent = data.key;
+      } else {
+        document.getElementById('key-text').textContent = 'Error: ' + data.error;
+      }
+    } catch (e) {
+      document.getElementById('key-text').textContent = 'Network Error';
+    }
+  }
+
+  function copyKey() {
+    const key = document.getElementById('key-text').textContent;
+    navigator.clipboard.writeText(key);
+    alert('Key copied to clipboard!');
+  }
+</script>
+</body>
+</html>
