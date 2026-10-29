@@ -10,13 +10,14 @@ function authUser(req) {
 }
 
 module.exports = async (req, res) => {
+  // Force JSON response for all routes
+  res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // --- GET: Public Feed or My Links ---
   if (req.method === 'GET') {
     const user = authUser(req);
     const { mine } = req.query;
@@ -41,7 +42,6 @@ module.exports = async (req, res) => {
     return res.status(200).json(data || []);
   }
 
-  // --- DELETE: Soft Delete ---
   if (req.method === 'DELETE') {
     const { slug } = req.query;
     const user = authUser(req);
@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
       .from('scripts')
       .update({ is_deleted: true })
       .eq('slug', slug)
-      .eq('owner_id', user.id); // Only allow deleting your own scripts
+      .eq('owner_id', user.id);
 
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
