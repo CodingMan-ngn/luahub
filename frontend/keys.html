@@ -28,14 +28,12 @@
 <body>
 
 <div class="box">
-  <!-- SCREEN 1: The Gateway Start -->
   <div id="screen-start">
     <h1>🔑 LuaHub Key System</h1>
     <p>Complete the gateway steps to generate your HWID key.</p>
     <button class="btn" onclick="startGateway()">Start Gateway</button>
   </div>
 
-  <!-- SCREEN 2: The Checkbox / Anti-Bot -->
   <div id="screen-check" class="hidden">
     <h1>Security Check</h1>
     <p>Please verify you are human to continue.</p>
@@ -47,14 +45,12 @@
     <button class="btn btn-green" id="claim-btn" onclick="claimKey()" disabled style="opacity:0.5;">Waiting...</button>
   </div>
 
-  <!-- SCREEN 3: The Loading -->
   <div id="screen-loading" class="hidden">
     <h1>Processing...</h1>
     <div class="loader"></div>
     <p>Verifying your session with the server. Do not close this tab.</p>
   </div>
 
-  <!-- SCREEN 4: The Success / Key -->
   <div id="screen-success" class="hidden">
     <h1>✅ Success!</h1>
     <p>Here is your key. Paste it in your executor UI.</p>
@@ -76,16 +72,13 @@
     claimKey(token);
   }
 
-  // Start the flow
   async function startGateway() {
     document.getElementById('screen-start').classList.add('hidden');
     document.getElementById('screen-check').classList.remove('hidden');
     
-    // Show them the link they will need to paste if they came from in-game
     const currentUrl = window.location.origin + "/keys.html?slug=" + slug;
     document.getElementById('gateway-link-display').textContent = currentUrl;
     
-    // Anti-bypass: Create the token on the server immediately, hold it in memory
     try {
       const res = await fetch('/api/gateway', {
         method: 'POST',
@@ -94,7 +87,6 @@
       });
       const data = await res.json();
       if (data.token) {
-        // Store token in browser session so they can't just guess it
         sessionStorage.setItem('pending_gateway_token', data.token);
       }
     } catch (e) {
@@ -102,14 +94,13 @@
     }
   }
 
-  // Handle checkbox ticking
   let waitTime = 0;
   function toggleTimer() {
     const isChecked = document.getElementById('human-check').checked;
     const btn = document.getElementById('claim-btn');
     
     if (isChecked) {
-      waitTime = 3 + Math.floor(Math.random() * 3); // 3 to 5 seconds wait
+      waitTime = 3 + Math.floor(Math.random() * 3); // 3 to 5 seconds
       btn.disabled = true;
       btn.style.opacity = '1';
       
@@ -129,7 +120,6 @@
     }
   }
 
-  // User clicks the final button
   function claimKey() {
     const pendingToken = sessionStorage.getItem('pending_gateway_token');
     if (!pendingToken) return alert('Session expired. Please restart.');
@@ -137,13 +127,11 @@
     document.getElementById('screen-check').classList.add('hidden');
     document.getElementById('screen-loading').classList.remove('hidden');
 
-    // Redirect to the token URL (this mimics the redirect from Lootlabs)
     setTimeout(() => {
       window.location.href = `/keys.html?token=${pendingToken}`;
-    }, 1500); // Short delay to show the loading spinner
+    }, 1500);
   }
 
-  // Final function to grab the key from the API
   async function claimKey(token) {
     try {
       const res = await fetch('/api/gateway', {
@@ -155,7 +143,6 @@
       
       if (data.key) {
         document.getElementById('key-text').textContent = data.key;
-        // Clear token so they can't refresh
         sessionStorage.removeItem('pending_gateway_token');
       } else {
         document.getElementById('key-text').textContent = '❌ ' + (data.error || 'Invalid Token');
@@ -167,7 +154,6 @@
     }
   }
 
-  // Copy Button
   function copyKey() {
     const key = document.getElementById('key-text').textContent;
     navigator.clipboard.writeText(key);
