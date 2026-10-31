@@ -13,68 +13,59 @@
   }
   * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; overflow-x: hidden; perspective: 1200px; }
-
-  /* 3D Ambient Background Glow */
   .ambient-glow { position: fixed; top: 50%; left: 50%; width: 100vw; height: 100vh; transform: translate(-50%, -50%); background: radial-gradient(circle at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 60%); pointer-events: none; z-index: -1; }
 
-  /* Nav */
   nav { padding: 0 2rem; height: 60px; background: rgba(3, 3, 3, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .logo { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; color: #fff; text-decoration: none; }
   .nav-links { display: flex; gap: 1.2rem; }
   .nav-btn { background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; font-size: 0.85rem; position: relative; padding: 0.5rem 0; }
   .nav-btn:hover, .nav-btn.active { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
   .nav-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+  .nav-btn.admin-only { display: none; }
+  body.is-admin .nav-btn.admin-only { display: block; }
 
-  /* Layout */
   .container { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; perspective: 1000px; }
   .page { display: none; animation: slideIn 0.5s ease forwards; transform-origin: top center; }
   @keyframes slideIn { from { opacity: 0; transform: translateY(20px) rotateX(-5deg); } to { opacity: 1; transform: translateY(0) rotateX(0); } }
-  
   .page-header h1 { font-size: 2rem; margin: 0 0 0.5rem 0; } .page-header p { color: var(--text-muted); margin: 0 0 2rem 0; }
 
-  /* 3D Glass Cards */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
   .glass-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 1.8rem; backdrop-filter: blur(16px); transform-style: preserve-3d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; transform-style: preserve-3d; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
   .card:hover { transform: translateY(-5px) rotateX(4deg) rotateY(-4deg) scale(1.02); box-shadow: -10px 15px 30px rgba(0,0,0,0.8), 0 0 20px rgba(124,58,237,0.2); border-color: rgba(124,58,237,0.5); z-index: 2; }
   .card-title { font-size: 1.1rem; font-weight: 800; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
   .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4; flex: 1; }
-  .card-footer { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .card-footer { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 
-  /* Forms */
   .form-row { display: flex; align-items: center; margin-bottom: 1.2rem; gap: 1rem; }
   .form-row label.main-label { width: 120px; color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-  .input-field { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 0.9rem; border-radius: 8px; outline: none; font-size: 0.9rem; }
+  .input-field, select.input-field { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 0.9rem; border-radius: 8px; outline: none; font-size: 0.9rem; font-family: inherit; }
   .input-field:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(124,58,237,0.3); }
   .editor-box { background: #000; border: 1px solid #222; border-radius: 12px; overflow: hidden; }
-  .editor-textarea { width: 100%; height: 200px; background: transparent; color: #d4d4d4; border: none; padding: 1.2rem; font-family: 'JetBrains Mono', monospace; resize: vertical; outline: none; }
+  .editor-textarea { width: 100%; height: 200px; background: transparent; color: #d4d4d4; border: none; padding: 1.2rem; font-family: 'JetBrains Mono', monospace; resize: vertical; outline: none; font-size: 0.85rem; }
 
-  /* Buttons & Toggles */
   .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: #fff; font-weight: 800; border: none; border-radius: 8px; cursor: pointer; margin-top: 1rem; box-shadow: 0 5px 15px rgba(124,58,237,0.3); }
   .btn-submit:hover { background: #8b5cf6; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(124,58,237,0.5); }
   .copy-btn { background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
   .copy-btn:hover { background: var(--primary); }
   .danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); } .danger:hover { background: var(--danger); color: #fff; }
 
-  .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+  .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; inset: 0; background: #333; border-radius: 34px; }
   .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .4s; }
   input:checked + .slider { background: var(--primary); } input:checked + .slider:before { transform: translateX(22px); }
 
-  /* Table */
   table { width: 100%; border-collapse: collapse; text-align: left; }
   th, td { padding: 1rem; border-bottom: 1px solid #222; font-size: 0.85rem; }
   th { color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; }
 
-  /* Modals */
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px); }
-  .modal.active { display: flex; } 
+  .modal.active { display: flex; }
   .modal-content { background: #0a0a0a; padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; border: 1px solid #222; transform: scale(0.9); animation: popIn 0.3s forwards; }
   @keyframes popIn { to { transform: scale(1); } }
-  .load-box { background: #000; border: 1px solid #222; border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-  .load-code { font-family: 'JetBrains Mono', monospace; color: #a78bfa; font-size: 0.8rem; word-break: break-all; }
+  .load-box { background: #000; border: 1px solid #222; border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.5rem; }
+  .load-code { font-family: 'JetBrains Mono', monospace; color: #a78bfa; font-size: 0.78rem; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -87,13 +78,14 @@
     <button id="nav-feed" class="nav-btn" onclick="switchPage('public-feed', this)">Public Feed</button>
     <button id="nav-tools" class="nav-btn" onclick="switchPage('tools', this)">Obfuscator</button>
     <button id="nav-links" class="nav-btn" onclick="switchPage('my-links', this)">My Scripts</button>
-    <button id="nav-admin" class="nav-btn" style="display:none; color:var(--danger);" onclick="switchPage('admin', this)">Admin Panel</button>
+    <button id="nav-keys" class="nav-btn admin-only" onclick="switchPage('keys', this)">Key System</button>
+    <button id="nav-admin" class="nav-btn admin-only" style="color:var(--danger);" onclick="switchPage('admin', this)">Admin Panel</button>
   </div>
   <div class="user-menu"><span id="user-name" style="font-weight:800; color:var(--primary);">Public User</span></div>
 </nav>
 
 <div class="container">
-  
+
   <!-- CREATE PASTE -->
   <div id="page-new-paste" class="page" style="display:block;">
     <div class="page-header"><h1>Deploy Script</h1><p>Upload your script and generate a universal loadstring.</p></div>
@@ -142,17 +134,47 @@
     <div class="grid" id="my-links-grid"></div>
   </div>
 
-  <!-- ADMIN PANEL -->
+  <!-- KEY SYSTEM (Admin only) -->
+  <div id="page-keys" class="page">
+    <div class="page-header"><h1>Key System</h1><p>Generate time-accurate HWID keys.</p></div>
+    <div class="glass-card">
+      <div class="form-row">
+        <label class="main-label">Script</label>
+        <select id="key-script-select" class="input-field"><option value="">Loading...</option></select>
+      </div>
+      <div class="form-row">
+        <label class="main-label">Duration</label>
+        <select id="key-duration" class="input-field">
+          <option value="1">1 Day</option>
+          <option value="7">7 Days</option>
+          <option value="30" selected>30 Days</option>
+          <option value="999">Lifetime</option>
+        </select>
+      </div>
+      <button class="btn-submit" onclick="generateKeyFromDropdown()">Generate Key</button>
+    </div>
+    <div class="glass-card" style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Key</th><th>Script</th><th>Created</th><th>Expires</th><th>HWID</th></tr></thead>
+        <tbody id="key-tbody"><tr><td colspan="5" style="text-align:center; color:#888;">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL (Admin only) -->
   <div id="page-admin" class="page">
     <div class="page-header"><h1 style="color:var(--danger);">Admin Panel</h1><p>Manage all public and private scripts across the hub.</p></div>
     <div class="glass-card" style="overflow-x:auto;">
-      <table><thead><tr><th>Script Name</th><th>Slug</th><th>Runs</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="admin-tbody"><tr><td colspan="5">Loading...</td></tr></tbody></table>
+      <table>
+        <thead><tr><th>Script Name</th><th>Slug</th><th>Runs</th><th>Owner</th><th>Actions</th></tr></thead>
+        <tbody id="admin-tbody"><tr><td colspan="5" style="text-align:center; color:#888;">Loading...</td></tr></tbody>
+      </table>
     </div>
   </div>
 
 </div>
 
-<!-- MODALS -->
+<!-- SUCCESS MODAL -->
 <div class="modal" id="success-modal">
   <div class="modal-content">
     <h3 style="margin-top:0;">Script Deployed</h3>
@@ -161,37 +183,73 @@
   </div>
 </div>
 
+<!-- KEY MODAL -->
+<div class="modal" id="key-modal">
+  <div class="modal-content">
+    <h3 style="margin-top:0; color:#10b981;">Key Generated</h3>
+    <input type="text" id="out-key" class="input-field" readonly style="width:100%; margin-bottom:1rem; color:#10b981; font-weight:bold;"/>
+    <div class="load-box"><span class="load-code" id="out-key-loader-text" style="color:#10b981;"></span><button class="copy-btn" onclick="copyText('out-key-loader-text')">Copy</button></div>
+    <button class="btn-submit" style="background:#222;" onclick="document.getElementById('key-modal').classList.remove('active')">Close</button>
+  </div>
+</div>
+
 <script>
-  // 1. IDENTIFY USER (Public or Admin)
+  // -------- identity --------
   let public_id = localStorage.getItem('public_id');
   if (!public_id) {
     public_id = 'user_' + Math.random().toString(36).substring(2, 10);
     localStorage.setItem('public_id', public_id);
   }
-  
+
   const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode = urlParams.get('admin') === 'true'; 
-  const adminKey = 'admin123'; // Must match Vercel ENV
+  const isAdminMode = urlParams.get('admin') === 'true';
+  const adminKey = 'admin123'; // must match Vercel ENV ADMIN_KEY
+  const authHeader = isAdminMode ? adminKey : public_id;
 
-  let authHeader = isAdminMode ? adminKey : public_id;
-  document.getElementById('user-name').textContent = isAdminMode ? 'Administrator' : 'User: ' + public_id.substring(5, 9);
-  if (isAdminMode) document.getElementById('nav-admin').style.display = 'block';
+  if (isAdminMode) {
+    document.body.classList.add('is-admin');
+    document.getElementById('user-name').textContent = 'Administrator';
+  } else {
+    document.getElementById('user-name').textContent = 'User: ' + public_id.substring(5, 9);
+  }
 
-  function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).textContent || document.getElementById(id).value); alert('Copied!'); }
+  // -------- helpers --------
+  function copyText(id) {
+    const el = document.getElementById(id);
+    const text = el.value !== undefined ? el.value : el.textContent;
+    navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
+  }
   function showToast(msg) { alert(msg); }
 
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      ...opts,
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader, ...(opts.headers || {}) }
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 200) }; }
+    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+
+  // -------- nav --------
   function switchPage(pageId, el) {
+    if (!isAdminMode && (pageId === 'admin' || pageId === 'keys')) return;
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     document.getElementById('page-' + pageId).style.display = 'block';
     document.querySelectorAll('.nav-btn').forEach(a => a.classList.remove('active'));
-    if(el) el.classList.add('active');
-    
+    if (el) el.classList.add('active');
+
     if (pageId === 'public-feed') loadPublicFeed();
     if (pageId === 'my-links') loadMyLinks();
     if (pageId === 'admin') loadAdminPanel();
+    if (pageId === 'keys') loadKeysPage();
   }
 
+  // -------- publish --------
   async function publishPaste() {
+    const btn = document.getElementById('submit-btn');
     const name = document.getElementById('s-name').value.trim();
     const description = document.getElementById('s-desc').value.trim();
     const content = document.getElementById('s-code').value.trim();
@@ -200,79 +258,157 @@
     const requires_key = document.getElementById('require-key-toggle').checked;
 
     if (!name || !content) return showToast('Title and code required.');
-    const btn = document.getElementById('submit-btn'); btn.textContent = 'Publishing...';
-
+    btn.disabled = true; btn.textContent = 'Publishing...';
     try {
-      const res = await fetch(`/api/paste`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, 
-        body: JSON.stringify({ name, description, content, place_id, requires_key, obfuscate: true }) 
+      const data = await api('/api/paste', {
+        method: 'POST',
+        body: JSON.stringify({ name, description, content, place_id, requires_key, obfuscate: true })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
       const fullUrl = `${location.origin}/api/loader`;
-      document.getElementById('out-loader-text').textContent = `loadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId()))()`;
+      document.getElementById('out-loader-text').textContent =
+        `loadstring(game:HttpGet("${fullUrl}?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId()))()`;
       document.getElementById('success-modal').classList.add('active');
-      
-      document.getElementById('s-name').value = ''; document.getElementById('s-desc').value = ''; document.getElementById('s-code').value = '';
-    } catch(e) { showToast(e.message); }
-    btn.textContent = 'Publish Script';
+      document.getElementById('s-name').value = '';
+      document.getElementById('s-desc').value = '';
+      document.getElementById('s-code').value = '';
+    } catch (e) { showToast(e.message); }
+    btn.disabled = false; btn.textContent = 'Publish Script';
   }
 
+  // -------- feed --------
   async function loadPublicFeed() {
-    const grid = document.getElementById('public-grid'); grid.innerHTML = 'Loading...';
-    const res = await fetch('/api/scripts');
-    const scripts = await res.json();
-    grid.innerHTML = scripts.map(s => `
-      <div class="card">
-        <div class="card-title">${s.name} ${s.requires_key ? '🔒' : ''}</div>
-        <div class="card-desc">${s.description || 'No description.'}</div>
-        <div class="card-footer"><span>${s.hits} runs</span><button class="copy-btn" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\'${location.origin}/api/loader?placeId=\' .. game.PlaceId .. \'&hwid=\' .. game:GetService(\'RbxAnalyticsService\'):GetClientId()))()')">Copy</button></div>
-      </div>
-    `).join('');
-  }
-
-  async function loadMyLinks() {
-    const grid = document.getElementById('my-links-grid'); grid.innerHTML = 'Loading...';
-    const res = await fetch(`/api/scripts?mine=true`, { headers: { 'Authorization': authHeader } });
-    const scripts = await res.json();
-    if(!Array.isArray(scripts) || !scripts.length) return grid.innerHTML = '<p>No scripts found.</p>';
-    
-    grid.innerHTML = scripts.map(s => `
-      <div class="card">
-        <div class="card-title">${s.name} ${s.requires_key ? '🔒' : ''}</div>
-        <div class="card-desc">${s.description || 'No description.'}</div>
-        <div class="card-footer" style="gap:0.5rem;">
-          <button class="copy-btn" onclick="navigator.clipboard.writeText('${location.origin}/keys.html?slug=${s.slug}'); alert('Key Link copied!')">Key Link</button>
-          <button class="copy-btn danger" onclick="if(confirm('Delete?')) fetch('/api/paste?slug=${s.slug}', {method:'DELETE', headers: {'Authorization': authHeader}}).then(()=>loadMyLinks())">Delete</button>
+    const grid = document.getElementById('public-grid');
+    grid.innerHTML = 'Loading...';
+    try {
+      const scripts = await api('/api/scripts');
+      if (!scripts.length) { grid.innerHTML = '<p style="color:#888;">No public scripts yet.</p>'; return; }
+      grid.innerHTML = scripts.map(s => `
+        <div class="card">
+          <div class="card-title">${escapeHtml(s.name)} ${s.requires_key ? '🔒' : ''}</div>
+          <div class="card-desc">${escapeHtml(s.description || 'No description.')}</div>
+          <div class="card-footer">
+            <span>${s.hits || 0} runs</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\\'${location.origin}/api/loader?placeId=\\' .. game.PlaceId .. \\'&hwid=\\' .. game:GetService(\\'RbxAnalyticsService\\'):GetClientId()))()'); showToast('Copied!')">Copy</button>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
+    } catch (e) { grid.innerHTML = '<p style="color:#ef4444;">' + escapeHtml(e.message) + '</p>'; }
   }
 
+  // -------- my scripts --------
+  async function loadMyLinks() {
+    const grid = document.getElementById('my-links-grid');
+    grid.innerHTML = 'Loading...';
+    try {
+      const scripts = await api('/api/scripts?mine=true');
+      if (!scripts.length) { grid.innerHTML = '<p style="color:#888;">No scripts found.</p>'; return; }
+      grid.innerHTML = scripts.map(s => `
+        <div class="card">
+          <div class="card-title">${escapeHtml(s.name)} ${s.requires_key ? '🔒' : ''}</div>
+          <div class="card-desc">${escapeHtml(s.description || 'No description.')}</div>
+          <div class="card-footer">
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('${location.origin}/keys?slug=${s.slug}'); showToast('Key Link copied!')">Key Link</button>
+            <button class="copy-btn danger" onclick="deleteScript('${s.slug}', loadMyLinks)">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) { grid.innerHTML = '<p style="color:#ef4444;">' + escapeHtml(e.message) + '</p>'; }
+  }
+
+  async function deleteScript(slug, reload) {
+    if (!confirm('Delete this script?')) return;
+    try {
+      await api('/api/paste?slug=' + encodeURIComponent(slug), { method: 'DELETE' });
+      reload();
+    } catch (e) { showToast(e.message); }
+  }
+
+  // -------- admin --------
   async function loadAdminPanel() {
-    const tbody = document.getElementById('admin-tbody'); tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-    const res = await fetch('/api/scripts?all=true', { headers: { 'Authorization': authHeader } });
-    const scripts = await res.json();
-    tbody.innerHTML = scripts.map(s => `
-      <tr>
-        <td>${s.name}</td>
-        <td style="font-family:monospace; color:var(--primary);">${s.slug}</td>
-        <td>${s.hits}</td>
-        <td>${s.public_id ? s.public_id.substring(5,10) : 'Admin'}</td>
-        <td><button class="copy-btn danger" onclick="if(confirm('Force Delete?')) fetch('/api/paste?slug=${s.slug}', {method:'DELETE', headers: {'Authorization': authHeader}}).then(()=>loadAdminPanel())">Delete</button></td>
-      </tr>
-    `).join('');
+    if (!isAdminMode) return;
+    const tbody = document.getElementById('admin-tbody');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Loading...</td></tr>';
+    try {
+      const scripts = await api('/api/scripts?all=true');
+      if (!scripts.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No scripts.</td></tr>'; return; }
+      tbody.innerHTML = scripts.map(s => `
+        <tr>
+          <td>${escapeHtml(s.name)}</td>
+          <td style="font-family:monospace; color:var(--primary);">${s.slug}</td>
+          <td>${s.hits || 0}</td>
+          <td>${s.public_id ? s.public_id.substring(5, 10) : 'Admin'}</td>
+          <td><button class="copy-btn danger" onclick="deleteScript('${s.slug}', loadAdminPanel)">Force Delete</button></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">' + escapeHtml(e.message) + '</td></tr>';
+    }
   }
 
+  // -------- keys (admin) --------
+  async function loadKeysPage() {
+    if (!isAdminMode) return;
+    const select = document.getElementById('key-script-select');
+    const tbody = document.getElementById('key-tbody');
+    try {
+      const scripts = await api('/api/scripts?all=true');
+      select.innerHTML = '<option value="">Select script...</option>' +
+        scripts.map(s => `<option value="${s.slug}">${escapeHtml(s.name)}</option>`).join('');
+
+      const keys = await api('/api/keys');
+      if (!keys.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No keys yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = keys.map(k => `
+        <tr>
+          <td style="color:#10b981; font-family:monospace;">${escapeHtml(k.key_string)}</td>
+          <td>${escapeHtml(k.script_slug || '')}</td>
+          <td>${k.created_at ? new Date(k.created_at).toLocaleDateString() : '-'}</td>
+          <td>${k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Lifetime'}</td>
+          <td>${k.hwid ? escapeHtml(k.hwid.slice(0, 12)) + '…' : 'Unlocked'}</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">' + escapeHtml(e.message) + '</td></tr>';
+    }
+  }
+
+  async function generateKeyFromDropdown() {
+    if (!isAdminMode) return;
+    const slug = document.getElementById('key-script-select').value;
+    const duration = document.getElementById('key-duration').value;
+    if (!slug) return showToast('Select a script first.');
+    try {
+      const data = await api('/api/keys', {
+        method: 'POST',
+        body: JSON.stringify({ slug, duration: parseInt(duration) })
+      });
+      document.getElementById('out-key').value = data.key;
+      document.getElementById('out-key-loader-text').textContent =
+        `script_key = "${data.key}"\nloadstring(game:HttpGet("${location.origin}/api/loader?placeId=" .. game.PlaceId .. "&hwid=" .. game:GetService("RbxAnalyticsService"):GetClientId() .. "&key=" .. script_key))()`;
+      document.getElementById('key-modal').classList.add('active');
+      loadKeysPage();
+    } catch (e) { showToast(e.message); }
+  }
+
+  // -------- obfuscator --------
   async function runObfuscator() {
     const input = document.getElementById('obf-input').value.trim();
     if (!input) return showToast('Paste code first.');
-    const res = await fetch('/api/obfuscate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: input }) });
-    const data = await res.json();
-    if(data.output) { document.getElementById('obf-output').textContent = data.output; document.getElementById('obf-result').style.display = 'block'; }
-    else showToast(data.error);
+    try {
+      const data = await api('/api/obfuscate', {
+        method: 'POST',
+        body: JSON.stringify({ code: input })
+      });
+      document.getElementById('obf-output').textContent = data.output;
+      document.getElementById('obf-result').style.display = 'block';
+    } catch (e) { showToast(e.message); }
+  }
+
+  // -------- util --------
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   }
 </script>
 </body>

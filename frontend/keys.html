@@ -6,7 +6,7 @@
 <title>Key System — LuaHub</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg: #050505; --panel: rgba(15, 15, 15, 0.8); --primary: #7c3aed; --success: #10b981; }
+  :root { --bg: #050505; --panel: rgba(15, 15, 15, 0.8); --primary: #7c3aed; --success: #10b981; --danger: #ef4444; }
   body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-image: radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.15), transparent 50%); }
   .box { background: var(--panel); border: 1px solid rgba(255,255,255,0.1); padding: 3rem; border-radius: 16px; text-align: center; max-width: 500px; width: 100%; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: popIn 0.4s ease-out; }
   @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -14,8 +14,7 @@
   p { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
   .btn { background: var(--primary); color: #fff; font-weight: 800; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.2s; width: 100%; box-sizing: border-box; }
   .btn:hover { background: #8b5cf6; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3); }
-  .btn-green { background: var(--success); color: #000; }
-  .btn-green:hover { background: #059669; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+  .btn-green { background: var(--success); color: #000; } .btn-green:hover { background: #059669; }
   .key-display { background: #000; border: 1px solid #222; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 1.2rem; color: var(--success); margin-bottom: 2rem; letter-spacing: 1px; word-break: break-all; font-weight: bold; }
   .hidden { display: none !important; }
   .link-box { background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.85rem; color: #a78bfa; word-break: break-all; }
@@ -26,31 +25,26 @@
 </style>
 </head>
 <body>
-
 <div class="box">
   <div id="screen-start">
     <h1>🔑 LuaHub Key System</h1>
     <p>Complete the gateway steps to generate your HWID key.</p>
     <button class="btn" onclick="startGateway()">Start Gateway</button>
   </div>
-
   <div id="screen-check" class="hidden">
     <h1>Security Check</h1>
-    <p>Please verify you are human to continue.</p>
+    <p>Verify you are human to continue.</p>
     <div class="link-box" id="gateway-link-display"></div>
     <div class="checkbox-wrap">
       <input type="checkbox" id="human-check" onchange="toggleTimer()">
       <label for="human-check">I am not a robot</label>
     </div>
-    <button class="btn btn-green" id="claim-btn" onclick="claimKey()" disabled style="opacity:0.5;">Waiting...</button>
+    <button class="btn btn-green" id="claim-btn" onclick="doClaim()" disabled style="opacity:0.5;">Waiting...</button>
   </div>
-
   <div id="screen-loading" class="hidden">
-    <h1>Processing...</h1>
-    <div class="loader"></div>
-    <p>Verifying your session with the server. Do not close this tab.</p>
+    <h1>Processing...</h1><div class="loader"></div>
+    <p>Verifying your session with the server.</p>
   </div>
-
   <div id="screen-success" class="hidden">
     <h1>✅ Success!</h1>
     <p>Here is your key. Paste it in your executor UI.</p>
@@ -60,104 +54,84 @@
 </div>
 
 <script>
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  const slug = urlParams.get('slug') || 'universal';
+  const params = new URLSearchParams(window.location.search);
+  const incomingToken = params.get('token');
+  const slug = params.get('slug') || 'universal';
 
-  // If URL has token, they just came from the gateway
-  if (token) {
+  if (incomingToken) {
     document.getElementById('screen-start').classList.add('hidden');
     document.getElementById('screen-success').classList.remove('hidden');
-    document.getElementById('key-text').textContent = "Claiming...";
-    claimKey(token);
+    claim(incomingToken);
   }
 
   async function startGateway() {
     document.getElementById('screen-start').classList.add('hidden');
     document.getElementById('screen-check').classList.remove('hidden');
-    
-    const currentUrl = window.location.origin + "/keys.html?slug=" + slug;
-    document.getElementById('gateway-link-display').textContent = currentUrl;
-    
+    document.getElementById('gateway-link-display').textContent = window.location.origin + "/keys.html?slug=" + slug;
     try {
       const res = await fetch('/api/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', slug: slug })
+        body: JSON.stringify({ action: 'start', slug })
       });
       const data = await res.json();
-      if (data.token) {
-        sessionStorage.setItem('pending_gateway_token', data.token);
-      }
-    } catch (e) {
-      alert('Failed to start gateway.');
-    }
+      if (data.token) sessionStorage.setItem('pending_gateway_token', data.token);
+      else alert('Gateway start failed: ' + (data.error || 'unknown'));
+    } catch (e) { alert('Network error starting gateway.'); }
   }
 
   let waitTime = 0;
   function toggleTimer() {
-    const isChecked = document.getElementById('human-check').checked;
+    const checked = document.getElementById('human-check').checked;
     const btn = document.getElementById('claim-btn');
-    
-    if (isChecked) {
-      waitTime = 3 + Math.floor(Math.random() * 3); // 3 to 5 seconds
-      btn.disabled = true;
-      btn.style.opacity = '1';
-      
-      const interval = setInterval(() => {
+    if (checked) {
+      waitTime = 3 + Math.floor(Math.random() * 3);
+      btn.disabled = true; btn.style.opacity = '1';
+      const iv = setInterval(() => {
         waitTime--;
         btn.textContent = `Verifying in ${waitTime}s...`;
-        if (waitTime <= 0) {
-          clearInterval(interval);
-          btn.disabled = false;
-          btn.textContent = 'Get My Key';
-        }
+        if (waitTime <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = 'Get My Key'; }
       }, 1000);
     } else {
-      btn.disabled = true;
-      btn.textContent = 'Waiting...';
-      btn.style.opacity = '0.5';
+      btn.disabled = true; btn.textContent = 'Waiting...'; btn.style.opacity = '0.5';
     }
   }
 
-  function claimKey() {
-    const pendingToken = sessionStorage.getItem('pending_gateway_token');
-    if (!pendingToken) return alert('Session expired. Please restart.');
-
+  function doClaim() {
+    const t = sessionStorage.getItem('pending_gateway_token');
+    if (!t) return alert('Session expired. Please restart.');
     document.getElementById('screen-check').classList.add('hidden');
     document.getElementById('screen-loading').classList.remove('hidden');
-
-    setTimeout(() => {
-      window.location.href = `/keys.html?token=${pendingToken}`;
-    }, 1500);
+    setTimeout(() => { window.location.href = `/keys.html?token=${t}`; }, 1200);
   }
 
-  async function claimKey(token) {
+  async function claim(t) {
     try {
       const res = await fetch('/api/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'claim', token: token })
+        body: JSON.stringify({ action: 'claim', token: t })
       });
       const data = await res.json();
-      
+      const el = document.getElementById('key-text');
       if (data.key) {
-        document.getElementById('key-text').textContent = data.key;
+        el.textContent = data.key;
         sessionStorage.removeItem('pending_gateway_token');
       } else {
-        document.getElementById('key-text').textContent = '❌ ' + (data.error || 'Invalid Token');
-        document.getElementById('key-text').style.color = '#ef4444';
+        el.textContent = '❌ ' + (data.error || 'Invalid Token');
+        el.style.color = '#ef4444';
       }
     } catch (e) {
-      document.getElementById('key-text').textContent = 'Network Error';
-      document.getElementById('key-text').style.color = '#ef4444';
+      const el = document.getElementById('key-text');
+      el.textContent = 'Network Error'; el.style.color = '#ef4444';
     }
   }
 
   function copyKey() {
-    const key = document.getElementById('key-text').textContent;
-    navigator.clipboard.writeText(key);
-    alert('Key copied to clipboard! Go back to your executor and paste it.');
+    const txt = document.getElementById('key-text').textContent;
+    if (!txt || txt.startsWith('❌')) return;
+    navigator.clipboard.writeText(txt);
+    alert('Key copied to clipboard!');
   }
 </script>
 </body>

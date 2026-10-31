@@ -1,12 +1,21 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/router.js?route=$1" },
-    { "source": "/dashboard", "destination": "/frontend/dashboard.html" },
-    { "source": "/keys", "destination": "/frontend/keys.html" },
-    { "source": "/assets/(.*)", "destination": "/frontend/assets/$1" },
-    { "source": "/favicon.svg", "destination": "/frontend/favicon.svg" },
-    { "source": "/", "destination": "/frontend/index.html" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    { "source": "/api/gateway",   "destination": "/api/router.js?route=gateway" },
+    { "source": "/api/scripts",   "destination": "/api/router.js?route=scripts" },
+    { "source": "/api/paste",     "destination": "/api/router.js?route=paste" },
+    { "source": "/api/obfuscate", "destination": "/api/router.js?route=obfuscate" },
+    { "source": "/api/keys",      "destination": "/api/router.js?route=keys" },
+    { "source": "/api/loader",    "destination": "/api/router.js?route=loader" },
+
+    { "source": "/dashboard",     "destination": "/frontend/dashboard.html" },
+    { "source": "/dashboard.html","destination": "/frontend/dashboard.html" },
+    { "source": "/keys",          "destination": "/frontend/keys.html" },
+    { "source": "/keys.html",     "destination": "/frontend/keys.html" },
+
+    { "source": "/assets/(.*)",   "destination": "/frontend/assets/$1" },
+    { "source": "/favicon.svg",   "destination": "/frontend/favicon.svg" },
+    { "source": "/",              "destination": "/frontend/index.html" },
+    { "source": "/(.*)",          "destination": "/frontend/$1" }
   ]
 }
