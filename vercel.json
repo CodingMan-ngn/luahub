@@ -1,24 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "frontend/**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/scripts", "dest": "/api/scripts.js" },
-    { "src": "/api/paste", "dest": "/api/paste.js" },
-    { "src": "/api/keys", "dest": "/api/keys.js" },
-    { "src": "/api/profile", "dest": "/api/profile.js" },
-    { "src": "/api/loader", "dest": "/api/loader.js" },
-    { "src": "/api/gateway", "dest": "/api/gateway.js" },
-    { "src": "/api/obfuscate", "dest": "/api/obfuscate.js" },
-    { "src": "/api/auth", "dest": "/api/auth.js" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/dashboard", "dest": "/frontend/dashboard.html" },
-    { "src": "/keys", "dest": "/frontend/keys.html" },
-    { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
-    { "src": "/favicon.svg", "dest": "/frontend/favicon.svg" },
-    { "src": "/(.*)", "dest": "/frontend/$1" },
-    { "src": "/", "dest": "/frontend/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/dashboard", "destination": "/frontend/dashboard.html" },
+    { "source": "/keys", "destination": "/frontend/keys.html" },
+    { "source": "/assets/(.*)", "destination": "/frontend/assets/$1" },
+    { "source": "/favicon.svg", "destination": "/frontend/favicon.svg" },
+    { "source": "/", "destination": "/frontend/index.html" },
+    { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
 }
