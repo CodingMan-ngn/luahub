@@ -5,197 +5,94 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LuaHub — Premium Scripts</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=230"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
-  body { display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; background: #050505; color: #fff; font-family: 'Inter', sans-serif; margin: 0; }
-  .orb { position: absolute; border-radius: 50%; filter: blur(120px); z-index: 0; pointer-events: none; }
-  .orb-1 { width: 500px; height: 500px; background: rgba(124,58,237,0.15); top: -10%; left: 10%; }
-  .orb-2 { width: 400px; height: 400px; background: rgba(16,185,129,0.08); top: 40%; right: 5%; }
-
-  nav { padding: 1.5rem 3rem; background: rgba(5, 5, 5, 0.6); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-  .logo { font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; }
-  .logo img { border-radius: 6px; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
-  .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-  .nav-links a { color: #888; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s; }
-  .nav-links a:hover { color: #fff; }
-
-  .hero { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 6rem 2rem 4rem; z-index: 10; position: relative; }
-  .hero h1 { font-size: clamp(3rem, 7vw, 5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 1.5rem; }
-  .hero h1 span { background: linear-gradient(135deg, #fff, #a78bfa, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .hero p { color: #94a3b8; font-size: 1.2rem; max-width: 600px; line-height: 1.6; margin-bottom: 3rem; }
-  .btn-hero { padding: 1.1rem 3rem; border-radius: 12px; font-weight: 700; font-size: 1.1rem; background: #7c3aed; color: #fff; border: none; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 40px rgba(124,58,237,0.4); }
-  .btn-hero:hover { transform: translateY(-4px) scale(1.02); background: #8b5cf6; box-shadow: 0 0 60px rgba(124,58,237,0.6); }
-
-  .storefront { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; z-index: 10; position: relative; }
-  .store-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; border-bottom: 1px solid #222; padding-bottom: 1rem; }
-  .store-header h2 { font-size: 2rem; font-weight: 800; margin: 0; }
-  .store-header input { background: #0a0a0a; border: 1px solid #222; color: #fff; padding: 0.8rem 1rem; border-radius: 8px; outline: none; font-family: 'Inter'; width: 300px; }
-  .store-header input:focus { border-color: #7c3aed; }
+  :root {
+    --bg: #030303; --primary: #7c3aed; --primary-glow: rgba(124, 58, 237, 0.4);
+    --text: #fff; --text-muted: #888;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
   
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-  .card { background: rgba(15, 15, 15, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; transition: 0.3s; display: flex; flex-direction: column; backdrop-filter: blur(10px); }
-  .card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  .card-title { font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-  .card-meta { font-size: 0.8rem; color: #888; margin-bottom: 1rem; }
-  .card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-  .copy-btn { background: #7c3aed; color: #fff; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; width: 100%; }
-  .copy-btn:hover { background: #8b5cf6; box-shadow: 0 0 15px rgba(124,58,237,0.3); }
+  /* 3D Background Glow */
+  .bg-glow {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
+    background: radial-gradient(circle at 50% -20%, var(--primary-glow) 0%, transparent 60%);
+    pointer-events: none;
+  }
 
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.3s ease; }
-  .modal-overlay.active { display: flex; opacity: 1; }
-  .modal-content { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 2.5rem; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: translateY(20px); transition: transform 0.3s ease; }
-  .modal-overlay.active .modal-content { transform: translateY(0); }
-  .modal-icon { font-size: 2.5rem; margin-bottom: 1rem; color: #5865F2; }
-  .modal-content h3 { margin-bottom: 0.5rem; font-size: 1.25rem; }
-  .modal-content p { color: #888; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem; }
-  .modal-btns { display: flex; gap: 1rem; justify-content: center; }
+  /* Nav */
+  nav { padding: 1.5rem 4rem; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; width: 100%; z-index: 100; }
+  .logo { font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: 0.5rem; }
+  .nav-links a { color: var(--text-muted); text-decoration: none; margin-left: 2rem; font-weight: 600; transition: 0.3s; }
+  .nav-links a:hover { color: #fff; text-shadow: 0 0 10px var(--primary); }
+  .btn-nav { background: var(--primary); color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; transition: 0.3s; }
+  .btn-nav:hover { transform: translateY(-2px); box-shadow: 0 0 20px var(--primary-glow); }
 
-  #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none; }
-  .toast { background: #0a0a0a; border: 1px solid #222; border-left: 4px solid #7c3aed; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 0.8rem; transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: auto; max-width: 350px; }
-  .toast.error { border-left-color: #ef4444; }
-  .toast.success { border-left-color: #10b981; }
-  @keyframes slideIn { to { transform: translateX(0); } }
-  @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
-  .toast.fade-out { animation: slideOut 0.3s ease forwards; }
+  /* Hero Section */
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 2rem; }
+  .hero h1 { font-size: 5rem; font-weight: 900; line-height: 1.1; letter-spacing: -2px; animation: fadeUp 1s ease forwards; }
+  .hero h1 span { background: linear-gradient(to right, #a78bfa, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { color: var(--text-muted); font-size: 1.2rem; margin: 1.5rem 0 3rem 0; max-width: 600px; animation: fadeUp 1s ease 0.2s forwards; opacity: 0; }
+  .btn-hero { background: var(--primary); color: #fff; padding: 1rem 2.5rem; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 1.1rem; transition: 0.3s; animation: fadeUp 1s ease 0.4s forwards; opacity: 0; display: inline-block; }
+  .btn-hero:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--primary-glow); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 3D Script Slider */
+  .scripts-section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; perspective: 1000px; }
+  .section-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; text-align: center; }
+  .slider { display: flex; gap: 2rem; overflow-x: auto; padding: 2rem 0; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .slider::-webkit-scrollbar { display: none; }
+  
+  .script-card { min-width: 320px; scroll-snap-align: center; background: rgba(20, 20, 20, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; transform-style: preserve-3d; transition: transform 0.4s ease, box-shadow 0.4s ease; }
+  .script-card:hover { transform: translateY(-10px) rotateX(5deg) rotateY(-5deg); box-shadow: -20px 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(124,58,237,0.2); border-color: rgba(124,58,237,0.5); }
+  .script-card h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .script-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .btn-copy { background: rgba(124,58,237,0.1); border: 1px solid var(--primary); color: var(--primary); width: 100%; padding: 0.8rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+  .btn-copy:hover { background: var(--primary); color: #fff; }
 </style>
 </head>
 <body>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  
-  <div id="toast-container"></div>
 
-  <nav>
-    <a href="/" class="logo">
-      <img src="/favicon.svg" width="28" height="28"/>
-      LuaHub
-    </a>
-    <div class="nav-links">
-      <a href="#storefront">Scripts</a>
-      <a href="/dashboard">Dashboard</a>
-      <a href="#" onclick="openModal()" style="background: #7c3aed; color: #fff; padding: 0.5rem 1rem; border-radius: 8px;">Login</a>
-    </div>
-  </nav>
+<div class="bg-glow"></div>
 
-  <div class="hero">
-    <h1>The Next Generation<br/><span>of Script Execution.</span></h1>
-    <p>Secure, fast, and obfuscated. Access the premier repository for Roblox scripts with zero compromises on performance or safety.</p>
-    <button class="btn-hero" onclick="openModal()">Get Started</button>
+<nav>
+  <div class="logo">LuaHub</div>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/keys">Key System</a>
+    <a href="https://discord.gg/P4P5jZGt3m" target="_blank">Discord</a>
   </div>
+</nav>
 
-  <div class="storefront" id="storefront">
-    <div class="store-header">
-      <h2>Public Scripts</h2>
-      <input type="text" id="search" placeholder="Search scripts..." oninput="filterScripts()" />
-    </div>
-    <div class="grid" id="public-grid">
-      <p style="color:#888;">Loading...</p>
-    </div>
-  </div>
+<div class="hero">
+  <h1>The Next Generation<br/>of <span>Script Execution.</span></h1>
+  <p>Secure, fast, and obfuscated. Access the premier repository for Roblox scripts with zero compromises on performance or safety.</p>
+  <a href="/dashboard" class="btn-hero">Explore the Hub</a>
+</div>
 
-  <!-- Discord Consent Modal -->
-  <div class="modal-overlay" id="login-modal">
-    <div class="modal-content">
-      <div class="modal-icon">💬</div>
-      <h3>Sign in with Discord</h3>
-      <p>LuaHub uses Discord for authentication. We will only read your username and avatar to create your account.</p>
-      <div class="modal-btns">
-        <button class="btn-secondary" onclick="closeModal()" style="padding: 0.6rem 1.5rem; font-size: 0.9rem; background:#222; border:none; border-radius:8px; color:#fff; cursor:pointer;">Cancel</button>
-        <button class="btn-primary" onclick="loginDiscord()" style="padding: 0.6rem 1.5rem; font-size: 0.9rem; background:#5865F2; border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">Authorize</button>
-      </div>
-    </div>
+<div class="scripts-section">
+  <h2 class="section-title">Featured Scripts</h2>
+  <div class="slider" id="public-feed">
+    <!-- Cards loaded via JS -->
   </div>
+</div>
 
 <script>
-  let allScripts = [];
-
-  // Check auth
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlToken = urlParams.get('token');
-  const urlUsername = urlParams.get('username');
-
-  if (urlToken && urlUsername) {
-    localStorage.setItem('token', urlToken);
-    localStorage.setItem('username', urlUsername);
-    window.location.href = '/dashboard';
-  }
-
-  if (localStorage.getItem('token')) {
-    document.querySelector('a[href="/dashboard"]').style.display = 'inline';
-    document.querySelector('a[onclick="openModal()"]').textContent = 'Dashboard';
-    document.querySelector('a[onclick="openModal()"]').href = '/dashboard';
-    document.querySelector('a[onclick="openModal()"]').onclick = null;
-  } else {
-    document.querySelector('a[href="/dashboard"]').style.display = 'none';
-  }
-
-  function openModal() { document.getElementById('login-modal').classList.add('active'); }
-  function closeModal() { document.getElementById('login-modal').classList.remove('active'); }
-
-  function loginDiscord() {
-    const clientId = "1565187874767507468"; 
-    const redirectUri = encodeURIComponent(window.location.origin + '/api/auth');
-    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`;
-  }
-
-  function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    let icon = 'ℹ️'; if (type === 'error') icon = '❌'; if (type === 'success') icon = '✅';
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.classList.add('fade-out'); toast.addEventListener('animationend', () => toast.remove()); }, 3000);
-  }
-
-  async function loadScripts() {
-    try {
-      const res = await fetch('/api/scripts');
-      allScripts = await res.json();
-      renderScripts(allScripts);
-    } catch(e) {
-      document.getElementById('public-grid').innerHTML = '<p style="color:#888;">Failed to load scripts.</p>';
-    }
-  }
-
-  function renderScripts(scripts) {
-    const grid = document.getElementById('public-grid');
-    if (!scripts.length) {
-      grid.innerHTML = '<p style="color:#888;">No public scripts found.</p>';
-      return;
-    }
-
-    grid.innerHTML = scripts.map(s => `
-      <div class="card">
-        <div class="card-title">
-          ${s.name}
-          ${s.requires_key ? '<span style="font-size:0.7rem; background:#ef4444; padding:0.2rem 0.5rem; border-radius:4px; color:#fff;">KEY</span>' : ''}
-        </div>
-        <div class="card-meta">${s.hits} runs · ${new Date(s.created_at).toLocaleDateString()}</div>
-        <div class="card-footer">
-          <button class="copy-btn" onclick="copyLoad('${s.slug}')">Copy Loadstring</button>
-        </div>
+  // Fetch scripts for the slider
+  fetch('/api/scripts').then(res => res.json()).then(scripts => {
+    const feed = document.getElementById('public-feed');
+    if (!scripts.length) return;
+    
+    feed.innerHTML = scripts.slice(0, 5).map(s => `
+      <div class="script-card">
+        <h3>${s.name}</h3>
+        <p>${s.description || 'No description provided.'}</p>
+        <button class="btn-copy" onclick="navigator.clipboard.writeText('loadstring(game:HttpGet(\\'https://lua-axon.vercel.app/api/loader?placeId=\\' .. game.PlaceId .. \\'&hwid=\\' .. game:GetService(\\'RbxAnalyticsService\\'):GetClientId()))()'); alert('Loadstring Copied!')">Copy Loadstring</button>
       </div>
     `).join('');
-  }
-
-  function filterScripts() {
-    const query = document.getElementById('search').value.toLowerCase();
-    const filtered = allScripts.filter(s => s.name.toLowerCase().includes(query));
-    renderScripts(filtered);
-  }
-
-  function copyLoad(slug) {
-    const load = `loadstring(game:HttpGet("${location.origin}/api/loader/${slug}"))()`;
-    navigator.clipboard.writeText(load).then(() => {
-      showToast('Loadstring copied to clipboard!', 'success');
-    }).catch(() => {
-      showToast('Failed to copy', 'error');
-    });
-  }
-
-  loadScripts();
+  });
 </script>
 </body>
 </html>
